@@ -5,6 +5,10 @@ import Image from "next/image";
 export default function SearchHistory() {
   const { history } = useSearchHistoryStore();
 
+  if (history.length === 0) {
+    return null;
+  }
+
   return (
     <div>
       <p className="font-bold border-b border-neutral-800 pb-2">History</p>
