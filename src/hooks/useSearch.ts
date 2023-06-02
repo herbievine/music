@@ -32,14 +32,24 @@ export default function useSearch(query?: string | null) {
     if (!data) return null;
 
     return removeDuplicates(
-      data.results.filter((val) =>
-        val.wrapperType === "track"
-          ? !val.trackName.toLowerCase().match(/(edit|remix|version|parody)/g)
-          : !val.collectionName
-              .toLowerCase()
-              .match(/(edit|remix|version|parody)/g)
-      ),
-      ["artistName", "collectionName"]
+      data.results
+        .filter((val) =>
+          val.wrapperType === "track"
+            ? !val.trackName.toLowerCase().match(/(edit|remix|version|parody)/g)
+            : !val.collectionName
+                .toLowerCase()
+                .match(/(edit|remix|version|parody)/g)
+        )
+        .map((val) => ({
+          id: val.wrapperType === "track" ? val.trackId : val.collectionId,
+          type: val.wrapperType === "track" ? "song" : "album",
+          title:
+            val.wrapperType === "track" ? val.trackName : val.collectionName,
+          artist: val.artistName,
+          coverLink: val.artworkUrl100,
+          audioLink: null,
+        })),
+      ["title", "artist"]
     );
   }, [data]);
 

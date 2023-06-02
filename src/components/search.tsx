@@ -32,40 +32,24 @@ export default function Search() {
       <div className="flex flex-col divide-y divide-neutral-800">
         {data?.map((songOrAlbum) => (
           <Link
-            key={
-              songOrAlbum.wrapperType === "track"
-                ? songOrAlbum.trackId
-                : songOrAlbum.collectionId
-            }
+            key={songOrAlbum.id}
             className="py-2 cursor-pointer"
-            href={`/view?id=${
-              songOrAlbum.wrapperType === "track"
-                ? songOrAlbum.trackId
-                : songOrAlbum.collectionId
-            }`}
+            href={`/view?id=${songOrAlbum.id}`}
           >
             <div className={"w-full flex items-center space-x-2"}>
               <Image
-                src={songOrAlbum.artworkUrl100}
-                alt={`${
-                  songOrAlbum.wrapperType === "track"
-                    ? songOrAlbum.trackName
-                    : songOrAlbum.collectionName
-                } by ${songOrAlbum.artistName}`}
+                src={songOrAlbum.coverLink}
+                alt={`${songOrAlbum.title} by ${songOrAlbum.artist}`}
                 width={45}
                 height={45}
                 className="rounded-lg"
               />
               <div className="flex flex-col">
-                <p className="font-semibold">
-                  {songOrAlbum.wrapperType === "track"
-                    ? songOrAlbum.trackName
-                    : songOrAlbum.collectionName}
-                </p>
+                <p className="font-semibold">{songOrAlbum.title}</p>
                 <p className="text-sm font-semibold text-neutral-500 truncate">
-                  {songOrAlbum.wrapperType === "track" ? "Song" : "Album"}
+                  {songOrAlbum.type === "song" ? "Song" : "Album"}
                   {" • "}
-                  {songOrAlbum.artistName}
+                  {songOrAlbum.artist}
                 </p>
               </div>
             </div>
