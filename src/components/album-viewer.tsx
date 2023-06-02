@@ -7,6 +7,8 @@ import PlayButton from "@/components/play-button";
 import DownloadSongButton from "@/components/download-song-button";
 import { Album } from "@/schemas/album";
 import Metadata from "@/components/metadata";
+import { useSearchHistoryStore } from "@/store/search-history";
+import { useEffect } from "react";
 
 type AlbumViewerProps = {
   album: Album;
@@ -14,6 +16,18 @@ type AlbumViewerProps = {
 };
 
 export default function AlbumViewer({ album, songs }: AlbumViewerProps) {
+  const { add } = useSearchHistoryStore();
+
+  useEffect(() => {
+    add({
+      id: album.collectionId,
+      type: "album",
+      title: album.collectionName,
+      artist: album.artistName,
+      coverLink: album.artworkUrl100,
+    });
+  }, [add, album]);
+
   return (
     <div className="w-full flex flex-col space-y-4 items-center">
       <Image
@@ -30,10 +44,10 @@ export default function AlbumViewer({ album, songs }: AlbumViewerProps) {
           {album.primaryGenreName} - {new Date(album.releaseDate).getFullYear()}
         </p>
       </div>
-      {/* <div className="w-full flex justify-center space-x-4">
-        <PlayButton song={songs[0]} />
-        <DownloadSongButton song={songs[0]} />
-      </div> */}
+      <div className="w-full flex justify-center space-x-4">
+        <PlayButton songs={songs} />
+        {/* <DownloadSongButton song={songs[0]} /> */}
+      </div>
       <DisplaySongs songs={songs} />
       <Metadata songs={songs} />
     </div>

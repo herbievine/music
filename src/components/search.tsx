@@ -6,6 +6,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import debounce from "lodash/debounce";
 import Image from "next/image";
+import SearchHistory from "./search-history";
 
 export default function Search() {
   const [query, setQuery] = useState("");
@@ -25,7 +26,7 @@ export default function Search() {
           setQuery(e.target.value);
         }, 300)}
         placeholder="Search..."
-        className="px-3 py-1.5 rounded-lg bg-neutral-800 w-full text-white"
+        className="px-3 py-1.5 font-semibold rounded-lg bg-neutral-800 w-full text-white"
       />
       {isSearching && <p>Searching...</p>}
       <div className="flex flex-col divide-y divide-neutral-800">
@@ -71,6 +72,7 @@ export default function Search() {
           </Link>
         ))}
       </div>
+      <SearchHistory />
     </div>
   );
 }

@@ -7,12 +7,26 @@ import PlayButton from "@/components/play-button";
 import DownloadSongButton from "@/components/download-song-button";
 import Link from "next/link";
 import Metadata from "@/components/metadata";
+import { useSearchHistoryStore } from "@/store/search-history";
+import { useEffect } from "react";
 
 type SongViewerProps = {
   song: Song;
 };
 
 export default function SongViewer({ song }: SongViewerProps) {
+  const { add } = useSearchHistoryStore();
+
+  useEffect(() => {
+    add({
+      id: song.trackId,
+      type: "song",
+      title: song.trackName,
+      artist: song.artistName,
+      coverLink: song.artworkUrl100,
+    });
+  }, [add, song]);
+
   return (
     <div className="w-full flex flex-col space-y-4 items-center">
       <Image
@@ -35,10 +49,10 @@ export default function SongViewer({ song }: SongViewerProps) {
           {song.primaryGenreName} - {new Date(song.releaseDate).getFullYear()}
         </p>
       </div>
-      {/* <div className="w-full flex justify-center space-x-4">
-        <PlayButton song={song} />
-        <DownloadSongButton song={song} />
-      </div> */}
+      <div className="w-full flex justify-center space-x-4">
+        <PlayButton songs={[song]} />
+        {/* <DownloadSongButton song={song} /> */}
+      </div>
       <DisplaySongs songs={[song]} />
       <Metadata songs={[song]} />
     </div>
