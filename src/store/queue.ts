@@ -21,7 +21,7 @@ type QueueStore = {
   add: (songs: Song[]) => void;
   remove: (song: Song) => void;
   next: () => void;
-  playPrev: () => void;
+  previous: () => void;
 };
 
 export const useQueueStore = create<QueueStore>()(
@@ -50,8 +50,16 @@ export const useQueueStore = create<QueueStore>()(
       })),
     remove: (song) =>
       set((s) => ({ songs: s.songs.filter((i) => i.id !== song.trackId) })),
-    next: () => set((s) => ({ songIndex: s.songIndex + 1 })),
-    playPrev: () => set((s) => ({ songIndex: s.songIndex - 1 })),
+    next: () =>
+      set((s) =>
+        s.songs[s.songIndex + 1]
+          ? { songIndex: s.songIndex + 1 }
+          : { songIndex: 0, songs: [], isPlaying: false }
+      ),
+    previous: () =>
+      set((s) =>
+        s.songIndex - 1 >= 0 ? { songIndex: s.songIndex - 1 } : { songIndex: 0 }
+      ),
   })
   //   {
   //     name: "queue-storage",

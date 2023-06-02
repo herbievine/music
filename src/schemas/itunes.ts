@@ -1,8 +1,8 @@
 import { z } from "zod";
+import { AlbumSchema } from "@/schemas/album";
+import { SongSchema } from "@/schemas/song";
 
-export function getItunesApiSchema<T extends z.AnyZodObject>(resultType: T) {
-  return z.object({
-    resultCount: z.number(),
-    results: z.array(resultType),
-  });
-}
+export const ItunesApiSchema = z.object({
+  resultCount: z.number(),
+  results: z.array(z.union([SongSchema, AlbumSchema])),
+});

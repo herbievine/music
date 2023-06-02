@@ -56,7 +56,7 @@ type PlayerControlsProps = {
 };
 
 function PlayerControls({ audioRef }: PlayerControlsProps) {
-  const { isPlaying, play, pause, next } = useQueueStore();
+  const { isPlaying, play, pause, next, previous } = useQueueStore();
 
   useEffect(() => {
     if (isPlaying) {
@@ -68,13 +68,14 @@ function PlayerControls({ audioRef }: PlayerControlsProps) {
 
   return (
     <div className="flex items-center space-x-6">
-      {/* <button
+      <button
         onClick={() => {
-          playPrev();
+          previous();
+          play();
         }}
       >
         <SkipIcon className="h-6 fill-white rotate-180" />
-      </button> */}
+      </button>
       <button
         onClick={() => {
           if (isPlaying) {

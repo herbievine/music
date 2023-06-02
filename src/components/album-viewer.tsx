@@ -5,33 +5,35 @@ import Image from "next/image";
 import DisplaySongs from "@/components/display-songs";
 import PlayButton from "@/components/play-button";
 import DownloadSongButton from "@/components/download-song-button";
+import { Album } from "@/schemas/album";
 
-type SongViewerProps = {
-  song: Song;
+type AlbumViewerProps = {
+  album: Album;
+  songs: Song[];
 };
 
-export default function SongViewer({ song }: SongViewerProps) {
+export default function AlbumViewer({ album, songs }: AlbumViewerProps) {
   return (
     <div className="w-full flex flex-col space-y-4 items-center">
       <Image
-        src={song.artworkUrl100}
-        alt={`${song.trackName} by ${song.artistName}`}
+        src={album.artworkUrl100}
+        alt={`${album.collectionName} by ${album.artistName}`}
         width={200}
         height={200}
         className="rounded-lg"
       />
       <div className="flex flex-col space-y-1 items-center">
-        <h2 className="text-xl font-bold">{song.trackName}</h2>
-        <h3 className="text-sm font-bold">{song.artistName}</h3>
+        <h2 className="text-xl font-bold">{album.collectionName}</h2>
+        <h3 className="text-sm font-bold">{album.artistName}</h3>
         <p className="text-xs text-neutral-500 uppercase font-black tracking-wider">
-          {song.primaryGenreName} - {new Date(song.releaseDate).getFullYear()}
+          {album.primaryGenreName} - {new Date(album.releaseDate).getFullYear()}
         </p>
       </div>
       <div className="w-full flex justify-center space-x-4">
-        <PlayButton song={song} />
-        <DownloadSongButton song={song} />
+        <PlayButton song={songs[0]} />
+        <DownloadSongButton song={songs[0]} />
       </div>
-      <DisplaySongs songs={[song]} />
+      <DisplaySongs songs={songs} />
     </div>
   );
 }

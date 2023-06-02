@@ -16,7 +16,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
   return (
     <html lang="en">
       <body className={cn("bg-neutral-950 text-white", inter.className)}>
-        <div className="fixed max-w-xl mx-auto h-full w-full flex flex-col justify-between">
+        <div className="max-w-xl mx-auto h-screen w-full flex flex-col justify-between">
           <main className="py-8 px-4 flex flex-col space-y-4 items-center">
             {children}
           </main>
