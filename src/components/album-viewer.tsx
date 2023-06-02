@@ -30,10 +30,10 @@ export default function AlbumViewer({ album, songs }: AlbumViewerProps) {
           {album.primaryGenreName} - {new Date(album.releaseDate).getFullYear()}
         </p>
       </div>
-      <div className="w-full flex justify-center space-x-4">
+      {/* <div className="w-full flex justify-center space-x-4">
         <PlayButton song={songs[0]} />
         <DownloadSongButton song={songs[0]} />
-      </div>
+      </div> */}
       <DisplaySongs songs={songs} />
       <Metadata songs={songs} />
     </div>

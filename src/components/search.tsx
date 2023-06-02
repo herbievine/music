@@ -18,7 +18,6 @@ export default function Search() {
 
   return (
     <div className="w-full flex flex-col space-y-4">
-      <h1 className="text-3xl font-black">Music</h1>
       <input
         {...register("query")}
         onChange={debounce((e) => {

@@ -35,10 +35,10 @@ export default function SongViewer({ song }: SongViewerProps) {
           {song.primaryGenreName} - {new Date(song.releaseDate).getFullYear()}
         </p>
       </div>
-      <div className="w-full flex justify-center space-x-4">
+      {/* <div className="w-full flex justify-center space-x-4">
         <PlayButton song={song} />
         <DownloadSongButton song={song} />
-      </div>
+      </div> */}
       <DisplaySongs songs={[song]} />
       <Metadata songs={[song]} />
     </div>
