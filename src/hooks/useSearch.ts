@@ -10,7 +10,7 @@ const buildUrl = (query: string) => {
   const baseUrl = "https://itunes.apple.com/search";
   const urlParams = new URLSearchParams({
     term: query,
-    media: "music",
+    // media: "music",
     entity: "song,album",
   });
 

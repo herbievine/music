@@ -1,6 +1,5 @@
 import { Song } from "@/schemas/song";
 import { create } from "zustand";
-import { devtools, persist } from "zustand/middleware";
 
 type QueueSong = {
   id: number;

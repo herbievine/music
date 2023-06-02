@@ -6,6 +6,7 @@ import DisplaySongs from "@/components/display-songs";
 import PlayButton from "@/components/play-button";
 import DownloadSongButton from "@/components/download-song-button";
 import { Album } from "@/schemas/album";
+import Metadata from "@/components/metadata";
 
 type AlbumViewerProps = {
   album: Album;
@@ -34,6 +35,7 @@ export default function AlbumViewer({ album, songs }: AlbumViewerProps) {
         <DownloadSongButton song={songs[0]} />
       </div>
       <DisplaySongs songs={songs} />
+      <Metadata songs={songs} />
     </div>
   );
 }

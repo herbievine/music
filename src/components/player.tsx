@@ -3,7 +3,7 @@
 import PauseIcon from "@/assets/pause-icon";
 import PlayIcon from "@/assets/play-icon";
 import SkipIcon from "@/assets/skip-icon";
-import trackTime from "@/lib/trackTime";
+import formatDuration from "@/lib/formatDuration";
 import { useQueueStore } from "@/store/queue";
 import Image from "next/image";
 import { RefObject, useEffect, useRef } from "react";
@@ -22,7 +22,7 @@ export default function Player() {
   }
 
   return (
-    <div className="w-full flex space-between absolute bg-neutral-950 bottom-0 left-0">
+    <div className="w-full flex space-between fixed bg-neutral-950 bottom-0 left-0">
       <audio
         className="w-full"
         src={songs[songIndex].audioLink}
@@ -44,7 +44,6 @@ export default function Player() {
             </p>
           </div>
         </div>
-        {/* <PlayerProgress audioRef={audioRef} progressRef={progressRef} /> */}
         <PlayerControls audioRef={audioRef} />
       </div>
     </div>
@@ -125,10 +124,10 @@ function PlayerProgress({ audioRef, progressRef }: PlayerProgressProps) {
       />
       <div className="w-full flex items-center justify-between">
         <span className="text-neutral-500">
-          {trackTime(audioRef.current?.currentTime ?? 0)}
+          {formatDuration(audioRef.current?.currentTime ?? 0)}
         </span>
         <span className="text-neutral-500">
-          {trackTime(songs[songIndex]?.duration)}
+          {formatDuration(songs[songIndex]?.duration)}
         </span>
       </div>
     </div>
