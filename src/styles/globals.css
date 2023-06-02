@@ -1,0 +1,7 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+.progress [type="range"]::-webkit-slider-thumb {
+	display: none;
+}
