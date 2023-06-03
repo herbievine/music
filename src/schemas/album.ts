@@ -14,7 +14,10 @@ export const AlbumSchema = z.object({
   artworkUrl60: z.string(),
   artworkUrl100: z.string(),
   collectionPrice: z.number(),
-  collectionExplicitness: z.string(),
+  collectionExplicitness: z.union([
+    z.literal("explicit"),
+    z.literal("notExplicit"),
+  ]),
   trackCount: z.number(),
   country: z.string(),
   currency: z.string(),

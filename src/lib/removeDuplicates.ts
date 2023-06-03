@@ -4,6 +4,6 @@ export function removeDuplicates<T extends any[]>(
 ): T {
   return arr.filter(
     (val, i, arr) =>
-      i === arr.findIndex((t) => keys.every((key) => t[key] === val[key])) //t[key] === val[key])
+      i === arr.findIndex((t) => keys.every((key) => t[key] === val[key]))
   ) as T;
 }

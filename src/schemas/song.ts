@@ -13,8 +13,11 @@ export const SongSchema = z.object({
   artworkUrl60: z.string(),
   artworkUrl100: z.string(),
   releaseDate: z.string(),
-  collectionExplicitness: z.string(),
-  trackExplicitness: z.string(),
+  collectionExplicitness: z.union([
+    z.literal("explicit"),
+    z.literal("notExplicit"),
+  ]),
+  trackExplicitness: z.union([z.literal("explicit"), z.literal("notExplicit")]),
   discCount: z.number(),
   discNumber: z.number(),
   trackCount: z.number(),

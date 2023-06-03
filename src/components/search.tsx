@@ -1,12 +1,11 @@
 "use client";
 
 import useSearch from "@/hooks/useSearch";
-import Link from "next/link";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import debounce from "lodash/debounce";
-import Image from "next/image";
 import SearchHistory from "./search-history";
+import MediaViewer from "./media-viewer";
 
 export default function Search() {
   const [query, setQuery] = useState("");
@@ -30,30 +29,8 @@ export default function Search() {
       />
       {isSearching && <p>Searching...</p>}
       <div className="flex flex-col divide-y divide-neutral-800">
-        {data?.map((songOrAlbum) => (
-          <Link
-            key={songOrAlbum.id}
-            className="py-2 cursor-pointer"
-            href={`/view?id=${songOrAlbum.id}`}
-          >
-            <div className={"w-full flex items-center space-x-2"}>
-              <Image
-                src={songOrAlbum.coverLink}
-                alt={`${songOrAlbum.title} by ${songOrAlbum.artist}`}
-                width={45}
-                height={45}
-                className="rounded-lg"
-              />
-              <div className="flex flex-col">
-                <p className="font-semibold">{songOrAlbum.title}</p>
-                <p className="text-sm font-semibold text-neutral-500 truncate">
-                  {songOrAlbum.type === "song" ? "Song" : "Album"}
-                  {" • "}
-                  {songOrAlbum.artist}
-                </p>
-              </div>
-            </div>
-          </Link>
+        {data?.map((media) => (
+          <MediaViewer key={media.id} media={media} />
         ))}
       </div>
       <SearchHistory />

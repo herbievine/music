@@ -1,6 +1,5 @@
 "use client";
 
-import { Song } from "@/schemas/song";
 import Image from "next/image";
 import DisplaySongs from "@/components/display-songs";
 import PlayButton from "@/components/play-button";
@@ -9,49 +8,44 @@ import Link from "next/link";
 import Metadata from "@/components/metadata";
 import { useSearchHistoryStore } from "@/store/search-history";
 import { useEffect } from "react";
+import { MediaSong } from "@/types/media";
 
 type SongViewerProps = {
-  song: Song;
+  song: MediaSong;
 };
 
 export default function SongViewer({ song }: SongViewerProps) {
   const { add } = useSearchHistoryStore();
 
   useEffect(() => {
-    add({
-      id: song.trackId,
-      type: "song",
-      title: song.trackName,
-      artist: song.artistName,
-      coverLink: song.artworkUrl100,
-    });
+    add(song);
   }, [add, song]);
 
   return (
     <div className="w-full flex flex-col space-y-4 items-center">
       <Image
-        src={song.artworkUrl100}
-        alt={`${song.trackName} by ${song.artistName}`}
+        src={song.coverLink}
+        alt={`${song.title} by ${song.artist}`}
         width={200}
         height={200}
         className="rounded-lg"
       />
       <div className="flex flex-col space-y-1 items-center">
-        <h2 className="text-xl font-bold">{song.trackName}</h2>
+        <h2 className="text-xl font-bold">{song.title}</h2>
         <h3 className="text-sm font-bold">
-          <Link className="underline" href={`/view?id=${song.collectionId}`}>
-            {song.collectionName}
+          <Link className="underline" href={`/album?id=${song.album.id}`}>
+            {song.album.title}
           </Link>
           {" • "}
-          {song.artistName}
+          {song.artist}
         </h3>
         <p className="text-xs text-neutral-500 uppercase font-black tracking-wider">
-          {song.primaryGenreName} - {new Date(song.releaseDate).getFullYear()}
+          {song.genre} - {new Date(song.releaseDate).getFullYear()}
         </p>
       </div>
       <div className="w-full flex justify-center space-x-4">
         <PlayButton songs={[song]} />
-        {/* <DownloadSongButton song={song} /> */}
+        <DownloadSongButton songs={[song]} />
       </div>
       <DisplaySongs songs={[song]} />
       <Metadata songs={[song]} />

@@ -5,12 +5,12 @@ import { SongSchema } from "@/schemas/song";
 import { useMemo } from "react";
 import { removeDuplicates } from "@/lib/removeDuplicates";
 import { AlbumSchema } from "@/schemas/album";
+import { getMediaFromSongOrAlbum } from "@/lib/media";
 
 const buildUrl = (query: string) => {
   const baseUrl = "https://itunes.apple.com/search";
   const urlParams = new URLSearchParams({
     term: query,
-    // media: "music",
     entity: "song,album",
   });
 
@@ -33,22 +33,10 @@ export default function useSearch(query?: string | null) {
 
     return removeDuplicates(
       data.results
+        .map((val) => getMediaFromSongOrAlbum(val))
         .filter((val) =>
-          val.wrapperType === "track"
-            ? !val.trackName.toLowerCase().match(/(edit|remix|version|parody)/g)
-            : !val.collectionName
-                .toLowerCase()
-                .match(/(edit|remix|version|parody)/g)
-        )
-        .map((val) => ({
-          id: val.wrapperType === "track" ? val.trackId : val.collectionId,
-          type: val.wrapperType === "track" ? "song" : "album",
-          title:
-            val.wrapperType === "track" ? val.trackName : val.collectionName,
-          artist: val.artistName,
-          coverLink: val.artworkUrl100,
-          audioLink: null,
-        })),
+          val.title.toLowerCase().match(/(edit|remix|version|parody)/g)
+        ),
       ["title", "artist"]
     );
   }, [data]);

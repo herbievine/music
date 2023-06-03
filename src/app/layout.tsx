@@ -3,10 +3,9 @@
 import ChevronIcon from "@/assets/chevron-icon";
 import Player from "@/components/player";
 import cn from "@/lib/cn";
-import { useQueueStore } from "@/store/queue";
-import "@/styles/globals.css";
 import { Inter } from "next/font/google";
 import { usePathname, useRouter } from "next/navigation";
+import "@/styles/globals.css";
 
 const inter = Inter({ subsets: ["latin"] });
 

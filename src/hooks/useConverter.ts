@@ -1,10 +1,7 @@
-import useSWRImmutable from "swr/immutable";
 import * as z from "zod";
-import { useEffect, useState } from "react";
-import { Song } from "@/schemas/song";
 import fetcher from "@/lib/fetcher";
 import { YoutubeApiSchema, YoutubeApi } from "@/schemas/youtube";
-import { useQueueStore } from "@/store/queue";
+import { MediaSong } from "@/types/media";
 
 const buildYoutubeUrl = (query: string) => {
   const baseUrl = "https://youtube.googleapis.com/youtube/v3/search";
@@ -36,10 +33,10 @@ const ConverterApiSchema = z.object({
 });
 
 export default function useConverter() {
-  async function convert(song: Song) {
+  async function convert(song: MediaSong) {
     try {
       const data = await fetcher<YoutubeApi>(
-        buildYoutubeUrl(`${song.trackName} ${song.artistName} audio`),
+        buildYoutubeUrl(`${song.title} ${song.artist} audio`),
         YoutubeApiSchema
       );
 

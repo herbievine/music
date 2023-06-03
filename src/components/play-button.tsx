@@ -2,11 +2,11 @@
 
 import PlayIcon from "@/assets/play-icon";
 import useConverter from "@/hooks/useConverter";
-import { Song } from "@/schemas/song";
 import { useQueueStore } from "@/store/queue";
+import { MediaSong } from "@/types/media";
 
 type PlayButtonProps = {
-  songs: Song[];
+  songs: MediaSong[];
 };
 
 export default function PlayButton({ songs }: PlayButtonProps) {
@@ -19,7 +19,7 @@ export default function PlayButton({ songs }: PlayButtonProps) {
       onClick={async () => {
         songs.forEach(async (song) => {
           const link = await convert(song);
-          add([{ ...song, previewUrl: link }]);
+          add([{ ...song, audioLink: link }]);
         });
       }}
     >
