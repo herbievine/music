@@ -73,7 +73,7 @@ export default function Player() {
   }
 
   return (
-    <div className="w-full flex space-between fixed bg-neutral-950 bottom-0 left-0">
+    <div className="w-full max-w-xl mx-auto flex space-between fixed bg-neutral-950 bottom-0">
       <audio
         src={songs[songIndex].audioLink}
         ref={audioRef}
