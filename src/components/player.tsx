@@ -3,36 +3,21 @@
 import ChevronIcon from "@/assets/chevron-icon";
 import PauseIcon from "@/assets/pause-icon";
 import PlayIcon from "@/assets/play-icon";
+import RoundArrowLeftIcon from "@/assets/round-arrow-left-icon";
+import RoundArrowRightIcon from "@/assets/round-arrow-right-icon";
 import SkipIcon from "@/assets/skip-icon";
 import cn from "@/lib/cn";
 import formatDuration from "@/lib/formatDuration";
 import { useQueueStore } from "@/store/queue";
 import Image from "next/image";
-import { RefObject, useCallback, useEffect, useRef, useState } from "react";
+import { RefObject, useEffect, useRef, useState } from "react";
 
 export default function Player() {
   const [expanded, setExpanded] = useState(false);
   const [progress, setProgress] = useState(0);
-  const { songs, songIndex, isPlaying, pause, next } = useQueueStore();
+  const { songs, songIndex, isPlaying, pause } = useQueueStore();
   const audioRef = useRef<HTMLAudioElement>(null);
   const progressRef = useRef<HTMLInputElement>(null);
-  const playAnimationRef = useRef<number>();
-
-  const repeat = useCallback(() => {
-    if (!audioRef.current || !progressRef.current) return;
-
-    console.log("repeat", audioRef.current.currentTime);
-
-    const currentTime = audioRef.current.currentTime;
-    setProgress(currentTime);
-    progressRef.current.value = currentTime.toString();
-    progressRef.current.style.setProperty(
-      "--range-progress",
-      `${(+progressRef.current.value / audioRef.current.duration) * 100}%`
-    );
-
-    playAnimationRef.current = requestAnimationFrame(repeat);
-  }, [audioRef, progressRef, setProgress]);
 
   useEffect(() => {
     if (isPlaying) {
@@ -40,22 +25,7 @@ export default function Player() {
     } else {
       audioRef.current?.pause();
     }
-
-    console.log("isPlaying", isPlaying);
-    console.log("audioRef.current?.paused", audioRef.current?.paused);
-    console.log("audioRef.current", audioRef.current);
-    console.log("progressRef.current", progressRef.current);
-    console.log("playAnimationRef.current", playAnimationRef.current);
-
-    playAnimationRef.current = requestAnimationFrame(repeat);
-  }, [isPlaying, audioRef, repeat, progressRef, playAnimationRef]);
-
-  useEffect(() => {
-    if (!audioRef.current || !progressRef.current) return;
-
-    const seconds = audioRef.current.duration;
-    progressRef.current.max = seconds.toString();
-  }, [audioRef, progressRef]);
+  }, [isPlaying, audioRef]);
 
   useEffect(() => {
     pause();
@@ -65,25 +35,8 @@ export default function Player() {
     return null;
   }
 
-  function onLoadedMetadata() {
-    if (!audioRef.current || !progressRef.current) return;
-
-    const seconds = audioRef.current.duration;
-    progressRef.current.max = seconds.toString();
-  }
-
   return (
     <div className="w-full max-w-xl mx-auto flex space-between fixed bg-neutral-950 bottom-0">
-      <audio
-        src={songs[songIndex].audioLink}
-        ref={audioRef}
-        onEnded={next}
-        onTimeUpdate={() => {
-          if (!audioRef.current || !progressRef.current) return;
-          progressRef.current.value = audioRef.current.currentTime.toString();
-        }}
-        onLoadedMetadata={onLoadedMetadata}
-      />
       <div
         className={cn(
           "w-full px-6 flex border-t border-neutral-800 justify-between",
@@ -127,14 +80,19 @@ export default function Player() {
             </p>
           </div>
         </div>
-        <PlayerControls expanded={expanded} />
-        {/* {expanded && (
+        <PlayerControls expanded={expanded} audioRef={audioRef} />
+        {expanded && (
           <PlayerProgress
             progress={progress}
             audioRef={audioRef}
             progressRef={progressRef}
           />
-        )} */}
+        )}
+        <RawPlayer
+          audioRef={audioRef}
+          progressRef={progressRef}
+          setProgress={setProgress}
+        />
       </div>
     </div>
   );
@@ -142,9 +100,10 @@ export default function Player() {
 
 type PlayerControlsProps = {
   expanded: boolean;
+  audioRef: RefObject<HTMLAudioElement>;
 };
 
-function PlayerControls({ expanded }: PlayerControlsProps) {
+function PlayerControls({ expanded, audioRef }: PlayerControlsProps) {
   const { isPlaying, play, pause, next, previous } = useQueueStore();
 
   return (
@@ -154,13 +113,24 @@ function PlayerControls({ expanded }: PlayerControlsProps) {
         expanded && "w-full justify-center"
       )}
     >
+      {expanded && (
+        <button
+          onClick={() => {
+            if (!audioRef.current) return;
+
+            audioRef.current.currentTime -= 10;
+          }}
+        >
+          <RoundArrowLeftIcon className="h-5 fill-white" />
+        </button>
+      )}
       <button
         onClick={() => {
           previous();
           play();
         }}
       >
-        <SkipIcon className="h-6 fill-white rotate-180" />
+        <SkipIcon className="h-5 fill-white rotate-180" />
       </button>
       <button
         onClick={() => {
@@ -172,9 +142,9 @@ function PlayerControls({ expanded }: PlayerControlsProps) {
         }}
       >
         {isPlaying ? (
-          <PauseIcon className="h-6 fill-white" />
+          <PauseIcon className="h-5 fill-white" />
         ) : (
-          <PlayIcon className="h-6 fill-white" />
+          <PlayIcon className="h-5 fill-white" />
         )}
       </button>
       <button
@@ -183,8 +153,19 @@ function PlayerControls({ expanded }: PlayerControlsProps) {
           play();
         }}
       >
-        <SkipIcon className="h-6 fill-white" />
+        <SkipIcon className="h-5 fill-white" />
       </button>
+      {expanded && (
+        <button
+          onClick={() => {
+            if (!audioRef.current) return;
+
+            audioRef.current.currentTime += 10;
+          }}
+        >
+          <RoundArrowRightIcon className="h-5 fill-white" />
+        </button>
+      )}
     </div>
   );
 }
@@ -223,5 +204,37 @@ function PlayerProgress({
         </span>
       </div>
     </div>
+  );
+}
+
+type RawPlayerProps = {
+  audioRef: RefObject<HTMLAudioElement>;
+  progressRef: RefObject<HTMLInputElement>;
+  setProgress: (progress: number) => void;
+};
+
+export function RawPlayer({
+  audioRef,
+  progressRef,
+  setProgress,
+}: RawPlayerProps) {
+  const { songs, songIndex, next } = useQueueStore();
+
+  return (
+    <audio
+      src={songs[songIndex].audioLink}
+      ref={audioRef}
+      onEnded={next}
+      onTimeUpdate={() => {
+        if (!audioRef.current || !progressRef.current) return;
+
+        const currentTime = audioRef.current.currentTime;
+        const seconds = audioRef.current.duration;
+
+        setProgress(currentTime);
+        progressRef.current.value = currentTime.toString();
+        progressRef.current.max = seconds.toString();
+      }}
+    />
   );
 }
