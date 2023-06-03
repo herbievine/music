@@ -17,6 +17,11 @@ export default function DownloadSongButton({ songs }: DownloadSongButtonProps) {
       onClick={async () => {
         songs.forEach(async (song) => {
           const link = await convert(song);
+
+          if (!link) {
+            return;
+          }
+
           window.open(link, "_blank");
         });
       }}

@@ -3,12 +3,19 @@ import { ItunesApiSchema } from "@/schemas/itunes";
 import { MediaSong } from "@/types/media";
 import { redirect } from "next/navigation";
 import { getMediaFromSong } from "@/lib/media";
+import fetcher from "@/lib/fetcher";
 
 async function getSong(id: string): Promise<MediaSong | null> {
-  const data = await fetch(`https://itunes.apple.com/lookup?id=${id}`);
-  const { results } = await ItunesApiSchema.parseAsync(await data.json());
+  const data = await fetcher(
+    `https://itunes.apple.com/lookup?id=${id}`,
+    ItunesApiSchema
+  );
 
-  for (const result of results) {
+  if (!data) {
+    return null;
+  }
+
+  for (const result of data.results) {
     if (result.wrapperType === "track") {
       return getMediaFromSong(result);
     }

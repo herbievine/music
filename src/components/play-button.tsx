@@ -19,6 +19,11 @@ export default function PlayButton({ songs }: PlayButtonProps) {
       onClick={async () => {
         songs.forEach(async (song) => {
           const link = await convert(song);
+
+          if (!link) {
+            return;
+          }
+
           add([{ ...song, audioLink: link }]);
         });
       }}

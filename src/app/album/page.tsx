@@ -8,25 +8,35 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 
 async function getAlbum(id: string): Promise<MediaAlbum | null> {
-  const {
-    results: [album],
-  } = await fetcher<z.infer<typeof ItunesApiSchema>>(
+  const albumData = await fetcher(
     `https://itunes.apple.com/lookup?id=${id}`,
     ItunesApiSchema
   );
+
+  if (!albumData) {
+    return null;
+  }
+
+  const {
+    results: [album],
+  } = albumData;
 
   if (!album || album.wrapperType !== "collection") {
     return null;
   }
 
-  const { results } = await fetcher<z.infer<typeof ItunesApiSchema>>(
+  const songData = await fetcher(
     `https://itunes.apple.com/lookup?id=${id}&entity=song`,
     ItunesApiSchema
   );
 
+  if (!songData) {
+    return null;
+  }
+
   const songs = z
     .array(SongSchema)
-    .parse(results.filter((song) => song.wrapperType === "track"))
+    .parse(songData.results.filter((song) => song.wrapperType === "track"))
     .map(getMediaFromSong);
 
   return {

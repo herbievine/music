@@ -1,9 +1,14 @@
-export default async function fetcher<T>(
+import { z } from "zod";
+
+export default async function fetcher<T extends z.AnyZodObject>(
   url: string,
-  schema?: Zod.AnyZodObject,
+  schema?: T,
   config?: RequestInit
-): Promise<T> {
+): Promise<z.infer<T> | null> {
   return fetch(url, config)
     .then((res) => res.json())
-    .then((data) => (schema ? schema.parse(data) : data) as T);
+    .then((data) => {
+      if (!schema?.safeParse(data).success) return null;
+      return data as z.infer<T>;
+    });
 }

@@ -1,6 +1,6 @@
 import * as z from "zod";
 import fetcher from "@/lib/fetcher";
-import { YoutubeApiSchema, YoutubeApi } from "@/schemas/youtube";
+import { YoutubeApiSchema } from "@/schemas/youtube";
 import { MediaSong } from "@/types/media";
 
 const buildYoutubeUrl = (query: string) => {
@@ -35,14 +35,18 @@ const ConverterApiSchema = z.object({
 export default function useConverter() {
   async function convert(song: MediaSong) {
     try {
-      const data = await fetcher<YoutubeApi>(
+      const data = await fetcher(
         buildYoutubeUrl(`${song.title} ${song.artist} audio`),
         YoutubeApiSchema
       );
 
+      if (!data) {
+        return null;
+      }
+
       const videoId = data.items[0].id.videoId;
 
-      const converterData = await fetcher<z.infer<typeof ConverterApiSchema>>(
+      const converterData = await fetcher(
         buildConverterUrl(videoId),
         ConverterApiSchema,
         {
@@ -53,7 +57,7 @@ export default function useConverter() {
         }
       );
 
-      return converterData.link;
+      return converterData?.link ?? null;
     } finally {
     }
   }

@@ -21,6 +21,11 @@ export default function DisplaySongs({ songs }: DisplaySongsProps) {
           className="flex justify-between py-3 font-semibold hover:text-blue-400 cursor-pointer"
           onClick={async () => {
             const link = await convert(song);
+
+            if (!link) {
+              return;
+            }
+
             add([{ ...song, audioLink: link }]);
           }}
         >

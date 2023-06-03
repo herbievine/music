@@ -2,8 +2,6 @@ import useSWRImmutable from "swr/immutable";
 import * as z from "zod";
 import fetcher from "@/lib/fetcher";
 import { SongSchema } from "@/schemas/song";
-import { useMemo } from "react";
-import { removeDuplicates } from "@/lib/removeDuplicates";
 import { AlbumSchema } from "@/schemas/album";
 import { getMediaFromSongOrAlbum } from "@/lib/media";
 
@@ -23,26 +21,15 @@ const ItunesApiSchema = z.object({
 });
 
 export default function useSearch(query?: string | null) {
-  const { data, ...rest } = useSWRImmutable<z.infer<typeof ItunesApiSchema>>(
+  const { data, ...rest } = useSWRImmutable(
     query ? buildUrl(query) : null,
-    (url) => fetcher<z.infer<typeof ItunesApiSchema>>(url, ItunesApiSchema)
+    (url) => fetcher(url, ItunesApiSchema)
   );
 
-  const cleanData = useMemo(() => {
-    if (!data) return null;
-
-    return removeDuplicates(
-      data.results
-        .map((val) => getMediaFromSongOrAlbum(val))
-        .filter((val) =>
-          val.title.toLowerCase().match(/(edit|remix|version|parody)/g)
-        ),
-      ["title", "artist"]
-    );
-  }, [data]);
-
   return {
-    data: cleanData,
+    data: data?.results
+      .map((val) => getMediaFromSongOrAlbum(val))
+      .filter((val) => !val.title.toLowerCase().match(/(edit|remix|parody)/g)),
     ...rest,
   };
 }
