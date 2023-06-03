@@ -1,5 +1,6 @@
 "use client";
 
+import ChevronIcon from "@/assets/chevron-icon";
 import PauseIcon from "@/assets/pause-icon";
 import PlayIcon from "@/assets/play-icon";
 import SkipIcon from "@/assets/skip-icon";
@@ -15,29 +16,46 @@ export default function Player() {
   const { songs, songIndex, isPlaying, pause, next } = useQueueStore();
   const audioRef = useRef<HTMLAudioElement>(null);
   const progressRef = useRef<HTMLInputElement>(null);
-  const animationRef = useRef<number>();
+  const playAnimationRef = useRef<number>();
 
-  const animate = useCallback(() => {
-    if (!audioRef.current || !progressRef.current || !animationRef.current)
-      return;
+  const repeat = useCallback(() => {
+    if (!audioRef.current || !progressRef.current) return;
+
+    console.log("repeat", audioRef.current.currentTime);
 
     const currentTime = audioRef.current.currentTime;
     setProgress(currentTime);
     progressRef.current.value = currentTime.toString();
-    animationRef.current = requestAnimationFrame(animate);
+    progressRef.current.style.setProperty(
+      "--range-progress",
+      `${(+progressRef.current.value / audioRef.current.duration) * 100}%`
+    );
+
+    playAnimationRef.current = requestAnimationFrame(repeat);
   }, [audioRef, progressRef, setProgress]);
 
   useEffect(() => {
-    if (!audioRef.current) return;
-
     if (isPlaying) {
-      audioRef.current.play();
+      audioRef.current?.play();
     } else {
-      audioRef.current.pause();
+      audioRef.current?.pause();
     }
 
-    animationRef.current = requestAnimationFrame(animate);
-  }, [isPlaying, audioRef, animate]);
+    console.log("isPlaying", isPlaying);
+    console.log("audioRef.current?.paused", audioRef.current?.paused);
+    console.log("audioRef.current", audioRef.current);
+    console.log("progressRef.current", progressRef.current);
+    console.log("playAnimationRef.current", playAnimationRef.current);
+
+    playAnimationRef.current = requestAnimationFrame(repeat);
+  }, [isPlaying, audioRef, repeat, progressRef, playAnimationRef]);
+
+  useEffect(() => {
+    if (!audioRef.current || !progressRef.current) return;
+
+    const seconds = audioRef.current.duration;
+    progressRef.current.max = seconds.toString();
+  }, [audioRef, progressRef]);
 
   useEffect(() => {
     pause();
@@ -72,6 +90,18 @@ export default function Player() {
           expanded ? "flex-col py-12 space-y-6" : "py-2"
         )}
       >
+        {expanded && (
+          <div className="w-full flex justify-center">
+            <button
+              className="w-min"
+              onClick={() => {
+                setExpanded(false);
+              }}
+            >
+              <ChevronIcon className="w-6 fill-white" />
+            </button>
+          </div>
+        )}
         <div
           className={cn(
             "w-full flex items-center",
@@ -98,13 +128,13 @@ export default function Player() {
           </div>
         </div>
         <PlayerControls expanded={expanded} />
-        {expanded && (
+        {/* {expanded && (
           <PlayerProgress
             progress={progress}
             audioRef={audioRef}
             progressRef={progressRef}
           />
-        )}
+        )} */}
       </div>
     </div>
   );
@@ -175,7 +205,7 @@ function PlayerProgress({
   return (
     <div className="w-full flex flex-col items-center space-y-1">
       <input
-        className="w-full progress"
+        className="w-full h-2 bg-neutral-800 rounded-lg"
         type="range"
         ref={progressRef}
         defaultValue="0"
@@ -185,10 +215,10 @@ function PlayerProgress({
         }}
       />
       <div className="w-full flex items-center justify-between">
-        <span className="text-neutral-500 text-sm font-bold">
+        <span className="text-neutral-500 font-bold text-sm">
           {formatDuration(progress * 1000)}
         </span>
-        <span className="text-neutral-500 text-sm font-bold">
+        <span className="text-neutral-500 font-bold text-sm">
           {formatDuration(songs[songIndex]?.duration)}
         </span>
       </div>
