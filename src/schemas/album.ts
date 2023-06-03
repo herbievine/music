@@ -5,7 +5,6 @@ export const AlbumSchema = z.object({
   collectionType: z.string(),
   artistId: z.number(),
   collectionId: z.number(),
-  amgArtistId: z.number(),
   artistName: z.string(),
   collectionName: z.string(),
   collectionCensoredName: z.string(),
@@ -17,6 +16,7 @@ export const AlbumSchema = z.object({
   collectionExplicitness: z.union([
     z.literal("explicit"),
     z.literal("notExplicit"),
+    z.literal("cleaned"),
   ]),
   trackCount: z.number(),
   country: z.string(),

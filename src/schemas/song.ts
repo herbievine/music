@@ -16,8 +16,13 @@ export const SongSchema = z.object({
   collectionExplicitness: z.union([
     z.literal("explicit"),
     z.literal("notExplicit"),
+    z.literal("cleaned"),
   ]),
-  trackExplicitness: z.union([z.literal("explicit"), z.literal("notExplicit")]),
+  trackExplicitness: z.union([
+    z.literal("explicit"),
+    z.literal("notExplicit"),
+    z.literal("cleaned"),
+  ]),
   discCount: z.number(),
   discNumber: z.number(),
   trackCount: z.number(),

@@ -4,6 +4,7 @@ import fetcher from "@/lib/fetcher";
 import { SongSchema } from "@/schemas/song";
 import { AlbumSchema } from "@/schemas/album";
 import { getMediaFromSongOrAlbum } from "@/lib/media";
+import { removeDuplicates } from "@/lib/removeDuplicates";
 
 const buildUrl = (query: string) => {
   const baseUrl = "https://itunes.apple.com/search";
@@ -26,10 +27,22 @@ export default function useSearch(query?: string | null) {
     (url) => fetcher(url, ItunesApiSchema)
   );
 
+  if (!data) {
+    return {
+      data: [],
+      ...rest,
+    };
+  }
+
   return {
-    data: data?.results
-      .map((val) => getMediaFromSongOrAlbum(val))
-      .filter((val) => !val.title.toLowerCase().match(/(edit|remix|parody)/g)),
+    data: removeDuplicates(
+      data.results
+        .map((val) => getMediaFromSongOrAlbum(val))
+        .filter(
+          (val) => !val.title.toLowerCase().match(/(edit|remix|parody)/g)
+        ),
+      ["title", "artist"]
+    ),
     ...rest,
   };
 }
