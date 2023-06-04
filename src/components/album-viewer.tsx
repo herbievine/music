@@ -7,6 +7,7 @@ import Metadata from "@/components/metadata";
 import { useSearchHistoryStore } from "@/store/search-history";
 import { useEffect } from "react";
 import { MediaAlbum } from "@/types/media";
+import dayjs from "dayjs";
 
 type AlbumViewerProps = {
   album: MediaAlbum;
@@ -32,7 +33,7 @@ export default function AlbumViewer({ album }: AlbumViewerProps) {
         <h2 className="text-xl font-bold">{album.title}</h2>
         <h3 className="text-sm font-bold">{album.artist}</h3>
         <p className="text-xs text-neutral-500 uppercase font-black tracking-wider">
-          {album.genre} - {new Date(album.releaseDate).getFullYear()}
+          {album.genre} - {dayjs(album.releaseDate).format("YYYY")}
         </p>
       </div>
       <PlayButton songs={album.songs} />

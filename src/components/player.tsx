@@ -90,9 +90,7 @@ export default function Player() {
             <div className="flex flex-col">
               <p className="font-semibold">{songs[songIndex].title}</p>
               <p className="text-sm font-semibold text-neutral-500 truncate">
-                {songs[songIndex].type === "song" ? "Song" : "Album"}
-                {" • "}
-                {songs[songIndex].artist}
+                Song • {songs[songIndex].artist}
               </p>
             </div>
           </div>
@@ -118,9 +116,7 @@ export default function Player() {
                 <div className="flex flex-col">
                   <p className="font-semibold">{song.title}</p>
                   <p className="text-sm font-semibold text-neutral-500 truncate">
-                    {song.type === "song" ? "Song" : "Album"}
-                    {" • "}
-                    {song.artist}
+                    Song • {song.artist}
                   </p>
                 </div>
               </div>
