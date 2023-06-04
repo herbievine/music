@@ -58,7 +58,7 @@ export default function Player() {
         {expanded && !isQueueOpen ? (
           <div className="w-full flex items-center flex-col space-y-6">
             <Image
-              src={songs[songIndex].coverLink}
+              src={songs[songIndex].coverLinkHigh}
               alt={`${songs[songIndex].title} by ${songs[songIndex].artist}`}
               width={200}
               height={200}
@@ -81,7 +81,7 @@ export default function Player() {
             }}
           >
             <Image
-              src={songs[songIndex].coverLink}
+              src={songs[songIndex].coverLinkLow}
               alt={`${songs[songIndex].title} by ${songs[songIndex].artist}`}
               width={45}
               height={45}
@@ -109,7 +109,7 @@ export default function Player() {
                 }}
               >
                 <Image
-                  src={song.coverLink}
+                  src={song.coverLinkLow}
                   alt={`${song.title} by ${song.artist}`}
                   width={45}
                   height={45}

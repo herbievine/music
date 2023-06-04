@@ -17,7 +17,7 @@ export default function MediaViewer({ media }: MediaViewerProps) {
     >
       <div className={"w-full flex items-center space-x-2"}>
         <Image
-          src={media.coverLink}
+          src={media.coverLinkLow}
           alt={`${media.title} by ${media.artist}`}
           width={45}
           height={45}

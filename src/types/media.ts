@@ -5,7 +5,8 @@ export type Media = {
   id: number;
   title: string;
   artist: string;
-  coverLink: string;
+  coverLinkLow: string;
+  coverLinkHigh: string;
   genre: string;
   releaseDate: string;
 } & (

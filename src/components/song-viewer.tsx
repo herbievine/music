@@ -24,7 +24,7 @@ export default function SongViewer({ song }: SongViewerProps) {
   return (
     <div className="w-full flex flex-col space-y-4 items-center">
       <Image
-        src={song.coverLink}
+        src={song.coverLinkHigh}
         alt={`${song.title} by ${song.artist}`}
         width={200}
         height={200}

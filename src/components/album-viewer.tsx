@@ -22,7 +22,7 @@ export default function AlbumViewer({ album }: AlbumViewerProps) {
   return (
     <div className="w-full flex flex-col space-y-4 items-center">
       <Image
-        src={album.coverLink}
+        src={album.coverLinkHigh}
         alt={`${album.title} by ${album.artist}`}
         width={200}
         height={200}
