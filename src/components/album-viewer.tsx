@@ -7,7 +7,6 @@ import Metadata from "@/components/metadata";
 import { useSearchHistoryStore } from "@/store/search-history";
 import { useEffect } from "react";
 import { MediaAlbum } from "@/types/media";
-import DownloadSongButton from "./download-song-button";
 
 type AlbumViewerProps = {
   album: MediaAlbum;
@@ -36,10 +35,7 @@ export default function AlbumViewer({ album }: AlbumViewerProps) {
           {album.genre} - {new Date(album.releaseDate).getFullYear()}
         </p>
       </div>
-      <div className="w-full flex justify-center space-x-4">
-        <PlayButton songs={album.songs} />
-        <DownloadSongButton songs={album.songs} />
-      </div>
+      <PlayButton songs={album.songs} />
       <DisplaySongs songs={album.songs} />
       <Metadata songs={album.songs} />
     </div>

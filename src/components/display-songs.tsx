@@ -4,6 +4,7 @@ import useConverter from "@/hooks/useConverter";
 import formatDuration from "@/lib/formatDuration";
 import { useQueueStore } from "@/store/queue";
 import { MediaSong } from "@/types/media";
+import DownloadSongButton from "./download-song-button";
 
 type DisplaySongsProps = {
   songs: MediaSong[];
@@ -33,7 +34,10 @@ export default function DisplaySongs({ songs }: DisplaySongsProps) {
             <p className="text-neutral-500">{song.trackNumber}</p>
             <p>{song.title}</p>
           </div>
-          <p className="text-white">{formatDuration(song.duration)}</p>
+          <div className="flex space-x-4">
+            <DownloadSongButton song={song} />
+            <p className="text-white">{formatDuration(song.duration)}</p>
+          </div>
         </div>
       ))}
     </div>

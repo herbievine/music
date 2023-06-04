@@ -3,8 +3,7 @@
 import ChevronIcon from "@/assets/chevron-icon";
 import PauseIcon from "@/assets/pause-icon";
 import PlayIcon from "@/assets/play-icon";
-import RoundArrowLeftIcon from "@/assets/round-arrow-left-icon";
-import RoundArrowRightIcon from "@/assets/round-arrow-right-icon";
+import PlaylistIcon from "@/assets/playlist-icon";
 import SkipIcon from "@/assets/skip-icon";
 import cn from "@/lib/cn";
 import formatDuration from "@/lib/formatDuration";
@@ -14,8 +13,10 @@ import { RefObject, useEffect, useRef, useState } from "react";
 
 export default function Player() {
   const [expanded, setExpanded] = useState(false);
+  const [isQueueOpen, setIsQueueOpen] = useState(false);
   const [progress, setProgress] = useState(0);
-  const { songs, songIndex, isPlaying, pause } = useQueueStore();
+  const [volume, setVolume] = useState(60);
+  const { songs, songIndex, isPlaying, pause, skipTo } = useQueueStore();
   const audioRef = useRef<HTMLAudioElement>(null);
   const progressRef = useRef<HTMLInputElement>(null);
 
@@ -36,57 +37,114 @@ export default function Player() {
   }
 
   return (
-    <div className="w-full max-w-xl mx-auto flex space-between fixed bg-neutral-950 bottom-0">
+    <div className="w-full max-w-xl mx-auto flex space-between fixed border-t border-neutral-800 bg-neutral-900 bottom-0 rounded-t-lg">
       <div
         className={cn(
-          "w-full px-6 flex border-t border-neutral-800 justify-between",
-          expanded ? "flex-col py-12 space-y-6" : "py-2"
+          "w-full px-6 flex justify-between",
+          expanded ? "flex-col py-8 space-y-6" : "py-2"
         )}
       >
         {expanded && (
-          <div className="w-full flex justify-center">
-            <button
-              className="w-min"
-              onClick={() => {
-                setExpanded(false);
-              }}
-            >
-              <ChevronIcon className="w-6 fill-white" />
-            </button>
+          <button
+            className="w-full flex justify-center"
+            onClick={() => {
+              setExpanded(false);
+              setIsQueueOpen(false);
+            }}
+          >
+            <ChevronIcon className="w-6 fill-white" />
+          </button>
+        )}
+        {expanded && !isQueueOpen ? (
+          <div className="w-full flex items-center flex-col space-y-6">
+            <Image
+              src={songs[songIndex].coverLink}
+              alt={`${songs[songIndex].title} by ${songs[songIndex].artist}`}
+              width={200}
+              height={200}
+              className="rounded-lg"
+            />
+            <div className="w-full flex flex-col items-start">
+              <p className="font-semibold">{songs[songIndex].title}</p>
+              <p className="text-sm font-semibold text-neutral-500">
+                {songs[songIndex].artist}
+              </p>
+            </div>
+          </div>
+        ) : (
+          <div
+            className="w-full flex items-center space-x-2"
+            onClick={() => {
+              if (!expanded) {
+                setExpanded(true);
+              }
+            }}
+          >
+            <Image
+              src={songs[songIndex].coverLink}
+              alt={`${songs[songIndex].title} by ${songs[songIndex].artist}`}
+              width={45}
+              height={45}
+              className="rounded-lg"
+            />
+            <div className="flex flex-col">
+              <p className="font-semibold">{songs[songIndex].title}</p>
+              <p className="text-sm font-semibold text-neutral-500 truncate">
+                {songs[songIndex].type === "song" ? "Song" : "Album"}
+                {" • "}
+                {songs[songIndex].artist}
+              </p>
+            </div>
           </div>
         )}
-        <div
-          className={cn(
-            "w-full flex items-center",
-            expanded ? "flex-col space-y-6" : "space-x-2"
-          )}
-          onClick={() => {
-            if (!expanded) {
-              setExpanded(true);
-            }
-          }}
-        >
-          <Image
-            src={songs[songIndex].coverLink}
-            alt={`${songs[songIndex].title} by ${songs[songIndex].artist}`}
-            width={expanded ? 250 : 45}
-            height={expanded ? 250 : 45}
-            className="rounded-lg"
-          />
-          <div className={cn("flex flex-col", expanded && "items-center")}>
-            <p className="font-semibold">{songs[songIndex].title}</p>
-            <p className="text-sm font-semibold text-neutral-500">
-              {songs[songIndex].artist}
-            </p>
+        {isQueueOpen && (
+          <div className="w-full flex flex-col space-y-2">
+            <p className="font-bold border-b border-neutral-800 pb-2">Queue</p>
+            {songs.slice(songIndex + 1).map((song) => (
+              <div
+                key={song.id}
+                className="w-full flex items-center space-x-2"
+                onClick={() => {
+                  skipTo(song);
+                }}
+              >
+                <Image
+                  src={song.coverLink}
+                  alt={`${song.title} by ${song.artist}`}
+                  width={45}
+                  height={45}
+                  className="rounded-lg"
+                />
+                <div className="flex flex-col">
+                  <p className="font-semibold">{song.title}</p>
+                  <p className="text-sm font-semibold text-neutral-500 truncate">
+                    {song.type === "song" ? "Song" : "Album"}
+                    {" • "}
+                    {song.artist}
+                  </p>
+                </div>
+              </div>
+            ))}
           </div>
-        </div>
-        <PlayerControls expanded={expanded} audioRef={audioRef} />
+        )}
         {expanded && (
           <PlayerProgress
             progress={progress}
             audioRef={audioRef}
             progressRef={progressRef}
           />
+        )}
+        <PlayerControls expanded={expanded} />
+        {expanded && (
+          <div className="flex items-center space-x-6 w-full justify-evenly">
+            <button
+              onClick={() => {
+                setIsQueueOpen(!isQueueOpen);
+              }}
+            >
+              <PlaylistIcon className="fill-white" />
+            </button>
+          </div>
         )}
         <RawPlayer
           audioRef={audioRef}
@@ -100,37 +158,27 @@ export default function Player() {
 
 type PlayerControlsProps = {
   expanded: boolean;
-  audioRef: RefObject<HTMLAudioElement>;
 };
 
-function PlayerControls({ expanded, audioRef }: PlayerControlsProps) {
+function PlayerControls({ expanded }: PlayerControlsProps) {
   const { isPlaying, play, pause, next, previous } = useQueueStore();
 
   return (
     <div
       className={cn(
         "flex items-center space-x-6",
-        expanded && "w-full justify-center"
+        expanded && "w-full justify-evenly"
       )}
     >
-      {expanded && (
-        <button
-          onClick={() => {
-            if (!audioRef.current) return;
-
-            audioRef.current.currentTime -= 10;
-          }}
-        >
-          <RoundArrowLeftIcon className="h-5 fill-white" />
-        </button>
-      )}
       <button
         onClick={() => {
           previous();
           play();
         }}
       >
-        <SkipIcon className="h-5 fill-white rotate-180" />
+        <SkipIcon
+          className={cn("fill-white rotate-180", expanded ? "h-8" : "h-5")}
+        />
       </button>
       <button
         onClick={() => {
@@ -142,9 +190,9 @@ function PlayerControls({ expanded, audioRef }: PlayerControlsProps) {
         }}
       >
         {isPlaying ? (
-          <PauseIcon className="h-5 fill-white" />
+          <PauseIcon className={cn("fill-white", expanded ? "h-8" : "h-5")} />
         ) : (
-          <PlayIcon className="h-5 fill-white" />
+          <PlayIcon className={cn("fill-white", expanded ? "h-8" : "h-5")} />
         )}
       </button>
       <button
@@ -153,19 +201,8 @@ function PlayerControls({ expanded, audioRef }: PlayerControlsProps) {
           play();
         }}
       >
-        <SkipIcon className="h-5 fill-white" />
+        <SkipIcon className={cn("fill-white", expanded ? "h-8" : "h-5")} />
       </button>
-      {expanded && (
-        <button
-          onClick={() => {
-            if (!audioRef.current) return;
-
-            audioRef.current.currentTime += 10;
-          }}
-        >
-          <RoundArrowRightIcon className="h-5 fill-white" />
-        </button>
-      )}
     </div>
   );
 }
@@ -196,10 +233,10 @@ function PlayerProgress({
         }}
       />
       <div className="w-full flex items-center justify-between">
-        <span className="text-neutral-500 font-bold text-sm">
+        <span className="text-neutral-500 font-bold text-xs">
           {formatDuration(progress * 1000)}
         </span>
-        <span className="text-neutral-500 font-bold text-sm">
+        <span className="text-neutral-500 font-bold text-xs">
           {formatDuration(songs[songIndex]?.duration)}
         </span>
       </div>
@@ -235,6 +272,26 @@ export function RawPlayer({
         progressRef.current.value = currentTime.toString();
         progressRef.current.max = seconds.toString();
       }}
+      onLoadedMetadata={() => {
+        audioRef.current?.play();
+      }}
     />
+  );
+}
+
+function PlayerOptions() {
+  const { play, previous } = useQueueStore();
+
+  return (
+    <div className="flex items-center space-x-6 w-full justify-evenly">
+      <button
+        onClick={() => {
+          previous();
+          play();
+        }}
+      >
+        <PlaylistIcon className="fill-white" />
+      </button>
+    </div>
   );
 }

@@ -11,6 +11,7 @@ type QueueStore = {
   remove: (song: MediaSong) => void;
   next: () => void;
   previous: () => void;
+  skipTo: (song: MediaSong) => void;
 };
 
 export const useQueueStore = create<QueueStore>()(
@@ -23,7 +24,9 @@ export const useQueueStore = create<QueueStore>()(
     pause: () => set({ isPlaying: false }),
     add: (songs) =>
       set((s) => ({
-        songs: [...s.songs, ...songs],
+        songs: [...s.songs, ...songs].filter(
+          (val, index, self) => self.findIndex((t) => t.id === val.id) === index
+        ),
         isPlaying: true,
       })),
     remove: (song) =>
@@ -38,6 +41,10 @@ export const useQueueStore = create<QueueStore>()(
       set((s) =>
         s.songIndex - 1 >= 0 ? { songIndex: s.songIndex - 1 } : { songIndex: 0 }
       ),
+    skipTo: (song) =>
+      set((s) => ({
+        songIndex: s.songs.indexOf(song),
+      })),
   })
   //   {
   //     name: "queue-storage",

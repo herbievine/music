@@ -8,15 +8,7 @@ export default async function fetcher<T extends z.AnyZodObject>(
   return fetch(url, config)
     .then((res) => res.json())
     .then((data) => {
-      console.log("data in fetcher", data);
-
-      try {
-        schema.parse(data);
-      } catch (error) {
-        console.log("error in fetcher", error);
-      }
-
-      // if (!schema?.safeParse(data).success) return null;
+      if (!schema.safeParse(data).success) return null;
       return schema.parse(data);
     });
 }

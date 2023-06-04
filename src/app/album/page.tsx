@@ -62,7 +62,7 @@ export async function generateMetadata({ searchParams: { id } }: SongProps) {
   }
 
   return {
-    title: `Music - ${album.title}`,
+    title: `${album.title}`,
     description: `Playing ${album.title} by ${album.artist}.`,
   };
 }
