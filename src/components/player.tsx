@@ -15,7 +15,7 @@ export default function Player() {
   const [expanded, setExpanded] = useState(false);
   const [isQueueOpen, setIsQueueOpen] = useState(false);
   const [progress, setProgress] = useState(0);
-  const [volume, setVolume] = useState(60);
+  // const [volume, setVolume] = useState(60);
   const { songs, songIndex, isPlaying, pause, skipTo } = useQueueStore();
   const audioRef = useRef<HTMLAudioElement>(null);
   const progressRef = useRef<HTMLInputElement>(null);
@@ -276,22 +276,5 @@ export function RawPlayer({
         audioRef.current?.play();
       }}
     />
-  );
-}
-
-function PlayerOptions() {
-  const { play, previous } = useQueueStore();
-
-  return (
-    <div className="flex items-center space-x-6 w-full justify-evenly">
-      <button
-        onClick={() => {
-          previous();
-          play();
-        }}
-      >
-        <PlaylistIcon className="fill-white" />
-      </button>
-    </div>
   );
 }
