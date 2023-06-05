@@ -6,7 +6,7 @@ export async function middleware(request: NextRequest) {
   const response = NextResponse.next();
   const supabase = createMiddlewareClient({ req: request, res: response });
   const session = await supabase.auth.getSession();
-  const publicRoutes = ["/profile"];
+  const publicRoutes = ["/profile", "/callback"];
 
   if (
     !session?.data?.session &&

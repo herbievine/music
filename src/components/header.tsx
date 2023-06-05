@@ -11,15 +11,18 @@ type HeaderProps = {
 };
 
 export default function Header({ session }: HeaderProps) {
-  const { back } = useRouter();
+  const { push } = useRouter();
   const path = usePathname();
 
   return (
     <header className="w-full flex justify-between items-center relative">
       {path !== "/" ? (
-        <button className="flex space-x-2 items-center" onClick={back}>
+        <button
+          className="flex space-x-2 items-center"
+          onClick={() => push("/")}
+        >
           <ChevronIcon className="w-3.5 h-3.5 fill-blue-400 rotate-90" />
-          <span className="font-bold text-blue-400">Back</span>
+          <span className="font-bold text-blue-400">Music</span>
         </button>
       ) : (
         <h1 className="font-black text-3xl">Music</h1>

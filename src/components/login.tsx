@@ -1,5 +1,6 @@
 "use client";
 
+import GoogleIcon from "@/assets/google-icon";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 
 export default function Login() {
@@ -7,18 +8,18 @@ export default function Login() {
 
   return (
     <button
-      type="submit"
-      className="w-full px-4 py-2 rounded-lg border border-sky-700 bg-sky-600 text-white"
+      className="rounded-lg w-full py-3 bg-neutral-800 flex space-x-2 justify-center items-center"
       onClick={() =>
         auth.signInWithOAuth({
           provider: "google",
           options: {
-            redirectTo: `${window.location.origin}/profile`,
+            redirectTo: `${window.location.origin}/callback`,
           },
         })
       }
     >
-      Login with Google
+      <GoogleIcon className="w-3.5 h-3.5 fill-blue-400" />
+      <span className="font-bold text-blue-400">Login with Google</span>
     </button>
   );
 }
