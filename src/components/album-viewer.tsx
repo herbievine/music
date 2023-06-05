@@ -4,17 +4,18 @@ import Image from "next/image";
 import DisplaySongs from "@/components/display-songs";
 import PlayButton from "@/components/play-button";
 import Metadata from "@/components/metadata";
-import { useSearchHistoryStore } from "@/store/search-history";
+import { useHistoryStore } from "@/store/history";
 import { useEffect } from "react";
 import { MediaAlbum } from "@/types/media";
 import dayjs from "dayjs";
+import FavoritesButton from "./favorites-button";
 
 type AlbumViewerProps = {
   album: MediaAlbum;
 };
 
 export default function AlbumViewer({ album }: AlbumViewerProps) {
-  const { add } = useSearchHistoryStore();
+  const { add } = useHistoryStore();
 
   useEffect(() => {
     add(album);
@@ -36,7 +37,10 @@ export default function AlbumViewer({ album }: AlbumViewerProps) {
           {album.genre} - {dayjs(album.releaseDate).format("YYYY")}
         </p>
       </div>
-      <PlayButton songs={album.songs} />
+      <div className="w-full flex justify-between space-x-4">
+        <PlayButton songs={album.songs} />
+        <FavoritesButton media={album} />
+      </div>
       <DisplaySongs songs={album.songs} />
       <Metadata songs={album.songs} />
     </div>

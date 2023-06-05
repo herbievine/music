@@ -1,14 +1,14 @@
 "use client";
 
-import { useSearchHistoryStore } from "@/store/search-history";
+import { useHistoryStore } from "@/store/history";
 import { useEffect } from "react";
-import MediaViewer from "./media-viewer";
+import MediaViewer from "@/components/media-viewer";
 
-export default function SearchHistory() {
-  const { history } = useSearchHistoryStore();
+export default function History() {
+  const { history } = useHistoryStore();
 
   useEffect(() => {
-    useSearchHistoryStore.persist.rehydrate();
+    useHistoryStore.persist.rehydrate();
   }, []);
 
   if (history.length === 0) {

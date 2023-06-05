@@ -2,12 +2,12 @@ import { Media } from "@/types/media";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
-type SearchHistoryStore = {
+type HistoryStore = {
   history: Media[];
   add: (song: Media) => void;
 };
 
-export const useSearchHistoryStore = create<SearchHistoryStore>()(
+export const useHistoryStore = create<HistoryStore>()(
   persist(
     (set) => ({
       history: [],
@@ -23,7 +23,7 @@ export const useSearchHistoryStore = create<SearchHistoryStore>()(
       },
     }),
     {
-      name: "search-history-storage",
+      name: "history-storage",
       skipHydration: true,
     }
   )

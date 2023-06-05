@@ -4,8 +4,9 @@ import useSearch from "@/hooks/useSearch";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import debounce from "lodash/debounce";
-import SearchHistory from "./search-history";
-import MediaViewer from "./media-viewer";
+import History from "@/components/history";
+import MediaViewer from "@/components/media-viewer";
+import Favorites from "@/components/favorites";
 
 export default function Search() {
   const [query, setQuery] = useState("");
@@ -33,7 +34,8 @@ export default function Search() {
           <MediaViewer key={media.id} media={media} />
         ))}
       </div>
-      <SearchHistory />
+      <History />
+      <Favorites />
     </div>
   );
 }

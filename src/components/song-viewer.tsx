@@ -5,7 +5,7 @@ import DisplaySongs from "@/components/display-songs";
 import PlayButton from "@/components/play-button";
 import Link from "next/link";
 import Metadata from "@/components/metadata";
-import { useSearchHistoryStore } from "@/store/search-history";
+import { useHistoryStore } from "@/store/history";
 import { useEffect } from "react";
 import { MediaSong } from "@/types/media";
 import dayjs from "dayjs";
@@ -15,7 +15,7 @@ type SongViewerProps = {
 };
 
 export default function SongViewer({ song }: SongViewerProps) {
-  const { add } = useSearchHistoryStore();
+  const { add } = useHistoryStore();
 
   useEffect(() => {
     add(song);

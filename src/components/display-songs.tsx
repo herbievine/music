@@ -4,7 +4,7 @@ import useConverter from "@/hooks/useConverter";
 import formatDuration from "@/lib/formatDuration";
 import { useQueueStore } from "@/store/queue";
 import { MediaSong } from "@/types/media";
-import DownloadSongButton from "./download-song-button";
+import DownloadSongButton from "@/components/download-song-button";
 
 type DisplaySongsProps = {
   songs: MediaSong[];
