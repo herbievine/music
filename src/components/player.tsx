@@ -98,29 +98,31 @@ export default function Player() {
         {isQueueOpen && (
           <div className="w-full flex flex-col space-y-2">
             <p className="font-bold border-b border-neutral-800 pb-2">Queue</p>
-            {songs.slice(songIndex + 1).map((song) => (
-              <div
-                key={song.id}
-                className="w-full flex items-center space-x-2"
-                onClick={() => {
-                  skipTo(song);
-                }}
-              >
-                <Image
-                  src={song.coverLinkLow}
-                  alt={`${song.title} by ${song.artist}`}
-                  width={45}
-                  height={45}
-                  className="rounded-lg"
-                />
-                <div className="flex flex-col">
-                  <p className="font-semibold">{song.title}</p>
-                  <p className="text-sm font-semibold text-neutral-500 truncate">
-                    Song • {song.artist}
-                  </p>
+            <div className="flex flex-col space-y-2 h-48 overflow-scroll">
+              {songs.slice(songIndex + 1).map((song) => (
+                <div
+                  key={song.id}
+                  className="w-full flex items-center space-x-2"
+                  onClick={() => {
+                    skipTo(song);
+                  }}
+                >
+                  <Image
+                    src={song.coverLinkLow}
+                    alt={`${song.title} by ${song.artist}`}
+                    width={45}
+                    height={45}
+                    className="rounded-lg"
+                  />
+                  <div className="flex flex-col">
+                    <p className="font-semibold">{song.title}</p>
+                    <p className="text-sm font-semibold text-neutral-500 truncate">
+                      Song • {song.artist}
+                    </p>
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         )}
         {expanded && (
@@ -130,7 +132,7 @@ export default function Player() {
             progressRef={progressRef}
           />
         )}
-        <PlayerControls expanded={expanded} />
+        <PlayerControls expanded={expanded} setProgress={setProgress} />
         {expanded && (
           <div className="flex items-center space-x-6 w-full justify-evenly">
             <button
@@ -154,9 +156,10 @@ export default function Player() {
 
 type PlayerControlsProps = {
   expanded: boolean;
+  setProgress: (progress: number) => void;
 };
 
-function PlayerControls({ expanded }: PlayerControlsProps) {
+function PlayerControls({ expanded, setProgress }: PlayerControlsProps) {
   const { isPlaying, play, pause, next, previous } = useQueueStore();
 
   return (
@@ -168,6 +171,7 @@ function PlayerControls({ expanded }: PlayerControlsProps) {
     >
       <button
         onClick={() => {
+          setProgress(0);
           previous();
           play();
         }}
@@ -193,6 +197,7 @@ function PlayerControls({ expanded }: PlayerControlsProps) {
       </button>
       <button
         onClick={() => {
+          setProgress(0);
           next();
           play();
         }}
