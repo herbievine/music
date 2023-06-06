@@ -38,7 +38,7 @@ export default function FavoritesButton({ media }: FavoritesButtonProps) {
           isFavorite ? "text-red-400" : "text-blue-400"
         )}
       >
-        {isFavorite ? "Remove from favorites" : "Add to favorites"}
+        {isFavorite ? "Remove" : "Add"}
       </span>
     </button>
   );
