@@ -7,12 +7,19 @@ export async function middleware(request: NextRequest) {
   const supabase = createMiddlewareClient({ req: request, res: response });
   const session = await supabase.auth.getSession();
   const publicRoutes = ["/profile", "/callback"];
+  const whitelistedEmailAddresses =
+    process.env.WHITELISTED_EMAIL_ADDRESSES?.split(",") || [];
 
   if (
-    !session?.data?.session &&
+    (!session?.data ||
+      !whitelistedEmailAddresses.includes(
+        session?.data?.session?.user?.email ?? ""
+      )) &&
     !publicRoutes.includes(request.nextUrl.pathname)
   ) {
-    return NextResponse.redirect(new URL("/profile", request.nextUrl.origin));
+    return NextResponse.redirect(
+      new URL("/profile?invalid=true", request.nextUrl.origin)
+    );
   }
 
   return response;

@@ -4,7 +4,7 @@ import SignoutIcon from "@/assets/signout-icon";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import { User } from "@supabase/supabase-js";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 type ProfileProps = {
   user: User;
@@ -13,6 +13,7 @@ type ProfileProps = {
 export default function Profile({ user }: ProfileProps) {
   const { auth } = createClientComponentClient();
   const { refresh } = useRouter();
+  const query = useSearchParams();
 
   return (
     <div className="flex flex-col space-y-4">
@@ -29,6 +30,16 @@ export default function Profile({ user }: ProfileProps) {
           <p className="text-sm font-semibold text-neutral-500">{user.email}</p>
         </div>
       </div>
+      {query.get("invalid") === "true" && (
+        <div className="w-full flex flex-col space-y-2 px-4 py-3 border border-red-800 rounded-lg">
+          <p className="font-black text-xl text-white">Invalid email address</p>
+          <p className="font-bold">
+            It looks like you tried to sign up with an invalid email address. If
+            you think this is a mistake, contact an admin. If you&apos;re from
+            the FBI, kindly logout and please don&apos;t contact us.
+          </p>
+        </div>
+      )}
       <button
         className="rounded-lg w-full py-3 bg-neutral-800 flex space-x-2 justify-center items-center"
         onClick={async () => {
