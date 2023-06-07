@@ -1,8 +1,7 @@
 "use client";
 
 import ChevronIcon from "@/assets/chevron-icon";
-import { useRouter, usePathname } from "next/navigation";
-import Image from "next/image";
+import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { Session } from "@supabase/auth-helpers-nextjs";
 import Link from "next/link";
 
@@ -13,6 +12,11 @@ type HeaderProps = {
 export default function Header({ session }: HeaderProps) {
   const { push } = useRouter();
   const path = usePathname();
+  const query = useSearchParams();
+
+  if (query.get("reload")) {
+    push("/");
+  }
 
   return (
     <header className="w-full flex justify-between items-center relative">
@@ -28,17 +32,8 @@ export default function Header({ session }: HeaderProps) {
         <h1 className="font-black text-3xl">Music</h1>
       )}
       {session?.user.user_metadata.avatar_url && (
-        <Link href="/profile" className="flex space-x-2 items-center">
-          <span className="font-bold text-sm">
-            {session.user.user_metadata.full_name}
-          </span>
-          <Image
-            src={session.user.user_metadata.avatar_url}
-            alt="Profile picture"
-            width={30}
-            height={30}
-            className="rounded-full"
-          />
+        <Link href="/profile" className="font-bold">
+          {session.user.user_metadata.full_name}
         </Link>
       )}
     </header>

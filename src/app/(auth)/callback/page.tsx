@@ -15,7 +15,7 @@ export default function CallbackPage() {
       data: { subscription },
     } = supabase?.auth.onAuthStateChange((event, session) => {
       if (event === "SIGNED_IN" && session) {
-        replace("/profile");
+        replace("/?reload=true");
       }
     });
 

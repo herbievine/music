@@ -31,11 +31,11 @@ export default function Search() {
       {isSearching && <p>Searching...</p>}
       <div className="flex flex-col divide-y divide-neutral-800">
         {data?.map((media) => (
-          <MediaViewer key={media.id} media={media} />
+          <MediaViewer key={media.id} media={media} link />
         ))}
       </div>
-      <History />
       <Favorites />
+      <History />
     </div>
   );
 }
