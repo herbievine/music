@@ -21,7 +21,7 @@ export default function DisplaySongs({ songs }: DisplaySongsProps) {
           className="flex justify-between font-semibold space-x-2 px-1"
         >
           <div
-            className="grow flex space-x-2 py-3 hover:text-blue-400 cursor-pointer"
+            className="grow flex flex-col py-3 hover:text-blue-400 cursor-pointer"
             onClick={async () => {
               const link = await convert(song);
 
@@ -32,8 +32,8 @@ export default function DisplaySongs({ songs }: DisplaySongsProps) {
               add([{ ...song, audioLink: link }]);
             }}
           >
-            <p className="text-neutral-500">{song.trackNumber}</p>
             <p>{song.title}</p>
+            <p className="text-xs font-bold text-neutral-500">{song.artist}</p>
           </div>
           <div className="flex space-x-4">
             <DownloadSongButton song={song} />
