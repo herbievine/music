@@ -45,7 +45,7 @@ export default function SongViewer({ song }: SongViewerProps) {
       </div>
       <PlayButton songs={[song]} />
       <DisplaySongs songs={[song]} />
-      <Metadata songs={[song]} />
+      <Metadata media={song} />
     </div>
   );
 }

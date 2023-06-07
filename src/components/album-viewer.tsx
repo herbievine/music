@@ -42,7 +42,7 @@ export default function AlbumViewer({ album }: AlbumViewerProps) {
         <FavoritesButton media={album} />
       </div>
       <DisplaySongs songs={album.songs} />
-      <Metadata songs={album.songs} />
+      <Metadata media={album} />
     </div>
   );
 }

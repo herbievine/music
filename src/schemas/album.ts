@@ -8,7 +8,7 @@ export const AlbumSchema = z.object({
   artistName: z.string(),
   collectionName: z.string(),
   collectionCensoredName: z.string(),
-  artistViewUrl: z.string(),
+  artistViewUrl: z.string().optional(),
   collectionViewUrl: z.string(),
   artworkUrl60: z.string(),
   artworkUrl100: z.string(),

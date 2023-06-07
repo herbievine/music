@@ -1,7 +1,6 @@
 "use client";
 
 import useConverter from "@/hooks/useConverter";
-import formatDuration from "@/lib/formatDuration";
 import { useQueueStore } from "@/store/queue";
 import { MediaSong } from "@/types/media";
 import DownloadSongButton from "@/components/download-song-button";
@@ -19,24 +18,25 @@ export default function DisplaySongs({ songs }: DisplaySongsProps) {
       {songs.map((song) => (
         <div
           key={song.id}
-          className="flex justify-between py-3 font-semibold hover:text-blue-400 cursor-pointer"
-          onClick={async () => {
-            const link = await convert(song);
-
-            if (!link) {
-              return;
-            }
-
-            add([{ ...song, audioLink: link }]);
-          }}
+          className="flex justify-between font-semibold space-x-2 px-1"
         >
-          <div className="flex space-x-2">
+          <div
+            className="grow flex space-x-2 py-3 hover:text-blue-400 cursor-pointer"
+            onClick={async () => {
+              const link = await convert(song);
+
+              if (!link) {
+                return;
+              }
+
+              add([{ ...song, audioLink: link }]);
+            }}
+          >
             <p className="text-neutral-500">{song.trackNumber}</p>
             <p>{song.title}</p>
           </div>
           <div className="flex space-x-4">
             <DownloadSongButton song={song} />
-            <p className="text-white">{formatDuration(song.duration)}</p>
           </div>
         </div>
       ))}

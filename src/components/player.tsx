@@ -1,5 +1,6 @@
 "use client";
 
+import BinIcon from "@/assets/bin-icon";
 import ChevronIcon from "@/assets/chevron-icon";
 import PauseIcon from "@/assets/pause-icon";
 import PlayIcon from "@/assets/play-icon";
@@ -10,13 +11,14 @@ import formatDuration from "@/lib/formatDuration";
 import { useQueueStore } from "@/store/queue";
 import Image from "next/image";
 import { RefObject, useEffect, useRef, useState } from "react";
+import MediaViewer from "./media-viewer";
 
 export default function Player() {
   const [expanded, setExpanded] = useState(false);
   const [isQueueOpen, setIsQueueOpen] = useState(false);
   const [progress, setProgress] = useState(0);
   // const [volume, setVolume] = useState(60);
-  const { songs, songIndex, isPlaying, pause, skipTo } = useQueueStore();
+  const { songs, songIndex, isPlaying, pause, remove } = useQueueStore();
   const audioRef = useRef<HTMLAudioElement>(null);
   const progressRef = useRef<HTMLInputElement>(null);
 
@@ -72,28 +74,15 @@ export default function Player() {
             </div>
           </div>
         ) : (
-          <div
-            className="w-full flex items-center space-x-2"
+          <MediaViewer
+            media={songs[songIndex]}
+            className="w-full"
             onClick={() => {
               if (!expanded) {
                 setExpanded(true);
               }
             }}
-          >
-            <Image
-              src={songs[songIndex].coverLinkLow}
-              alt={`${songs[songIndex].title} by ${songs[songIndex].artist}`}
-              width={45}
-              height={45}
-              className="rounded-lg"
-            />
-            <div className="flex flex-col">
-              <p className="font-semibold">{songs[songIndex].title}</p>
-              <p className="text-sm font-semibold text-neutral-500 truncate">
-                Song • {songs[songIndex].artist}
-              </p>
-            </div>
-          </div>
+          />
         )}
         {isQueueOpen && (
           <div className="w-full flex flex-col space-y-2">
@@ -102,24 +91,17 @@ export default function Player() {
               {songs.slice(songIndex + 1).map((song) => (
                 <div
                   key={song.id}
-                  className="w-full flex items-center space-x-2"
-                  onClick={() => {
-                    skipTo(song);
-                  }}
+                  className="flex items-center justify-between"
                 >
-                  <Image
-                    src={song.coverLinkLow}
-                    alt={`${song.title} by ${song.artist}`}
-                    width={45}
-                    height={45}
-                    className="rounded-lg"
-                  />
-                  <div className="flex flex-col">
-                    <p className="font-semibold">{song.title}</p>
-                    <p className="text-sm font-semibold text-neutral-500 truncate">
-                      Song • {song.artist}
-                    </p>
-                  </div>
+                  <MediaViewer media={song} />
+                  <button
+                    className="rounded-full bg-neutral-800 w-8 h-8 flex justify-center items-center"
+                    onClick={() => {
+                      remove(song);
+                    }}
+                  >
+                    <BinIcon className="fill-white" />
+                  </button>
                 </div>
               ))}
             </div>
@@ -136,6 +118,9 @@ export default function Player() {
         {expanded && (
           <div className="flex items-center space-x-6 w-full justify-evenly">
             <button
+              className={cn(
+                isQueueOpen ? "bg-neutral-800 p-2 rounded-lg" : "p-2"
+              )}
               onClick={() => {
                 setIsQueueOpen(!isQueueOpen);
               }}

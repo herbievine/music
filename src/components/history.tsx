@@ -20,7 +20,7 @@ export default function History() {
       <p className="font-bold border-b border-neutral-800 pb-2">History</p>
       <div className="flex flex-col divide-y divide-neutral-800">
         {history.map((media) => (
-          <MediaViewer key={media.id} media={media} />
+          <MediaViewer key={media.id} media={media} link />
         ))}
       </div>
     </div>
