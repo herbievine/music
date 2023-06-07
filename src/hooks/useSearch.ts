@@ -18,7 +18,9 @@ const buildUrl = (query: string) => {
 
 const ItunesApiSchema = z.object({
   resultCount: z.number(),
-  results: z.array(z.union([SongSchema, AlbumSchema])),
+  results: z.array(
+    z.discriminatedUnion("wrapperType", [SongSchema, AlbumSchema])
+  ),
 });
 
 export default function useSearch(query?: string | null) {

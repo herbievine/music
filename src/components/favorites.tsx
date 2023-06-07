@@ -20,7 +20,7 @@ export default function Favorites() {
       <p className="font-bold border-b border-neutral-800 pb-2">Favorites</p>
       <div className="flex flex-col divide-y divide-neutral-800">
         {favorites.map((media) => (
-          <MediaViewer key={media.id} media={media} />
+          <MediaViewer key={media.id} media={media} link />
         ))}
       </div>
     </div>

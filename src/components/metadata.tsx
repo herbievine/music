@@ -1,23 +1,38 @@
 "use client";
 
 import formatDuration from "@/lib/formatDuration";
-import { MediaSong } from "@/types/media";
+import { Media } from "@/types/media";
 import dayjs from "dayjs";
 
 type MetadataProps = {
-  songs: MediaSong[];
+  media: Media;
 };
 
-export default function Metadata({ songs }: MetadataProps) {
-  const totalDuration = songs.reduce((acc, song) => acc + song.duration, 0);
+export default function Metadata({ media }: MetadataProps) {
+  const { totalDuration, songLength } =
+    media.type === "song"
+      ? {
+          totalDuration: media.duration,
+          songLength: 1,
+        }
+      : media.songs.reduce(
+          (acc, song) => ({
+            ...acc,
+            totalDuration: acc.totalDuration + song.duration,
+          }),
+          {
+            totalDuration: 0,
+            songLength: media.songs.length,
+          }
+        );
 
   return (
-    <div className="w-full">
+    <div className="w-full flex flex-col items-center">
       <p className="text-neutral-500 font-bold text-sm">
-        {dayjs(songs[0].releaseDate).format("DD MMMM, YYYY")}
+        {dayjs(media.releaseDate).format("DD MMMM, YYYY")}
       </p>
       <p className="text-neutral-500 font-bold text-sm">
-        {songs.length} {songs.length > 1 ? "songs" : "song"},{" "}
+        {songLength} {songLength > 1 ? "songs" : "song"},{" "}
         {formatDuration(totalDuration)} total
       </p>
     </div>

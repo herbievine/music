@@ -18,7 +18,7 @@ export default function DisplaySongs({ songs }: DisplaySongsProps) {
       {songs.map((song) => (
         <div
           key={song.id}
-          className="flex justify-between font-semibold space-x-2"
+          className="flex justify-between font-semibold space-x-2 px-1"
         >
           <div
             className="grow flex space-x-2 py-3 hover:text-blue-400 cursor-pointer"

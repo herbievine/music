@@ -74,28 +74,15 @@ export default function Player() {
             </div>
           </div>
         ) : (
-          <div
-            className="w-full flex items-center space-x-2"
+          <MediaViewer
+            media={songs[songIndex]}
+            className="w-full"
             onClick={() => {
               if (!expanded) {
                 setExpanded(true);
               }
             }}
-          >
-            <Image
-              src={songs[songIndex].coverLinkLow}
-              alt={`${songs[songIndex].title} by ${songs[songIndex].artist}`}
-              width={45}
-              height={45}
-              className="rounded-lg"
-            />
-            <div className="flex flex-col">
-              <p className="font-semibold">{songs[songIndex].title}</p>
-              <p className="text-sm font-semibold text-neutral-500 truncate">
-                Song • {songs[songIndex].artist}
-              </p>
-            </div>
-          </div>
+          />
         )}
         {isQueueOpen && (
           <div className="w-full flex flex-col space-y-2">

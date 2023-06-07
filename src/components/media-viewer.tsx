@@ -3,9 +3,11 @@
 import { Media } from "@/types/media";
 import Link from "next/link";
 import Image from "next/image";
+import cn from "@/lib/cn";
 
 type MediaViewerProps = {
   media: Media;
+  className?: string;
 } & (
   | {
       link?: boolean;
@@ -15,7 +17,11 @@ type MediaViewerProps = {
     }
 );
 
-export default function MediaViewer({ media, ...props }: MediaViewerProps) {
+export default function MediaViewer({
+  media,
+  className,
+  ...props
+}: MediaViewerProps) {
   const component = (
     <div className={"w-full flex items-center space-x-2"}>
       <Image
@@ -39,22 +45,23 @@ export default function MediaViewer({ media, ...props }: MediaViewerProps) {
   if ("link" in props) {
     return (
       <Link
-        key={media.id}
-        className="py-2 cursor-pointer"
+        className={cn("py-2 cursor-pointer", className)}
         href={`/${media.type}?id=${media.id}`}
       >
         {component}
       </Link>
     );
   }
-
   if ("onClick" in props) {
     return (
-      <div key={media.id} className="cursor-pointer" onClick={props.onClick}>
+      <div
+        className={cn("py-2 cursor-pointer", className)}
+        onClick={props.onClick}
+      >
         {component}
       </div>
     );
   }
 
-  return component;
+  return <div className={cn("py-2", className)}>{component}</div>;
 }
