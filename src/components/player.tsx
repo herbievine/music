@@ -85,9 +85,9 @@ export default function Player() {
           />
         )}
         {isQueueOpen && (
-          <div className="w-full flex flex-col space-y-2">
+          <div>
             <p className="font-bold border-b border-neutral-800 pb-2">Queue</p>
-            <div className="flex flex-col space-y-2 h-48 overflow-scroll">
+            <div className="flex flex-col divide-y divide-neutral-800 h-64 overflow-scroll">
               {songs.slice(songIndex + 1).map((song) => (
                 <div
                   key={song.id}
@@ -95,7 +95,7 @@ export default function Player() {
                 >
                   <MediaViewer media={song} />
                   <button
-                    className="rounded-full bg-neutral-800 w-8 h-8 flex justify-center items-center"
+                    className="bg-neutral-800 py-2 px-[.55rem] rounded-lg"
                     onClick={() => {
                       remove(song);
                     }}
