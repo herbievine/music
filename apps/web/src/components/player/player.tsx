@@ -5,10 +5,12 @@ import { trpc } from "../../utils/trpc";
 import { AudioTag } from "./audio";
 import { PlayerExpandedView } from "./player-expanded-view";
 import { PlayerMiniView } from "./player-mini-view";
+import { useClickAway } from "@uidotdev/usehooks";
 
 export function Player() {
   const [isExpanded, setIsExpanded] = useState(false);
   const [progress, setProgress] = useState(0);
+  const ref = useClickAway(() => setIsExpanded(false));
   const { songs, songIndex, isPlaying } = useQueueStore();
   const { data } = trpc.play.useQuery(
     { songId: songIndex !== -1 ? songs[songIndex].itunesId.toString() : "" },
@@ -40,7 +42,12 @@ export function Player() {
   }
 
   return (
-    <div className="w-full max-w-lg p-4 mx-auto fixed bottom-0">
+    <div
+      className={cn(
+        "w-full max-w-lg mx-auto fixed bottom-0",
+        !isExpanded && "p-4",
+      )}
+    >
       <div
         className={cn(
           "w-full bg-zinc-800 rounded-xl",
@@ -53,6 +60,8 @@ export function Player() {
       >
         {isExpanded ? (
           <PlayerExpandedView
+            // @ts-ignore
+            playerRef={ref}
             audioRef={audioRef}
             progressRef={progressRef}
             progress={progress}

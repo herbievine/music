@@ -1,15 +1,21 @@
-import { Pause, Play, SkipBackIcon, SkipForward } from "lucide-react";
+import { ListX, Pause, Play, SkipBackIcon, SkipForward } from "lucide-react";
 import { useQueueStore } from "../../store/queue";
 import type { RefObject } from "react";
 import { formatTime } from "../../lib/format-time";
 
 type Props = {
+  playerRef: RefObject<HTMLDivElement>;
   audioRef: RefObject<HTMLAudioElement>;
   progressRef: RefObject<HTMLInputElement>;
   progress: number;
 };
 
-export function PlayerExpandedView({ audioRef, progressRef, progress }: Props) {
+export function PlayerExpandedView({
+  playerRef,
+  audioRef,
+  progressRef,
+  progress,
+}: Props) {
   const { songs, songIndex, play, pause, next, previous, isPlaying } =
     useQueueStore();
 
@@ -18,7 +24,10 @@ export function PlayerExpandedView({ audioRef, progressRef, progress }: Props) {
   }
 
   return (
-    <div className="w-full h-full flex flex-col items-center space-y-4">
+    <div
+      ref={playerRef}
+      className="w-full h-full flex flex-col items-center space-y-4"
+    >
       <div className="w-full flex space-x-4 items-center">
         <img src={songs[songIndex].artworkUrl100} className="h-20 rounded-lg" />
         <div className="w-full flex flex-col items-start">
@@ -30,19 +39,25 @@ export function PlayerExpandedView({ audioRef, progressRef, progress }: Props) {
       </div>
       <p className="w-full font-semibold text-left">Next up</p>
       <div className="w-full h-full flex flex-col space-y-4 overflow-y-auto">
-        {songs.slice(songIndex + 1).map((song) => (
-          <div key={song.id} className="w-full flex space-x-2 items-center">
-            <img src={song.artworkUrl100} className="h-12 rounded-lg" />
-            <div className="w-full flex flex-col items-start">
-              <p className="font-semibold">{song.name}</p>
-              <p className="text-sm font-semibold text-neutral-500">
-                {song.album.name} - {song.artist.name}
-              </p>
+        {songs.length - 1 > songIndex + 1 ? (
+          songs.slice(songIndex + 1).map((song) => (
+            <div key={song.id} className="w-full flex space-x-2 items-center">
+              <img src={song.artworkUrl100} className="h-12 rounded-lg" />
+              <div className="w-full flex flex-col items-start">
+                <p className="font-semibold">{song.name}</p>
+                <p className="text-sm font-semibold text-neutral-500">
+                  {song.album.name} - {song.artist.name}
+                </p>
+              </div>
             </div>
+          ))
+        ) : (
+          <div className="w-full h-full flex justify-center items-center">
+            <ListX strokeWidth={1.5} size={128} className="stroke-zinc-500" />
           </div>
-        ))}
+        )}
       </div>
-      <div className="w-full flex flex-col space-y-6 py-12">
+      <div className="w-full flex flex-col items-center space-y-12 py-8">
         <div className="w-full flex flex-col items-center space-y-1">
           <input
             className="w-full h-2 bg-zinc-700 accent-zinc-100 rounded-lg appearance-none"
@@ -72,7 +87,7 @@ export function PlayerExpandedView({ audioRef, progressRef, progress }: Props) {
               previous();
             }}
           >
-            <SkipBackIcon strokeWidth={2.5} size={32} />
+            <SkipBackIcon strokeWidth={2} size={28} />
           </button>
           {isPlaying ? (
             <button
@@ -83,7 +98,7 @@ export function PlayerExpandedView({ audioRef, progressRef, progress }: Props) {
                 pause();
               }}
             >
-              <Pause strokeWidth={2.5} size={32} />
+              <Pause strokeWidth={2} size={28} />
             </button>
           ) : (
             <button
@@ -94,7 +109,7 @@ export function PlayerExpandedView({ audioRef, progressRef, progress }: Props) {
                 play();
               }}
             >
-              <Play strokeWidth={2.5} size={32} />
+              <Play strokeWidth={2} size={28} />
             </button>
           )}
           <button
@@ -105,7 +120,7 @@ export function PlayerExpandedView({ audioRef, progressRef, progress }: Props) {
               next();
             }}
           >
-            <SkipForward strokeWidth={2.5} size={32} />
+            <SkipForward strokeWidth={2} size={28} />
           </button>
         </div>
       </div>
