@@ -22,6 +22,8 @@ import { trpcServer } from "@hono/trpc-server";
 import { z } from "zod";
 import { contextStorage } from "hono/context-storage";
 import { getSong, saveSong } from "./services/songs";
+import { getAlbum } from "./services/albums";
+import { getArtist } from "./services/artists";
 
 const app = new Hono<{ Bindings: Env }>();
 
@@ -76,23 +78,20 @@ export const appRouter = router({
       });
   }),
   getAlbumById: publicProcedure
-    .input(z.string().min(1))
-    .query(async ({ input }) => {
-      const { results } = await itunesLookup(input, "album");
+    .input(z.object({ albumId: z.string() }))
+    .query(async ({ input: { albumId }, ctx }) => {
+      const db = drizzle(ctx.env.DB);
+      const album = await getAlbum(albumId, db);
 
-      if (results.length === 0) {
+      if (!album) {
         return null;
       }
 
-      const [album] = results as Album[];
-
-      const { results: artistResults } = await itunesLookup(
-        album.artistId.toString(),
-      );
+      const artist = await getArtist(album.itunesArtistId, db);
 
       return {
         ...album,
-        artist: artistResults[0] as Artist,
+        artist,
       };
     }),
   getAlbumTracks: publicProcedure

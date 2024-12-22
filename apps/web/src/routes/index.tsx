@@ -3,6 +3,7 @@ import { useDebounce } from "@uidotdev/usehooks";
 import { trpc } from "../utils/trpc";
 import { useQueryState } from "nuqs";
 import { Link } from "@tanstack/react-router";
+import { Favorites } from "../components/home/favorites";
 
 export const Route = createFileRoute("/")({
   component: HomeComponent,
@@ -49,6 +50,7 @@ function HomeComponent() {
       ) : (
         <span>No data</span>
       )}
+      <Favorites />
     </div>
   );
 }
