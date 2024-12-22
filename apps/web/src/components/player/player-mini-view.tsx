@@ -13,8 +13,8 @@ export function PlayerMiniView() {
       <div className="flex space-x-2 items-center">
         <img src={songs[songIndex].artworkUrl100} className="h-10 rounded-lg" />
         <div className="w-full flex flex-col items-start">
-          <p className="font-semibold">{songs[songIndex].name}</p>
-          <p className="text-sm font-semibold text-neutral-500">
+          <p className="font-semibold line-clamp-1">{songs[songIndex].name}</p>
+          <p className="text-sm font-semibold text-neutral-500 line-clamp-1">
             {songs[songIndex].artist.name}
           </p>
         </div>

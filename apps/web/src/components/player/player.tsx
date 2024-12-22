@@ -7,7 +7,7 @@ import { PlayerExpandedView } from "./player-expanded-view";
 import { PlayerMiniView } from "./player-mini-view";
 
 export function Player() {
-  const [isExpanded, setIsExpanded] = useState(true);
+  const [isExpanded, setIsExpanded] = useState(false);
   const [progress, setProgress] = useState(0);
   const { songs, songIndex, isPlaying } = useQueueStore();
   const { data } = trpc.play.useQuery(
@@ -40,11 +40,11 @@ export function Player() {
   }
 
   return (
-    <div className="w-full max-w-lg p-4 mx-auto fixed bottom-0 bg-red-500/50">
+    <div className="w-full max-w-lg p-4 mx-auto fixed bottom-0">
       <div
         className={cn(
           "w-full bg-zinc-800 rounded-xl",
-          "transition-all duration-200 ease-in-out",
+          "transition-all duration-300 ease-in-out",
           isExpanded ? "p-6 h-[calc(100vh_*_0.8)]" : "p-2 h-14",
         )}
         onClick={() => {
