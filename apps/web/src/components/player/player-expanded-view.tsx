@@ -39,7 +39,7 @@ export function PlayerExpandedView({
       </div>
       <p className="w-full font-semibold text-left">Next up</p>
       <div className="w-full h-full flex flex-col space-y-4 overflow-y-auto">
-        {songs.length - 1 > songIndex + 1 ? (
+        {songs.length - 1 >= songIndex + 1 ? (
           songs.slice(songIndex + 1).map((song) => (
             <div key={song.id} className="w-full flex space-x-2 items-center">
               <img src={song.artworkUrl100} className="h-12 rounded-lg" />
