@@ -50,9 +50,11 @@ export function Player() {
     >
       <div
         className={cn(
-          "w-full bg-zinc-800 rounded-xl",
+          "w-full bg-zinc-800",
           "transition-all duration-300 ease-in-out",
-          isExpanded ? "p-6 h-[calc(100vh_*_0.8)]" : "p-2 h-14",
+          isExpanded
+            ? "p-6 h-[calc(100vh_*_0.8)] rounded-t-2xl"
+            : "p-2 h-14 rounded-xl",
         )}
         onClick={() => {
           setIsExpanded((p) => !p);
