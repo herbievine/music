@@ -72,8 +72,17 @@ export async function saveSong(songId: string, db: DrizzleD1Database) {
   const arrayBuffer = await getArrayBuffer(link, {
     headers: {
       "content-type": "audio/mpeg",
+      "User-Agent":
+        "Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1 herbievine",
     },
   });
+
+  const mb = 1 * 1024 * 1024; // 1MB (minimum for a song)
+
+  if (arrayBuffer.byteLength < mb) {
+    console.error(`Issue with link, under a MB: ${link}`);
+    throw new Error("Error fetching song data");
+  }
 
   const songWithTags = await write2({ ...song, artist, album }, arrayBuffer);
 

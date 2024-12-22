@@ -15,12 +15,16 @@ export async function converter(videoId: string, key: string, retryCount = 0) {
 
   searchParams.append("id", videoId);
 
-  const data = await fetcher(`https://youtube-mp36.p.rapidapi.com/dl?${searchParams}`, apiSchema, {
-    headers: {
-      "X-RapidAPI-Host": "youtube-mp36.p.rapidapi.com",
-      "X-RapidAPI-Key": key,
+  const data = await fetcher(
+    `https://youtube-mp36.p.rapidapi.com/dl?${searchParams}`,
+    apiSchema,
+    {
+      headers: {
+        "X-RapidAPI-Host": "youtube-mp36.p.rapidapi.com",
+        "X-RapidAPI-Key": key,
+      },
     },
-  });
+  );
 
   if (data.status === "ok" && data.link) {
     console.log(`Link received for ${videoId}: ${data.link}`);
@@ -39,6 +43,4 @@ export async function converter(videoId: string, key: string, retryCount = 0) {
   }
 
   throw `Could not get link: ${data.msg || "Unknown reason"}`;
-
-  return "";
 }

@@ -2,6 +2,7 @@ import { ListX, Pause, Play, SkipBackIcon, SkipForward } from "lucide-react";
 import { useQueueStore } from "../../store/queue";
 import type { RefObject } from "react";
 import { formatTime } from "../../lib/format-time";
+import { Link } from "@tanstack/react-router";
 
 type Props = {
   playerRef: RefObject<HTMLDivElement>;
@@ -31,10 +32,17 @@ export function PlayerExpandedView({
       <div className="w-full flex space-x-4 items-center">
         <img src={songs[songIndex].artworkUrl100} className="h-20 rounded-lg" />
         <div className="w-full flex flex-col items-start">
-          <p className="font-semibold">{songs[songIndex].name}</p>
-          <p className="text-sm font-semibold text-neutral-500">
-            {songs[songIndex].album.name} - {songs[songIndex].artist.name}
-          </p>
+          <span className="font-semibold">{songs[songIndex].name}</span>
+          <span className="text-sm font-semibold text-neutral-500">
+            <Link
+              to="/albums/$id"
+              params={{ id: songs[songIndex].itunesAlbumId }}
+              className="underline"
+            >
+              {songs[songIndex].album.name}
+            </Link>{" "}
+            - {songs[songIndex].artist.name}
+          </span>
         </div>
       </div>
       <p className="w-full font-semibold text-left">Next up</p>
