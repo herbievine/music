@@ -33,7 +33,11 @@ type HonoContext = {
 
 app.use(
   cors({
-    origin: ["https://winamp.herbievine.com", "http://localhost:3001"],
+    origin: [
+      "https://music.herbievine.com",
+      "https://winamp.herbievine.com",
+      "http://localhost:3001",
+    ],
   }),
 );
 
