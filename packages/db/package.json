@@ -1,0 +1,20 @@
+{
+  "name": "@music/db",
+  "type": "module",
+  "exports": {
+    "default": "./src/index.ts"
+  },
+  "version": "1.0.0",
+  "scripts": {
+    "db:gen": "drizzle-kit generate",
+    "db:studio": "drizzle-kit studio"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "better-sqlite3": "^11.7.0",
+    "drizzle-kit": "^0.26.2",
+    "drizzle-orm": "^0.35.3"
+  }
+}

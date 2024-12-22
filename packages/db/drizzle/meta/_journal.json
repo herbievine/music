@@ -1,0 +1,48 @@
+{
+  "version": "7",
+  "dialect": "sqlite",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "6",
+      "when": 1729960682668,
+      "tag": "0000_glorious_reavers",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1729960984995,
+      "tag": "0001_majestic_tomas",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1729963403348,
+      "tag": "0002_outgoing_reptil",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1730019135986,
+      "tag": "0003_shocking_exiles",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1730380966258,
+      "tag": "0004_slimy_ma_gnuci",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "6",
+      "when": 1734862968513,
+      "tag": "0005_bitter_agent_zero",
+      "breakpoints": true
+    }
+  ]
+}
