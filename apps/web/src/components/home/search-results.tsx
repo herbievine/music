@@ -45,7 +45,8 @@ export function SearchResults({ q }: Props) {
             <div className="flex flex-col items-start">
               <span className="line-clamp-1 text-left">{result.name}</span>
               <span className="text-sm text-zinc-500">
-                {result.releaseYear}
+                {result.releaseYear} —{" "}
+                <span className="uppercase">{result.object}</span>
               </span>
             </div>
           </Link>

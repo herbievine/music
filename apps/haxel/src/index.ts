@@ -10,7 +10,15 @@ import {
 } from "./api/itunes";
 import { youtube } from "./api/youtube";
 import { converter } from "./api/converter";
-import { albums, artists, songs, eq, drizzle } from "@music/db";
+import {
+  albums,
+  artists,
+  songs,
+  eq,
+  drizzle,
+  arrayContains,
+  inArray,
+} from "@music/db";
 import { id } from "./utils/id";
 import { getArrayBuffer } from "./utils/get-array-buffer";
 import { write } from "./lib/id3";
@@ -50,31 +58,72 @@ const publicProcedure = t.procedure;
 const router = t.router;
 
 export const appRouter = router({
-  search: publicProcedure.input(z.string()).query(async ({ input }) => {
+  search: publicProcedure.input(z.string()).query(async ({ input, ctx }) => {
     if (input.length === 0) {
       return [];
     }
 
     const { results } = await itunes(input);
 
-    return results
-      .filter(({ wrapperType }) => wrapperType === "collection")
-      .map((album) => {
-        const {
-          collectionId,
-          collectionName,
-          artworkUrl100,
-          trackCount,
-          releaseDate,
-        } = album as Album;
+    // const itunesIds = results
+    //   .filter(
+    //     ({ wrapperType }) =>
+    //       wrapperType === "collection" || wrapperType === "track",
+    //   )
+    //   .map((res) =>
+    //     res.wrapperType === "track"
+    //       ? [res.trackId.toString(), res.collectionId.toString()]
+    //       : res.wrapperType === "collection"
+    //         ? res.collectionId.toString()
+    //         : res.artistId.toString(),
+    //   )
+    //   .flatMap((r) => r)
+    //   .splice(0, 100);
 
-        return {
-          albumId: collectionId,
-          name: collectionName,
-          url: artworkUrl100, //.replace("100x100", "1000x1000"),
-          releaseYear: releaseDate.split("-")[0],
-          trackCount,
-        };
+    // console.log(JSON.stringify(itunesIds, null, 2));
+
+    // const db = drizzle(ctx.env.DB);
+    // const songsInDb = await db
+    //   .select()
+    //   .from(songs)
+    //   .where(inArray(songs.itunesId, itunesIds))
+    //   .all();
+
+    // const albumsInDb = await db
+    //   .select()
+    //   .from(albums)
+    //   .where(inArray(albums.itunesId, itunesIds))
+    //   .all();
+
+    // console.log(JSON.stringify({ songsInDb, albumsInDb, itunesIds }, null, 2));
+
+    return results
+      .filter(
+        ({ wrapperType }) =>
+          wrapperType === "collection" || wrapperType === "track",
+      )
+      .map((data) => {
+        data = data as Song | Album;
+
+        if (data.wrapperType === "track") {
+          return {
+            albumId: data.collectionId,
+            object: "song",
+            name: data.trackName,
+            url: data.artworkUrl100, //.replace("100x100", "1000x1000"),
+            releaseYear: data.releaseDate.split("-")[0],
+            trackCount: data.trackCount,
+          };
+        } else {
+          return {
+            albumId: data.collectionId,
+            object: "album",
+            name: data.collectionName,
+            url: data.artworkUrl100, //.replace("100x100", "1000x1000"),
+            releaseYear: data.releaseDate.split("-")[0],
+            trackCount: data.trackCount,
+          };
+        }
       });
   }),
   getAlbumById: publicProcedure
