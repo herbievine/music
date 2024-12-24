@@ -29,9 +29,11 @@ export function MediaHeader({ id }: Props) {
         className="w-52 h-52 rounded-2xl"
       />
       <div className="flex flex-col items-center space-y-1">
-        <h1 className="text-xl font-bold">{data.name}</h1>
-        <span className="text-sm font-bold">{data.artist.name}</span>
-        <span className="text-xs font-bold uppercase text-zinc-500">
+        <h1 className="text-xl font-semibold text-center">{data.name}</h1>
+        <span className="text-sm font-semibold text-center">
+          {data.artist.name}
+        </span>
+        <span className="text-xs font-semibold uppercase text-zinc-500">
           {data.primaryGenreName} - {dayjs(data.releaseDate).format("YYYY")}
         </span>
       </div>

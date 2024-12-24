@@ -13,13 +13,13 @@ export function PlayerMiniView() {
       <div className="flex space-x-2 items-center">
         <img src={songs[songIndex].artworkUrl100} className="h-10 rounded-lg" />
         <div className="w-full flex flex-col items-start">
-          <p className="font-semibold line-clamp-1">{songs[songIndex].name}</p>
-          <p className="text-sm font-semibold text-neutral-500 line-clamp-1">
+          <span className="line-clamp-1">{songs[songIndex].name}</span>
+          <p className="text-sm text-neutral-500 line-clamp-1">
             {songs[songIndex].artist.name}
           </p>
         </div>
       </div>
-      <div className="flex space-x-2 items-center">
+      <div className="px-2 flex space-x-3 items-center">
         {isPlaying ? (
           <button
             onClick={(e) => {
@@ -29,7 +29,7 @@ export function PlayerMiniView() {
               pause();
             }}
           >
-            <Pause strokeWidth={2.5} />
+            <Pause strokeWidth={1.75} size={24} />
           </button>
         ) : (
           <button
@@ -40,7 +40,7 @@ export function PlayerMiniView() {
               play();
             }}
           >
-            <Play strokeWidth={2.5} />
+            <Play strokeWidth={2} size={22} />
           </button>
         )}
         <button
@@ -51,7 +51,7 @@ export function PlayerMiniView() {
             next();
           }}
         >
-          <SkipForward strokeWidth={2.5} />
+          <SkipForward strokeWidth={2} size={24} />
         </button>
       </div>
     </div>

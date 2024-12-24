@@ -33,29 +33,29 @@ export function PlayerExpandedView({
         <img src={songs[songIndex].artworkUrl100} className="h-20 rounded-lg" />
         <div className="w-full flex flex-col items-start">
           <span className="font-semibold">{songs[songIndex].name}</span>
-          <span className="text-sm font-semibold text-neutral-500">
-            <Link
-              to="/albums/$id"
-              params={{ id: songs[songIndex].itunesAlbumId }}
-              className="underline"
-            >
-              {songs[songIndex].album.name}
-            </Link>{" "}
-            - {songs[songIndex].artist.name}
+          <Link
+            to="/albums/$id"
+            params={{ id: songs[songIndex].itunesAlbumId }}
+            className="underline text-sm text-neutral-500"
+          >
+            {songs[songIndex].album.name}
+          </Link>
+          <span className="text-sm text-neutral-500">
+            {songs[songIndex].artist.name}
           </span>
         </div>
       </div>
-      <p className="w-full font-semibold text-left">Next up</p>
+      <p className="w-full text-sm text-left">Next up</p>
       <div className="w-full h-full flex flex-col space-y-4 overflow-y-auto">
         {songs.length - 1 >= songIndex + 1 ? (
           songs.slice(songIndex + 1).map((song) => (
             <div key={song.id} className="w-full flex space-x-2 items-center">
               <img src={song.artworkUrl100} className="h-12 rounded-lg" />
               <div className="w-full flex flex-col items-start">
-                <p className="font-semibold">{song.name}</p>
-                <p className="text-sm font-semibold text-neutral-500">
+                <span className="line-clamp-1">{song.name}</span>
+                <span className="text-sm line-clamp-1 text-neutral-500">
                   {song.album.name} - {song.artist.name}
-                </p>
+                </span>
               </div>
             </div>
           ))
@@ -65,7 +65,7 @@ export function PlayerExpandedView({
           </div>
         )}
       </div>
-      <div className="w-full flex flex-col items-center space-y-12 py-8">
+      <div className="w-full flex flex-col items-center space-y-8 py-8">
         <div className="w-full flex flex-col items-center space-y-1">
           <input
             className="w-full h-2 bg-zinc-700 accent-zinc-100 rounded-lg appearance-none"
@@ -95,7 +95,7 @@ export function PlayerExpandedView({
               previous();
             }}
           >
-            <SkipBackIcon strokeWidth={2} size={28} />
+            <SkipBackIcon strokeWidth={2} size={32} />
           </button>
           {isPlaying ? (
             <button
@@ -106,7 +106,7 @@ export function PlayerExpandedView({
                 pause();
               }}
             >
-              <Pause strokeWidth={2} size={28} />
+              <Pause strokeWidth={2} size={40} />
             </button>
           ) : (
             <button
@@ -117,7 +117,7 @@ export function PlayerExpandedView({
                 play();
               }}
             >
-              <Play strokeWidth={2} size={28} />
+              <Play strokeWidth={2} size={40} />
             </button>
           )}
           <button
@@ -128,7 +128,7 @@ export function PlayerExpandedView({
               next();
             }}
           >
-            <SkipForward strokeWidth={2} size={28} />
+            <SkipForward strokeWidth={2} size={32} />
           </button>
         </div>
       </div>
