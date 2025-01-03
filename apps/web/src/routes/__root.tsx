@@ -27,7 +27,7 @@ function RootComponent() {
     <trpc.Provider client={trpcClient} queryClient={queryClient}>
       <QueryClientProvider client={queryClient}>
         <NuqsAdapter>
-          <main className="max-w-lg mx-auto flex flex-col py-6">
+          <main className="max-w-lg mx-auto flex flex-col py-2">
             <div className="relative">
               <Outlet />
               <Player />

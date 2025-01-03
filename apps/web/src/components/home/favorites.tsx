@@ -18,10 +18,10 @@ export function Favorites() {
           <img
             src={`https://albums.herbievine.com/${fav.bucketCoverId}`}
             alt={`${fav.name} cover`}
-            className="w-full h-full rounded-2xl"
+            className="w-full rounded-2xl"
           />
           <div className="flex flex-col space-y-1">
-            <span className="text-sm font-bold">{fav.name}</span>
+            <span className="text-sm font-bold line-clamp-2">{fav.name}</span>
             <span className="text-sm font-bold text-zinc-500">
               {fav.artist.name}
             </span>
