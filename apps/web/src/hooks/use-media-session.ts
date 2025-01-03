@@ -1,11 +1,7 @@
-import { useEffect, type RefObject } from "react";
+import { useEffect } from "react";
 import { useQueueStore } from "../store/queue";
 
-type Props = {
-  audioRef: RefObject<HTMLAudioElement>;
-};
-
-export function useMediaSession({ audioRef }: Props) {
+export function useMediaSession() {
   const { play, pause, next, previous } = useQueueStore();
   const song = useQueueStore((s) => s.songs[s.songIndex]);
 
