@@ -1,19 +1,14 @@
 import { useQueueStore } from "../../store/queue";
 import type { RefObject } from "react";
 
-type RawPlayerProps = {
+type Props = {
   src: string | undefined;
   audioRef: RefObject<HTMLAudioElement>;
   progressRef: RefObject<HTMLInputElement>;
   setProgress: (progress: number) => void;
 };
 
-export function AudioTag({
-  src,
-  audioRef,
-  progressRef,
-  setProgress,
-}: RawPlayerProps) {
+export function AudioTag({ src, audioRef, progressRef, setProgress }: Props) {
   const { next } = useQueueStore();
 
   return (

@@ -6,6 +6,7 @@ import { AudioTag } from "./audio";
 import { PlayerExpandedView } from "./player-expanded-view";
 import { PlayerMiniView } from "./player-mini-view";
 import { useClickAway } from "@uidotdev/usehooks";
+import { useMediaSession } from "../../hooks/useMediaSession";
 
 export function Player() {
   const [isExpanded, setIsExpanded] = useState(false);
@@ -18,6 +19,8 @@ export function Player() {
   );
   const audioRef = useRef<HTMLAudioElement>(null);
   const progressRef = useRef<HTMLInputElement>(null);
+
+  useMediaSession({ audioRef });
 
   // Used to sync store with audio ref
   useEffect(() => {
