@@ -20,7 +20,7 @@ export function Player() {
   const audioRef = useRef<HTMLAudioElement>(null);
   const progressRef = useRef<HTMLInputElement>(null);
 
-  useMediaSession();
+  useMediaSession({ audioRef });
 
   // Used to sync store with audio ref
   useEffect(() => {

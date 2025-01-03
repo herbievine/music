@@ -1,12 +1,69 @@
-import { useEffect } from "react";
+import { useEffect, useMemo, type RefObject } from "react";
 import { useQueueStore } from "../store/queue";
 
-export function useMediaSession() {
+type Props = {
+  audioRef: RefObject<HTMLAudioElement>;
+};
+
+export function useMediaSession({ audioRef }: Props) {
   const { play, pause, next, previous } = useQueueStore();
   const song = useQueueStore((s) => s.songs[s.songIndex]);
 
+  const actionHandlers = useMemo(
+    () =>
+      [
+        {
+          key: "play",
+          fn: () => {
+            play();
+            navigator.mediaSession.playbackState = "playing";
+          },
+        },
+        {
+          key: "pause",
+          fn: () => {
+            pause();
+            navigator.mediaSession.playbackState = "paused";
+          },
+        },
+        {
+          key: "nexttrack",
+          fn: next,
+        },
+        {
+          key: "previoustrack",
+          fn: previous,
+        },
+      ] as const,
+    [play, pause, next, previous, navigator.mediaSession],
+  );
+
+  useEffect(() => {
+    if (song && "mediaSession" in navigator && audioRef.current) {
+      audioRef.current.addEventListener("playing", () => {
+        for (const { key, fn } of actionHandlers) {
+          navigator.mediaSession.setActionHandler(key, fn);
+        }
+      });
+    }
+
+    return () => {
+      if ("mediaSession" in navigator && audioRef.current) {
+        audioRef.current.addEventListener("playing", () => null);
+
+        for (const { key } of actionHandlers) {
+          navigator.mediaSession.setActionHandler(key, null);
+        }
+      }
+    };
+  }, [song?.id]);
+
   useEffect(() => {
     if (song && "mediaSession" in navigator) {
+      // always clear seek forward/backward
+      navigator.mediaSession.setActionHandler("seekforward", null);
+      navigator.mediaSession.setActionHandler("seekbackward", null);
+
       navigator.mediaSession.metadata = new MediaMetadata({
         title: song.name,
         artist: song.artist.name,
@@ -14,7 +71,6 @@ export function useMediaSession() {
         artwork: [
           {
             src: `https://albums.herbievine.com/${song.album.bucketCoverId}`,
-            sizes: "96x96",
             type: "image/png",
           },
         ],
@@ -24,54 +80,6 @@ export function useMediaSession() {
     return () => {
       if ("mediaSession" in navigator) {
         navigator.mediaSession.metadata = null;
-      }
-    };
-  }, [song?.id]);
-
-  useEffect(() => {
-    if (song && "mediaSession" in navigator) {
-      navigator.mediaSession.setActionHandler("play", play);
-    }
-
-    return () => {
-      if ("mediaSession" in navigator) {
-        navigator.mediaSession.setActionHandler("play", null);
-      }
-    };
-  }, [song?.id]);
-
-  useEffect(() => {
-    if (song && "mediaSession" in navigator) {
-      navigator.mediaSession.setActionHandler("pause", pause);
-    }
-
-    return () => {
-      if ("mediaSession" in navigator) {
-        navigator.mediaSession.setActionHandler("pause", null);
-      }
-    };
-  }, [song?.id]);
-
-  useEffect(() => {
-    if (song && "mediaSession" in navigator) {
-      navigator.mediaSession.setActionHandler("nexttrack", next);
-    }
-
-    return () => {
-      if ("mediaSession" in navigator) {
-        navigator.mediaSession.setActionHandler("nexttrack", null);
-      }
-    };
-  }, [song?.id]);
-
-  useEffect(() => {
-    if (song && "mediaSession" in navigator) {
-      navigator.mediaSession.setActionHandler("previoustrack", previous);
-    }
-
-    return () => {
-      if ("mediaSession" in navigator) {
-        navigator.mediaSession.setActionHandler("previoustrack", null);
       }
     };
   }, [song?.id]);
