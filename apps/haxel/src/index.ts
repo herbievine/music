@@ -146,20 +146,46 @@ export const appRouter = router({
   getAlbumTracks: publicProcedure
     .input(z.string().min(1))
     .query(async ({ input, ctx }) => {
+      const albumId = input;
+
+      const db = drizzle(ctx.env.DB);
+      const album = await db
+        .select()
+        .from(albums)
+        .where(eq(albums.itunesId, albumId))
+        .get();
+
+      if (album) {
+        const albumSongs = await db
+          .select()
+          .from(songs)
+          .where(eq(songs.itunesAlbumId, albumId))
+          .leftJoin(artists, eq(songs.itunesArtistId, artists.itunesId))
+          .all();
+
+        console.log(albumSongs);
+
+        if (albumSongs.length > 0) {
+          return albumSongs.map(({ songs, artists }) => ({
+            ...songs,
+            album,
+            artist: artists,
+          }));
+        }
+      }
+
       const { results } = await itunesLookup(input, "song");
 
       if (results.length === 0) {
         return null;
       }
 
-      const songs = results.filter(
+      const songsResults = results.filter(
         ({ wrapperType }) => wrapperType === "track",
       ) as Song[];
 
-      const db = drizzle(ctx.env.DB);
-
       return Promise.all(
-        songs.map(({ trackId }) => getSong(trackId.toString(), db)),
+        songsResults.map(({ trackId }) => getSong(trackId.toString(), db)),
       );
     }),
   play: publicProcedure
