@@ -16,7 +16,9 @@ export async function fetcher<S extends z.ZodTypeAny>(
     }
 
     if (!res.ok) {
-      console.error(`An error occurred fetching '${url}'\n${await res.text()}`);
+      console.error(
+        `[FETCH ERROR]\nCode from API: ${res.status}\nResponse from API: ${await res.text()}`,
+      );
 
       throw new Error("An error occurred");
     }
@@ -26,7 +28,9 @@ export async function fetcher<S extends z.ZodTypeAny>(
     const parsedJson = schema.safeParse(json);
 
     if (parsedJson.success === false) {
-      console.error(`An error occurred validating '${url}'\n${JSON.stringify(json)}\n${parsedJson.error}`);
+      console.error(
+        `An error occurred validating '${url}'\n${JSON.stringify(json)}\n${parsedJson.error}`,
+      );
 
       throw new Error("An error occurred");
     }
