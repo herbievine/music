@@ -11,7 +11,12 @@ export function MediaHeader({ id }: Props) {
   if (!data) {
     return (
       <div className="flex flex-col items-center space-y-4">
-        <div className="w-52 h-52 bg-zinc-800 rounded-2xl animate-pulse" />
+        <div
+          className="w-52 h-52 bg-zinc-800 rounded-2xl animate-pulse"
+          style={{
+            viewTransitionName: `album-${id}`,
+          }}
+        />
         <div className="flex flex-col items-center space-y-2">
           <div className="h-6 w-40 bg-zinc-800 rounded-2xl animate-pulse" />
           <div className="h-4 w-28 bg-zinc-800 rounded-2xl animate-pulse" />
@@ -27,6 +32,9 @@ export function MediaHeader({ id }: Props) {
         src={`https://albums.herbievine.com/${data.bucketCoverId}`}
         alt={`${data.name} cover`}
         className="w-52 h-52 rounded-2xl"
+        style={{
+          viewTransitionName: `album-${id}`,
+        }}
       />
       <div className="flex flex-col items-center space-y-1">
         <h1 className="text-xl font-semibold text-center">{data.name}</h1>

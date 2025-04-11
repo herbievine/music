@@ -7,6 +7,7 @@ import "./styles/globals.css";
 const router = createRouter({
   routeTree,
   defaultPreload: "intent",
+  defaultViewTransition: true,
 });
 
 // Register things for typesafety

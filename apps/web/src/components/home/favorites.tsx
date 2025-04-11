@@ -19,6 +19,9 @@ export function Favorites() {
             src={`https://albums.herbievine.com/${fav.bucketCoverId}`}
             alt={`${fav.name} cover`}
             className="w-full rounded-2xl"
+            style={{
+              viewTransitionName: `album-${fav.itunesId}`,
+            }}
           />
           <div className="flex flex-col space-y-1">
             <span className="text-sm font-bold line-clamp-2">{fav.name}</span>
