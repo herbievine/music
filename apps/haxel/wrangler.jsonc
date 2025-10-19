@@ -1,0 +1,31 @@
+{
+  "name": "haxel2",
+  "main": "src/index.ts",
+  "compatibility_date": "2024-07-12",
+  "compatibility_flags": [
+    "nodejs_compat_v2"
+  ],
+  "preview_urls": false,
+  "d1_databases": [
+    {
+      "migrations_dir": "../../packages/db/drizzle",
+      "binding": "DB",
+      "database_name": "audio",
+      "database_id": "2b47230f-b54f-4591-881b-5a5951a7ff34"
+    }
+  ],
+  "r2_buckets": [
+    {
+      "binding": "AUDIO",
+      "bucket_name": "audio"
+    },
+    {
+      "binding": "ALBUM_COVERS",
+      "bucket_name": "album-covers"
+    }
+  ],
+  "observability": {
+    "enabled": true,
+    "head_sampling_rate": 1
+  }
+}

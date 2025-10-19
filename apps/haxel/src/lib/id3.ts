@@ -1,70 +1,32 @@
-import {
-  albums,
-  artists,
-  InferModel,
-  InferSelectModel,
-  songs,
-} from "@music/db";
-import { Song } from "../api/itunes";
-import { getArrayBuffer } from "../utils/get-array-buffer";
+import type { Track } from "@statsfm/spotify.js";
+import dayjs from "dayjs";
+import utc from "dayjs/plugin/utc";
 import id3, { TagConstants } from "node-id3";
+import { getArrayBuffer } from "../utils/get-array-buffer.js";
 
-export async function write(song: Song, data: ArrayBuffer) {
-  const imageArrayBuffer = await getArrayBuffer(
-    song.artworkUrl100.replace("100x100", "800x800"),
-  );
+dayjs.extend(utc);
 
-  return id3.write(
-    {
-      title: song.trackName ?? undefined,
-      artist: song.artistName ?? undefined,
-      album: song.collectionName ?? undefined,
-      year: song.releaseDate.split("-")[0],
-      genre: song.primaryGenreName ?? undefined,
-      trackNumber: `${song.trackNumber}/${song.trackCount}`,
-      partOfSet: `${song.discNumber}/${song.discCount}`,
-      image: {
-        mime: "image/jpeg",
-        type: {
-          id: TagConstants.AttachedPicture.PictureType.FRONT_COVER,
-        },
-        description: "Cover",
-        imageBuffer: Buffer.from(imageArrayBuffer),
-      },
-    },
-    Buffer.from(data),
-  );
-}
+export async function write(song: Track, data: ArrayBuffer) {
+	const imageArrayBuffer = await getArrayBuffer(song.album.images[0].url);
 
-export async function write2(
-  song: InferSelectModel<typeof songs> & {
-    artist: InferSelectModel<typeof artists>;
-    album: InferSelectModel<typeof albums>;
-  },
-  data: ArrayBuffer,
-) {
-  const imageArrayBuffer = await getArrayBuffer(
-    song.artworkUrl100.replace("100x100", "800x800"),
-  );
-
-  return id3.write(
-    {
-      title: song.name,
-      artist: song.artist.name,
-      album: song.album.name,
-      year: song.releaseDate.split("-")[0],
-      genre: song.primaryGenreName,
-      trackNumber: `${song.trackNumber}/${song.trackCount}`,
-      partOfSet: `${song.discNumber}/${song.discCount}`,
-      image: {
-        mime: "image/jpeg",
-        type: {
-          id: TagConstants.AttachedPicture.PictureType.FRONT_COVER,
-        },
-        description: "Cover",
-        imageBuffer: Buffer.from(imageArrayBuffer),
-      },
-    },
-    Buffer.from(data),
-  );
+	return id3.write(
+		{
+			title: song.name ?? undefined,
+			artist: song.artists.map((a) => a.name).join("/") ?? undefined,
+			album: song.album.name ?? undefined,
+			year: dayjs.utc(song.album.release_date).format("YYYY"),
+			// genre: song.album.genres[0] ?? undefined,
+			trackNumber: `${song.track_number}/${song.album.total_tracks}`,
+			partOfSet: song.disc_number.toString(),
+			image: {
+				mime: "image/jpeg",
+				type: {
+					id: TagConstants.AttachedPicture.PictureType.FRONT_COVER,
+				},
+				description: "Cover",
+				imageBuffer: Buffer.from(imageArrayBuffer),
+			},
+		},
+		Buffer.from(data),
+	);
 }

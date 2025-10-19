@@ -1,27 +1,32 @@
 {
-  "name": "@music/haxel",
-  "type": "module",
-  "exports": {
-    "default": "./src/types.ts"
-  },
-  "scripts": {
-    "dev": "wrangler dev",
-    "deploy": "wrangler deploy --minify"
-  },
-  "dependencies": {
-    "@hono/trpc-server": "^0.3.4",
-    "@music/db": "workspace:*",
-    "@trpc/server": "11.0.0-rc.666",
-    "archiver": "^7.0.1",
-    "hono": "^4.6.7",
-    "jszip": "^3.10.1",
-    "nanoid": "^5.0.7",
-    "node-id3": "^0.2.6",
-    "zod": "^3.23.8"
-  },
-  "devDependencies": {
-    "@types/archiver": "^6.0.3",
-    "@types/bun": "^1.1.12",
-    "wrangler": "^3.79.0"
-  }
+	"name": "@music/haxel",
+	"type": "module",
+	"exports": {
+		"default": "./src/types.ts"
+	},
+	"scripts": {
+		"dev": "wrangler dev src/index.ts",
+		"deploy": "wrangler deploy --keep-vars --minify"
+	},
+	"dependencies": {
+		"@hono/clerk-auth": "^3.0.3",
+		"@hono/trpc-server": "^0.3.4",
+		"@music/db": "workspace:*",
+		"@statsfm/spotify.js": "^1.13.0",
+		"@trpc/server": "11.0.0-rc.666",
+		"archiver": "^7.0.1",
+		"dayjs": "^1.11.13",
+		"dotenv": "^17.2.3",
+		"hono": "^4.9.12",
+		"jszip": "^3.10.1",
+		"nanoid": "^5.0.7",
+		"node-id3": "^0.2.6",
+		"zod": "^3.23.8"
+	},
+	"devDependencies": {
+		"@types/archiver": "^6.0.3",
+		"@types/bun": "^1.1.12",
+		"@types/node": "^20.11.17",
+		"wrangler": "^4"
+	}
 }

@@ -14,7 +14,11 @@
   "license": "ISC",
   "dependencies": {
     "better-sqlite3": "^11.7.0",
+    "dotenv": "^17.2.3",
     "drizzle-kit": "^0.26.2",
     "drizzle-orm": "^0.35.3"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.1.12"
   }
 }

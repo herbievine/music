@@ -43,6 +43,20 @@
       "when": 1734862968513,
       "tag": "0005_bitter_agent_zero",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1760779732498,
+      "tag": "0006_huge_titanium_man",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "6",
+      "when": 1760806330942,
+      "tag": "0007_first_shatterstar",
+      "breakpoints": true
     }
   ]
 }

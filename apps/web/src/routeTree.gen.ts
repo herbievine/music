@@ -10,104 +10,174 @@
 
 // Import Routes
 
-import { Route as rootRoute } from "./routes/__root";
-import { Route as AboutImport } from "./routes/about";
-import { Route as IndexImport } from "./routes/index";
-import { Route as AlbumsIdImport } from "./routes/albums/$id";
+import { Route as rootRoute } from './routes/__root'
+import { Route as SearchImport } from './routes/search'
+import { Route as LoginImport } from './routes/login'
+import { Route as LibraryImport } from './routes/library'
+import { Route as IndexImport } from './routes/index'
+import { Route as PlaylistIdImport } from './routes/playlist/$id'
+import { Route as AlbumIdImport } from './routes/album/$id'
 
 // Create/Update Routes
 
-const AboutRoute = AboutImport.update({
-  id: "/about",
-  path: "/about",
+const SearchRoute = SearchImport.update({
+  id: '/search',
+  path: '/search',
   getParentRoute: () => rootRoute,
-} as any);
+} as any)
+
+const LoginRoute = LoginImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRoute,
+} as any)
+
+const LibraryRoute = LibraryImport.update({
+  id: '/library',
+  path: '/library',
+  getParentRoute: () => rootRoute,
+} as any)
 
 const IndexRoute = IndexImport.update({
-  id: "/",
-  path: "/",
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRoute,
-} as any);
+} as any)
 
-const AlbumsIdRoute = AlbumsIdImport.update({
-  id: "/albums/$id",
-  path: "/albums/$id",
+const PlaylistIdRoute = PlaylistIdImport.update({
+  id: '/playlist/$id',
+  path: '/playlist/$id',
   getParentRoute: () => rootRoute,
-} as any);
+} as any)
+
+const AlbumIdRoute = AlbumIdImport.update({
+  id: '/album/$id',
+  path: '/album/$id',
+  getParentRoute: () => rootRoute,
+} as any)
 
 // Populate the FileRoutesByPath interface
 
-declare module "@tanstack/react-router" {
+declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    "/": {
-      id: "/";
-      path: "/";
-      fullPath: "/";
-      preLoaderRoute: typeof IndexImport;
-      parentRoute: typeof rootRoute;
-    };
-    "/about": {
-      id: "/about";
-      path: "/about";
-      fullPath: "/about";
-      preLoaderRoute: typeof AboutImport;
-      parentRoute: typeof rootRoute;
-    };
-    "/albums/$id": {
-      id: "/albums/$id";
-      path: "/albums/$id";
-      fullPath: "/albums/$id";
-      preLoaderRoute: typeof AlbumsIdImport;
-      parentRoute: typeof rootRoute;
-    };
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexImport
+      parentRoute: typeof rootRoute
+    }
+    '/library': {
+      id: '/library'
+      path: '/library'
+      fullPath: '/library'
+      preLoaderRoute: typeof LibraryImport
+      parentRoute: typeof rootRoute
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginImport
+      parentRoute: typeof rootRoute
+    }
+    '/search': {
+      id: '/search'
+      path: '/search'
+      fullPath: '/search'
+      preLoaderRoute: typeof SearchImport
+      parentRoute: typeof rootRoute
+    }
+    '/album/$id': {
+      id: '/album/$id'
+      path: '/album/$id'
+      fullPath: '/album/$id'
+      preLoaderRoute: typeof AlbumIdImport
+      parentRoute: typeof rootRoute
+    }
+    '/playlist/$id': {
+      id: '/playlist/$id'
+      path: '/playlist/$id'
+      fullPath: '/playlist/$id'
+      preLoaderRoute: typeof PlaylistIdImport
+      parentRoute: typeof rootRoute
+    }
   }
 }
 
 // Create and export the route tree
 
 export interface FileRoutesByFullPath {
-  "/": typeof IndexRoute;
-  "/about": typeof AboutRoute;
-  "/albums/$id": typeof AlbumsIdRoute;
+  '/': typeof IndexRoute
+  '/library': typeof LibraryRoute
+  '/login': typeof LoginRoute
+  '/search': typeof SearchRoute
+  '/album/$id': typeof AlbumIdRoute
+  '/playlist/$id': typeof PlaylistIdRoute
 }
 
 export interface FileRoutesByTo {
-  "/": typeof IndexRoute;
-  "/about": typeof AboutRoute;
-  "/albums/$id": typeof AlbumsIdRoute;
+  '/': typeof IndexRoute
+  '/library': typeof LibraryRoute
+  '/login': typeof LoginRoute
+  '/search': typeof SearchRoute
+  '/album/$id': typeof AlbumIdRoute
+  '/playlist/$id': typeof PlaylistIdRoute
 }
 
 export interface FileRoutesById {
-  __root__: typeof rootRoute;
-  "/": typeof IndexRoute;
-  "/about": typeof AboutRoute;
-  "/albums/$id": typeof AlbumsIdRoute;
+  __root__: typeof rootRoute
+  '/': typeof IndexRoute
+  '/library': typeof LibraryRoute
+  '/login': typeof LoginRoute
+  '/search': typeof SearchRoute
+  '/album/$id': typeof AlbumIdRoute
+  '/playlist/$id': typeof PlaylistIdRoute
 }
 
 export interface FileRouteTypes {
-  fileRoutesByFullPath: FileRoutesByFullPath;
-  fullPaths: "/" | "/about" | "/albums/$id";
-  fileRoutesByTo: FileRoutesByTo;
-  to: "/" | "/about" | "/albums/$id";
-  id: "__root__" | "/" | "/about" | "/albums/$id";
-  fileRoutesById: FileRoutesById;
+  fileRoutesByFullPath: FileRoutesByFullPath
+  fullPaths:
+    | '/'
+    | '/library'
+    | '/login'
+    | '/search'
+    | '/album/$id'
+    | '/playlist/$id'
+  fileRoutesByTo: FileRoutesByTo
+  to: '/' | '/library' | '/login' | '/search' | '/album/$id' | '/playlist/$id'
+  id:
+    | '__root__'
+    | '/'
+    | '/library'
+    | '/login'
+    | '/search'
+    | '/album/$id'
+    | '/playlist/$id'
+  fileRoutesById: FileRoutesById
 }
 
 export interface RootRouteChildren {
-  IndexRoute: typeof IndexRoute;
-  AboutRoute: typeof AboutRoute;
-  AlbumsIdRoute: typeof AlbumsIdRoute;
+  IndexRoute: typeof IndexRoute
+  LibraryRoute: typeof LibraryRoute
+  LoginRoute: typeof LoginRoute
+  SearchRoute: typeof SearchRoute
+  AlbumIdRoute: typeof AlbumIdRoute
+  PlaylistIdRoute: typeof PlaylistIdRoute
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  AboutRoute: AboutRoute,
-  AlbumsIdRoute: AlbumsIdRoute,
-};
+  LibraryRoute: LibraryRoute,
+  LoginRoute: LoginRoute,
+  SearchRoute: SearchRoute,
+  AlbumIdRoute: AlbumIdRoute,
+  PlaylistIdRoute: PlaylistIdRoute,
+}
 
 export const routeTree = rootRoute
   ._addFileChildren(rootRouteChildren)
-  ._addFileTypes<FileRouteTypes>();
+  ._addFileTypes<FileRouteTypes>()
 
 /* ROUTE_MANIFEST_START
 {
@@ -116,18 +186,30 @@ export const routeTree = rootRoute
       "filePath": "__root.tsx",
       "children": [
         "/",
-        "/about",
-        "/albums/$id"
+        "/library",
+        "/login",
+        "/search",
+        "/album/$id",
+        "/playlist/$id"
       ]
     },
     "/": {
       "filePath": "index.tsx"
     },
-    "/about": {
-      "filePath": "about.tsx"
+    "/library": {
+      "filePath": "library.tsx"
     },
-    "/albums/$id": {
-      "filePath": "albums/$id.tsx"
+    "/login": {
+      "filePath": "login.tsx"
+    },
+    "/search": {
+      "filePath": "search.tsx"
+    },
+    "/album/$id": {
+      "filePath": "album/$id.tsx"
+    },
+    "/playlist/$id": {
+      "filePath": "playlist/$id.tsx"
     }
   }
 }
