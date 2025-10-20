@@ -45,7 +45,7 @@ function RouteComponent() {
 					className={cn(
 						"w-full h-16",
 						"fixed top-0 left-1/2 -translate-x-1/2",
-						"z-10 backdrop-blur-md bg-neutral-900/10",
+						"z-10 backdrop-blur-md bg-neutral-900/70",
 					)}
 				>
 					<div className="w-full h-16 px-4 max-w-lg mx-auto flex items-center">
@@ -54,7 +54,7 @@ function RouteComponent() {
 				</header>
 			</div>
 			<div
-				className="grid grid-cols-2 gap-6 px-4"
+				className="grid grid-cols-2 gap-6"
 				style={{
 					scrollbarWidth: "none",
 				}}

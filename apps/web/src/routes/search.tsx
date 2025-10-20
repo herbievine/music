@@ -85,7 +85,7 @@ function RouteComponent() {
 					className={cn(
 						"w-full h-24",
 						"fixed top-0 left-1/2 -translate-x-1/2",
-						"z-10 backdrop-blur-md bg-neutral-900/10",
+						"z-10 backdrop-blur-md bg-neutral-900/70",
 					)}
 				>
 					<div className="w-full h-24 px-4 max-w-lg mx-auto flex flex-col justify-center space-y-2">
@@ -120,12 +120,12 @@ function RouteComponent() {
 					</div>
 				</header>
 			</div>
-			<ul className="flex flex-col space-y-6 px-4 pb-20">
+			<ul className="flex flex-col space-y-6">
 				{data?.results.map((result) =>
 					result.type === "track" ? (
 						<li key={result.id} className="flex space-x-2">
 							<Link
-								to="/albums/$id"
+								to="/album/$id"
 								params={{
 									id: result.album.id,
 								}}
@@ -134,14 +134,17 @@ function RouteComponent() {
 								{!!result.album.images && result.album.images.length > 0 ? (
 									<img
 										src={result.album.images[0].url}
-										alt={`${result.name} cover`}
+										alt={`${result.album.name} cover`}
 										className="w-12 h-12 rounded-lg"
+										style={{
+											viewTransitionName: `key-${result.album.id}`,
+										}}
 									/>
 								) : null}
 								<div className="flex flex-col items-start">
 									<span className="line-clamp-1 text-left">{result.name}</span>
 									<span className="text-sm text-zinc-500">
-										{dayjs(result.release_date).format("YYYY")}
+										{dayjs(result.album.release_date).format("YYYY")}
 									</span>
 								</div>
 							</Link>
@@ -155,11 +158,14 @@ function RouteComponent() {
 								}}
 								className="flex space-x-4 items-center"
 							>
-								{!!result.images && result.images.length > 0 ? (
+								{"images" in result.images && result.images.length > 0 ? (
 									<img
 										src={result.images[0].url}
 										alt={`${result.name} cover`}
 										className="w-12 h-12 rounded-lg"
+										style={{
+											viewTransitionName: `key-${result.id}`,
+										}}
 									/>
 								) : null}
 								<div className="flex flex-col items-start">
@@ -179,11 +185,14 @@ function RouteComponent() {
 								}}
 								className="flex space-x-4 items-center"
 							>
-								{!!result.images && result.images.length > 0 ? (
+								{"images" in result.images && result.images.length > 0 ? (
 									<img
 										src={result.images[0].url}
 										alt={`${result.name} cover`}
 										className="w-12 h-12 rounded-lg"
+										style={{
+											viewTransitionName: `key-${result.id}`,
+										}}
 									/>
 								) : null}
 								<div className="flex flex-col items-start">
@@ -200,11 +209,14 @@ function RouteComponent() {
 								}}
 								className="flex space-x-4 items-center"
 							>
-								{!!result.images && result.images.length > 0 ? (
+								{"images" in result.images && result.images.length > 0 ? (
 									<img
 										src={result.images[0].url}
-										alt={`${result.name} cover`}
+										alt={result.name}
 										className="w-12 h-12 rounded-lg"
+										style={{
+											viewTransitionName: `key-${result.id}`,
+										}}
 									/>
 								) : null}
 								<div className="flex flex-col items-start">

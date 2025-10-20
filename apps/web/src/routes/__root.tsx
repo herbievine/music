@@ -24,7 +24,7 @@ function RootComponent() {
 						<main className="flex-1 h-[calc(100vh_-_16rem)] w-full max-w-lg mx-auto flex flex-col relative">
 							<div
 								className={cn(
-									"py-2 overfow-auto",
+									"px-4 py-2 overfow-auto",
 									store.isPlaying ? "pb-36" : "pb-24",
 								)}
 							>

@@ -80,8 +80,8 @@ function HomeComponent() {
 	});
 
 	return (
-		<div className="px-4 flex flex-col space-y-6">
-			<section className="grid grid-cols-2 gap-2 px-4">
+		<div className="flex flex-col space-y-6">
+			<section className="grid grid-cols-2 gap-2">
 				{recents?.items.slice(0, 8).map((item) => (
 					<Link
 						key={item.id}
@@ -104,7 +104,7 @@ function HomeComponent() {
 				))}
 			</section>
 			{recents && recents.items.length === 9 ? (
-				<section className="px-4 flex flex-col space-y-2">
+				<section className="flex flex-col space-y-2">
 					<h2 className="text-xl font-bold">Top pick for you</h2>
 					<Link
 						to="/album/$id"
@@ -130,7 +130,7 @@ function HomeComponent() {
 					</Link>
 				</section>
 			) : null}
-			<section className="px-4 flex flex-col space-y-2">
+			<section className="flex flex-col space-y-2">
 				<h2 className="text-xl font-bold">Jump back in</h2>
 				<div
 					className="w-full flex gap-4 overflow-x-scroll"
@@ -152,7 +152,7 @@ function HomeComponent() {
 								alt={`${item.name} cover`}
 								className="w-48 h-48 rounded-lg"
 								style={{
-									viewTransitionName: `key-${item.id}`,
+									viewTransitionName: `key-${item.album.id}`,
 								}}
 							/>
 							<div className="w-full flex-1 flex flex-col">
@@ -165,7 +165,7 @@ function HomeComponent() {
 					))}
 				</div>
 			</section>
-			<section className="px-4 flex flex-col space-y-2">
+			<section className="flex flex-col space-y-2">
 				<h2 className="text-xl font-bold">New releases</h2>
 				<div
 					className="w-full flex gap-4 overflow-x-scroll"

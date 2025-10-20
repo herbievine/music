@@ -55,7 +55,7 @@ function RouteComponent() {
 				onClick={() =>
 					canGoBack ? router.history.back() : navigate({ to: "/" })
 				}
-				className="px-4 py-1"
+				className="py-1"
 			>
 				<ChevronLeft strokeWidth={2.5} size={20} />
 			</button>
@@ -66,7 +66,7 @@ function RouteComponent() {
 					(data && data.images.length > 0 && data.images[0].url) || undefined
 				}
 			/>
-			<div className="px-4 flex space-x-4">
+			<div className="flex space-x-4">
 				<Button
 					onClick={() => {
 						if (data) {
@@ -93,7 +93,7 @@ function RouteComponent() {
 								onClick={() => {
 									play([toSimpleTrack(track, track.album)]);
 								}}
-								className="px-4 py-2 flex justify-between items-center"
+								className="py-2 flex justify-between items-center"
 							>
 								<div className="flex flex-col items-start">
 									<span className="line-clamp-1 text-left">{track.name}</span>
@@ -107,7 +107,7 @@ function RouteComponent() {
 							<div
 								// biome-ignore lint/suspicious/noArrayIndexKey: no other choice
 								key={i}
-								className="px-4 py-2 flex justify-between items-center"
+								className="py-2 flex justify-between items-center"
 							>
 								<div className="flex flex-col items-start space-y-2">
 									<div className="h-5 w-40 bg-zinc-800 rounded-2xl animate-pulse" />
