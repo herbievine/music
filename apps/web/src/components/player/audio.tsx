@@ -22,18 +22,24 @@ export function AudioTag({ src, audioRef, progressRef, setProgress }: Props) {
 		try {
 			await audioRef.current.play();
 			setNeedsGesture(false);
-		} catch (err: any) {
+		} catch (err) {
+			console.error("Audio error code:", err);
+			alert(`Error playing song\ncode: ${JSON.stringify(err)}`);
+
 			// iOS PWA will throw NotAllowedError until a user gesture
-			if (
-				err?.name === "NotAllowedError" ||
-				err?.message?.includes("gesture")
-			) {
-				setNeedsGesture(true);
-				alert("Needs gesture");
-			} else {
-				console.error("Audio play error:", err);
-				alert("Error playing song");
-			}
+			// if (
+			// 	err?.name === "NotAllowedError" ||
+			// 	err?.message?.includes("gesture")
+			// ) {
+			// 	setNeedsGesture(true);
+			// 	alert("Needs gesture");
+			// } else {
+			// 	const code = err?.code || "unknown";
+			// 	console.error("Audio error code:", code, target.error);
+			// 	alert(`Error playing song\ncode: ${code}\nerr: ${err.message}`);
+			// 	console.error("Audio play error:", err);
+			// 	alert("Error playing song");
+			// }
 		}
 	}
 
