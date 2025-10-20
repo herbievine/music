@@ -56,7 +56,6 @@ export function AudioTag({ src, audioRef, progressRef, setProgress }: Props) {
 				controls={false}
 				onEnded={next}
 				onCanPlay={() => {
-					alert("canplay");
 					if (!firstPlayTried.current) {
 						firstPlayTried.current = true;
 						void tryPlay();
