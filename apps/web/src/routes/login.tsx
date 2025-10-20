@@ -19,7 +19,6 @@ function RouteComponent() {
 			<SignedIn>
 				<UserProfile />
 			</SignedIn>
-			<span>{import.meta.env.COMMIT_HASH}</span>
 		</div>
 	);
 }

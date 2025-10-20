@@ -1,4 +1,3 @@
-import child from "node:child_process";
 import {
 	TanStackRouterCodeSplitterVite,
 	TanStackRouterGeneratorVite,
@@ -7,13 +6,8 @@ import react from "@vitejs/plugin-react";
 import { defineConfig } from "vite";
 import { VitePWA } from "vite-plugin-pwa";
 
-const commitHash = child.execSync("git rev-parse --short HEAD").toString();
-
 // https://vitejs.dev/config
 export default defineConfig({
-	define: {
-		"import.meta.env.COMMIT_HASH": JSON.stringify(commitHash),
-	},
 	plugins: [
 		TanStackRouterCodeSplitterVite(),
 		TanStackRouterGeneratorVite(),
