@@ -29,6 +29,9 @@ export function AudioTag({ src, audioRef, progressRef, setProgress }: Props) {
 			onLoadedMetadata={() => {
 				audioRef.current?.play();
 			}}
+      onError={() => {
+        alert('Error playing song')
+      }}
 		/>
 	);
 }
