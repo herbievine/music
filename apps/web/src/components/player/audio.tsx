@@ -47,6 +47,7 @@ export function AudioTag({ src, audioRef, progressRef, setProgress }: Props) {
 
 	return (
 		<>
+			{/* biome-ignore lint/a11y/useMediaCaption: shut up */}
 			<audio
 				src={src}
 				ref={audioRef}
@@ -73,13 +74,14 @@ export function AudioTag({ src, audioRef, progressRef, setProgress }: Props) {
 				}}
 				onError={(e) => {
 					const target = e.currentTarget;
-					const code = (target.error && target.error.code) || "unknown";
+					const code = target.error?.code || "unknown";
 					console.error("Audio error code:", code, target.error);
-					alert("Error playing song");
+					alert(`Error playing song\ncode: ${code}\nerr: ${target.error}`);
 				}}
 			/>
 			{needsGesture && (
 				<button
+					type="button"
 					onClick={tryPlay}
 					style={{
 						position: "absolute",
