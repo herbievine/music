@@ -1,3 +1,4 @@
+import child from "node:child_process";
 import {
 	TanStackRouterCodeSplitterVite,
 	TanStackRouterGeneratorVite,
@@ -6,25 +7,29 @@ import react from "@vitejs/plugin-react";
 import { defineConfig } from "vite";
 import { VitePWA } from "vite-plugin-pwa";
 
-// https://vitejs.dev/config/
+const commitHash = child.execSync("git rev-parse --short HEAD").toString();
+
+// https://vitejs.dev/config
 export default defineConfig({
+	define: {
+		"import.meta.env.COMMIT_HASH": JSON.stringify(commitHash),
+	},
 	plugins: [
 		TanStackRouterCodeSplitterVite(),
 		TanStackRouterGeneratorVite(),
 		react(),
 		VitePWA({
-		  workbox: {
-        runtimeCaching: [
-          {
-            urlPattern: ({ request, url }) =>
-              request.destination === "audio" ||
-              url.pathname.endsWith(".mp3"),
-            handler: "NetworkOnly",
-          },
-        ],
-        // Optional: make sure SPA fallback doesn't swallow audio
-        navigateFallbackDenylist: [/\.mp3$/],
-      },
+			workbox: {
+				runtimeCaching: [
+					{
+						urlPattern: ({ request, url }) =>
+							request.destination === "audio" || url.pathname.endsWith(".mp3"),
+						handler: "NetworkOnly",
+					},
+				],
+				// Optional: make sure SPA fallback doesn't swallow audio
+				navigateFallbackDenylist: [/\.mp3$/],
+			},
 			manifest: {
 				id: "/",
 				scope: "/",

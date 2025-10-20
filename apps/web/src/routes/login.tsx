@@ -13,14 +13,13 @@ export const Route = createFileRoute("/login")({
 function RouteComponent() {
 	return (
 		<div className="">
-			<header>
-				<SignedOut>
-					<SignInButton />
-				</SignedOut>
-				<SignedIn>
-					<UserProfile />
-				</SignedIn>
-			</header>
+			<SignedOut>
+				<SignInButton />
+			</SignedOut>
+			<SignedIn>
+				<UserProfile />
+			</SignedIn>
+			<span>{import.meta.env.COMMIT_HASH}</span>
 		</div>
 	);
 }
