@@ -150,7 +150,7 @@ function HomeComponent() {
 				<section className="flex flex-col space-y-2">
 					<h2 className="text-xl font-bold">Jump back in</h2>
 					<div
-						className="w-full flex gap-4 overflow-x-scroll"
+						className="w-full flex gap-4 overflow-x-scroll overflow-y-hidden"
 						style={{
 							scrollbarWidth: "none",
 						}}
@@ -185,7 +185,7 @@ function HomeComponent() {
 				<section className="flex flex-col space-y-2">
 					<h2 className="text-xl font-bold">New releases</h2>
 					<div
-						className="w-full flex gap-4 overflow-x-scroll"
+						className="w-full flex gap-4 overflow-x-scroll overflow-y-hidden"
 						style={{
 							scrollbarWidth: "none",
 						}}

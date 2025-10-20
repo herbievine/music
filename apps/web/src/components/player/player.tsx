@@ -50,6 +50,20 @@ export function Player() {
 	const audioRef = useRef<HTMLAudioElement>(null);
 	const progressRef = useRef<HTMLInputElement>(null);
 
+	useEffect(() => {
+	  const song = songs[songIndex]
+
+		audioRef.current?.addEventListener("error", () => {
+		  alert(`Error playing ${song.name}`)
+		});
+
+		return () => {
+  		audioRef.current?.removeEventListener("error", () => {
+  		  alert(`Error playing ${song.name}`)
+  		});
+		};
+	}, [songIndex, songs]);
+
 	useMediaSession({ audioRef });
 
 	// Used to sync store with audio ref

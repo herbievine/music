@@ -158,7 +158,7 @@ function RouteComponent() {
 								}}
 								className="flex space-x-4 items-center"
 							>
-								{"images" in result.images && result.images.length > 0 ? (
+								{!!result.images && result.images.length > 0 ? (
 									<img
 										src={result.images[0].url}
 										alt={`${result.name} cover`}
@@ -185,7 +185,7 @@ function RouteComponent() {
 								}}
 								className="flex space-x-4 items-center"
 							>
-								{"images" in result.images && result.images.length > 0 ? (
+								{!!result.images && result.images.length > 0 ? (
 									<img
 										src={result.images[0].url}
 										alt={`${result.name} cover`}
@@ -209,7 +209,7 @@ function RouteComponent() {
 								}}
 								className="flex space-x-4 items-center"
 							>
-								{"images" in result.images && result.images.length > 0 ? (
+								{!!result.images && result.images.length > 0 ? (
 									<img
 										src={result.images[0].url}
 										alt={result.name}
