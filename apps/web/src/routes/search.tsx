@@ -1,3 +1,4 @@
+import { useClerk } from "@clerk/clerk-react";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useDebounce } from "@uidotdev/usehooks";
@@ -26,17 +27,25 @@ export const Route = createFileRoute("/search")({
 });
 
 function RouteComponent() {
+	const { session } = useClerk();
 	const [{ query, type }, setValues] = useQueryStates(searchParams);
 	const debouncedSearchTerm = useDebounce(query, 300);
 	const { data, isLoading } = useQuery({
 		queryKey: ["search", debouncedSearchTerm, type],
 		queryFn: async () => {
-			const res = await client.search.$get({
-				query: {
-					q: debouncedSearchTerm,
-					type,
+			const res = await client.search.$get(
+				{
+					query: {
+						q: debouncedSearchTerm,
+						type,
+					},
 				},
-			});
+				{
+					headers: {
+						Authorization: `Bearer ${await session?.getToken()}`,
+					},
+				},
+			);
 
 			if (!res.ok) {
 				throw new Error("api error");

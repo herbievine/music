@@ -1,3 +1,4 @@
+import { useClerk } from "@clerk/clerk-react";
 import { useQuery } from "@tanstack/react-query";
 import { useClickAway } from "@uidotdev/usehooks";
 import { useEffect, useRef, useState } from "react";
@@ -10,6 +11,7 @@ import { PlayerExpandedView } from "./player-expanded-view";
 import { PlayerMiniView } from "./player-mini-view";
 
 export function Player() {
+	const { session } = useClerk();
 	const [isExpanded, setIsExpanded] = useState(false);
 	const [progress, setProgress] = useState(0);
 	const ref = useClickAway(() => setIsExpanded(false));
@@ -17,18 +19,25 @@ export function Player() {
 	const { data } = useQuery({
 		queryKey: ["play", songs[songIndex]],
 		queryFn: async () => {
-			const res = await client.play[":spotifyId"].$get({
-				param: {
-					spotifyId: songs[songIndex].id,
+			const res = await client.play[":spotifyId"].$get(
+				{
+					param: {
+						spotifyId: songs[songIndex].id,
+					},
+					...(songs[songIndex + 1]
+						? {
+								query: {
+									next: songs[songIndex + 1].id,
+								},
+							}
+						: {}),
 				},
-				...(songs[songIndex + 1]
-					? {
-							query: {
-								next: songs[songIndex + 1].id,
-							},
-						}
-					: {}),
-			});
+				{
+					headers: {
+						Authorization: `Bearer ${await session?.getToken()}`,
+					},
+				},
+			);
 
 			if (!res.ok) {
 				throw new Error(`cannot play ${songs[songIndex]}`);

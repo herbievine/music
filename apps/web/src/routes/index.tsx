@@ -1,3 +1,4 @@
+import { useClerk } from "@clerk/clerk-react";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { client } from "../lib/hono-rpc";
@@ -7,10 +8,20 @@ export const Route = createFileRoute("/")({
 });
 
 function HomeComponent() {
+	const { session } = useClerk();
 	const { data: recents } = useQuery({
 		queryKey: ["recents"],
 		queryFn: async () => {
-			const res = await client.recents.$get();
+			const res = await client.recents.$get(
+				{
+					query: {},
+				},
+				{
+					headers: {
+						Authorization: `Bearer ${await session?.getToken()}`,
+					},
+				},
+			);
 
 			if (!res.ok) {
 				throw new Error("Could not fetch album");
@@ -24,11 +35,18 @@ function HomeComponent() {
 	const { data: jumpBackIn } = useQuery({
 		queryKey: ["jump-back-in"],
 		queryFn: async () => {
-			const res = await client.recents.$get({
-				query: {
-					range: "long_term",
+			const res = await client.recents.$get(
+				{
+					query: {
+						range: "long_term",
+					},
 				},
-			});
+				{
+					headers: {
+						Authorization: `Bearer ${await session?.getToken()}`,
+					},
+				},
+			);
 
 			if (!res.ok) {
 				throw new Error("Could not fetch album");
@@ -42,7 +60,14 @@ function HomeComponent() {
 	const { data: newReleases } = useQuery({
 		queryKey: ["new-releases"],
 		queryFn: async () => {
-			const res = await client["new-releases"].$get();
+			const res = await client["new-releases"].$get(
+				{},
+				{
+					headers: {
+						Authorization: `Bearer ${await session?.getToken()}`,
+					},
+				},
+			);
 
 			if (!res.ok) {
 				throw new Error("Could not fetch album");

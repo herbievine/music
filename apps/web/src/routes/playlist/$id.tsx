@@ -1,3 +1,4 @@
+import { useClerk } from "@clerk/clerk-react";
 import { useQuery } from "@tanstack/react-query";
 import {
 	createFileRoute,
@@ -22,11 +23,19 @@ function RouteComponent() {
 	const router = useRouter();
 	const canGoBack = useCanGoBack();
 	const navigate = useNavigate();
+	const { session } = useClerk();
 	const { id } = useParams({ from: "/playlist/$id" });
 	const { data } = useQuery({
 		queryKey: ["playlist", id],
 		queryFn: async () => {
-			const res = await client.playlists[":id"].$get({ param: { id } });
+			const res = await client.playlists[":id"].$get(
+				{ param: { id } },
+				{
+					headers: {
+						Authorization: `Bearer ${await session?.getToken()}`,
+					},
+				},
+			);
 
 			if (!res.ok) {
 				throw new Error("Could not fetch playlist");

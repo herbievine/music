@@ -1,4 +1,10 @@
-import { SignedIn, SignedOut, SignInButton, useUser } from "@clerk/clerk-react";
+import {
+	SignedIn,
+	SignedOut,
+	SignInButton,
+	useClerk,
+	useUser,
+} from "@clerk/clerk-react";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { client } from "../lib/hono-rpc";
@@ -9,11 +15,18 @@ export const Route = createFileRoute("/library")({
 });
 
 function RouteComponent() {
-	const { user } = useUser();
+	const { session } = useClerk();
 	const { data } = useQuery({
-		queryKey: ["playlists", user?.id],
+		queryKey: ["playlists"],
 		queryFn: async () => {
-			const res = await client.playlists.$get();
+			const res = await client.playlists.$get(
+				{},
+				{
+					headers: {
+						Authorization: `Bearer ${await session?.getToken()}`,
+					},
+				},
+			);
 
 			if (!res.ok) {
 				throw new Error("Could not fetch playlists");
@@ -23,7 +36,6 @@ function RouteComponent() {
 
 			return json;
 		},
-		enabled: !!user,
 	});
 
 	return (
