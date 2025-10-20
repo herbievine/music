@@ -13,6 +13,18 @@ export default defineConfig({
 		TanStackRouterGeneratorVite(),
 		react(),
 		VitePWA({
+		  workbox: {
+        runtimeCaching: [
+          {
+            urlPattern: ({ request, url }) =>
+              request.destination === "audio" ||
+              url.pathname.endsWith(".mp3"),
+            handler: "NetworkOnly",
+          },
+        ],
+        // Optional: make sure SPA fallback doesn't swallow audio
+        navigateFallbackDenylist: [/\.mp3$/],
+      },
 			manifest: {
 				id: "/",
 				scope: "/",
