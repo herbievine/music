@@ -1,6 +1,7 @@
 import { UserButton, useClerk, useUser } from "@clerk/clerk-react";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { AlbumRows } from "../components/album-rows";
 import { client } from "../lib/hono-rpc";
 import cn from "../utils/cn";
 
@@ -182,41 +183,12 @@ function HomeComponent() {
 						))}
 					</div>
 				</section>
-				<section className="flex flex-col space-y-2">
-					<h2 className="text-xl font-bold">New releases</h2>
-					<div
-						className="w-full flex gap-4 overflow-x-scroll overflow-y-hidden"
-						style={{
-							scrollbarWidth: "none",
-						}}
-					>
-						{newReleases?.albums.items.map((item) => (
-							<Link
-								key={item.id}
-								to="/album/$id"
-								params={{
-									id: item.id,
-								}}
-								className="w-48 h-60 flex-none flex flex-col space-y-2"
-							>
-								<img
-									src={item.images[0].url}
-									alt={`${item.name} cover`}
-									className="w-48 h-48 rounded-lg"
-									style={{
-										viewTransitionName: `key-${item.id}`,
-									}}
-								/>
-								<div className="w-full flex-1 flex flex-col">
-									<span className="text-sm line-clamp-2">{item.name}</span>
-									<span className="text-sm text-neutral-400">
-										{item.artists[0].name}
-									</span>
-								</div>
-							</Link>
-						))}
-					</div>
-				</section>
+				{newReleases?.albums.items ? (
+					<AlbumRows
+						title="New releases"
+						albumOrPlaylists={newReleases.albums.items}
+					/>
+				) : null}
 			</div>
 		</div>
 	);

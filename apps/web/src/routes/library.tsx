@@ -7,6 +7,7 @@ import {
 } from "@clerk/clerk-react";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { AlbumRows } from "../components/album-rows";
 import { client } from "../lib/hono-rpc";
 import cn from "../utils/cn";
 
@@ -16,7 +17,7 @@ export const Route = createFileRoute("/library")({
 
 function RouteComponent() {
 	const { session } = useClerk();
-	const { data } = useQuery({
+	const { data: playlists } = useQuery({
 		queryKey: ["playlists"],
 		queryFn: async () => {
 			const res = await client.playlists.$get(
@@ -30,6 +31,27 @@ function RouteComponent() {
 
 			if (!res.ok) {
 				throw new Error("Could not fetch playlists");
+			}
+
+			const json = await res.json();
+
+			return json;
+		},
+	});
+	const { data: albums } = useQuery({
+		queryKey: ["albums"],
+		queryFn: async () => {
+			const res = await client.albums.$get(
+				{},
+				{
+					headers: {
+						Authorization: `Bearer ${await session?.getToken()}`,
+					},
+				},
+			);
+
+			if (!res.ok) {
+				throw new Error("Could not fetch albums");
 			}
 
 			const json = await res.json();
@@ -53,13 +75,31 @@ function RouteComponent() {
 					</div>
 				</header>
 			</div>
-			<div
+			{playlists?.items ? (
+				<AlbumRows
+					title="Playlists"
+					albumOrPlaylists={playlists?.items.map((p) => ({
+						...p,
+						type: "playlist",
+					}))}
+				/>
+			) : null}
+			{albums?.items ? (
+				<AlbumRows
+					title="Albums"
+					albumOrPlaylists={albums?.items.map((p) => ({
+						...p.album,
+						type: "album",
+					}))}
+				/>
+			) : null}
+			{/*<div
 				className="grid grid-cols-2 gap-6"
 				style={{
 					scrollbarWidth: "none",
 				}}
 			>
-				{data?.items.map((result) => (
+				{albums?.items.map((result) => (
 					<Link
 						key={result.id}
 						to="/playlist/$id"
@@ -88,7 +128,7 @@ function RouteComponent() {
 						</div>
 					</Link>
 				))}
-			</div>
+			</div>*/}
 		</div>
 	);
 }

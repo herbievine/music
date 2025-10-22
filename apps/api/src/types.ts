@@ -1,6 +1,7 @@
 export type {
 	Album,
 	Artist,
+	Playlist,
 	PlaylistTrack,
 	Track,
 	TrackSimplified,
