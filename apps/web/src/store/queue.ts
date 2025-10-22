@@ -51,7 +51,7 @@ export const useQueueStore = create<PlaybackStore>()((set) => ({
 	},
 	next: () =>
 		set(({ songs, songIndex }) => {
-			const isNextSong = songs.length >= songIndex + 1;
+			const isNextSong = songs.length > songIndex + 1;
 
 			if (isNextSong) {
 				return { songIndex: songIndex + 1 };

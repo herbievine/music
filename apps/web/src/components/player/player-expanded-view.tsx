@@ -107,10 +107,12 @@ export function PlayerExpandedView({
 				<div className="w-full flex justify-evenly items-center">
 					<button
 						type="button"
-						onClick={(e) => {
+						onClick={async (e) => {
 							e.preventDefault();
 							e.stopPropagation();
 
+							pause();
+							audioRef.current?.pause();
 							previous();
 						}}
 					>
@@ -135,6 +137,8 @@ export function PlayerExpandedView({
 								e.preventDefault();
 								e.stopPropagation();
 
+								pause();
+								audioRef.current?.pause();
 								play();
 							}}
 						>

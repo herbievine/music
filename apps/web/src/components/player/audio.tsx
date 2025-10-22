@@ -9,7 +9,7 @@ type Props = {
 };
 
 export function AudioTag({ src, audioRef, progressRef, setProgress }: Props) {
-	const { next } = useQueueStore();
+	const { next, play, pause } = useQueueStore();
 	const firstPlayTried = useRef(false);
 	const [needsGesture, setNeedsGesture] = useState(false);
 
@@ -21,6 +21,7 @@ export function AudioTag({ src, audioRef, progressRef, setProgress }: Props) {
 
 		try {
 			await audioRef.current.play();
+			play();
 			setNeedsGesture(false);
 		} catch (err) {
 			console.error("Audio error code:", err);
@@ -60,7 +61,10 @@ export function AudioTag({ src, audioRef, progressRef, setProgress }: Props) {
 				playsInline
 				preload="metadata"
 				controls={false}
-				onEnded={next}
+				onEnded={() => {
+					pause();
+					next();
+				}}
 				onCanPlay={() => {
 					if (!firstPlayTried.current) {
 						firstPlayTried.current = true;

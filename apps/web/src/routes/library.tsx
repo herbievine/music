@@ -93,42 +93,6 @@ function RouteComponent() {
 					}))}
 				/>
 			) : null}
-			{/*<div
-				className="grid grid-cols-2 gap-6"
-				style={{
-					scrollbarWidth: "none",
-				}}
-			>
-				{albums?.items.map((result) => (
-					<Link
-						key={result.id}
-						to="/playlist/$id"
-						params={{
-							id: result.id,
-						}}
-						className="flex flex-col items-start space-y-2"
-					>
-						{result.images && result.images.length > 0 ? (
-							<img
-								src={result.images[0].url}
-								alt={`${result.name} cover`}
-								className="w-full rounded-2xl"
-								style={{
-									viewTransitionName: `key-${result.id}`,
-								}}
-							/>
-						) : null}
-						<div className="flex flex-col space-y-1">
-							<span className="text-sm font-bold line-clamp-2">
-								{result.name}
-							</span>
-							<span className="text-sm font-bold text-zinc-500">
-								{result.description}
-							</span>
-						</div>
-					</Link>
-				))}
-			</div>*/}
 		</div>
 	);
 }
