@@ -16,7 +16,7 @@ type PlaybackStore = {
 	songs: SimpleTrack[];
 	songIndex: number;
 	isPlaying: boolean;
-	play: (songs?: SimpleTrack[]) => void;
+	play: (songs?: SimpleTrack[], songIndex?: number) => void;
 	pause: () => void;
 	add: (songs: SimpleTrack[]) => void;
 	remove: (songId: string) => void;
@@ -29,11 +29,11 @@ export const useQueueStore = create<PlaybackStore>()((set) => ({
 	songs: [],
 	songIndex: -1,
 	isPlaying: false,
-	play: (songsToPlay) => {
+	play: (songsToPlay, songIndexToSet) => {
 		return set(({ songs, songIndex }) => ({
 			songs: songsToPlay ? songsToPlay : songs,
 			isPlaying: true,
-			songIndex: songIndex === -1 ? 0 : songIndex,
+			songIndex: songIndexToSet || songIndex === -1 ? 0 : songIndex,
 		}));
 	},
 	pause: () => set({ isPlaying: false }),

@@ -74,6 +74,7 @@ function RouteComponent() {
 								data.tracks.items.map(({ track }) =>
 									toSimpleTrack(track, track.album),
 								),
+								0
 							);
 						}
 					}}

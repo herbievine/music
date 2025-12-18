@@ -76,6 +76,7 @@ function RouteComponent() {
 						if (data) {
 							play(
 								data.tracks.items.map((track) => toSimpleTrack(track, data)),
+								0
 							);
 						}
 					}}
