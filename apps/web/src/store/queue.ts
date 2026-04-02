@@ -33,7 +33,12 @@ export const useQueueStore = create<PlaybackStore>()((set) => ({
 		return set(({ songs, songIndex }) => ({
 			songs: songsToPlay ? songsToPlay : songs,
 			isPlaying: true,
-			songIndex: songIndexToSet || songIndex === -1 ? 0 : songIndex,
+			songIndex:
+				songIndexToSet !== undefined
+					? songIndexToSet
+					: songsToPlay || songIndex === -1
+						? 0
+						: songIndex,
 		}));
 	},
 	pause: () => set({ isPlaying: false }),
