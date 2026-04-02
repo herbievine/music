@@ -30,9 +30,7 @@ function HomeComponent() {
 				throw new Error("Could not fetch album");
 			}
 
-			const json = await res.json();
-
-			return json;
+			return res.json();
 		},
 	});
 	const { data: jumpBackIn } = useQuery({
@@ -55,9 +53,7 @@ function HomeComponent() {
 				throw new Error("Could not fetch album");
 			}
 
-			const json = await res.json();
-
-			return json;
+			return res.json();
 		},
 	});
 	const { data: newReleases } = useQuery({
@@ -76,9 +72,7 @@ function HomeComponent() {
 				throw new Error("Could not fetch album");
 			}
 
-			const json = await res.json();
-
-			return json;
+			return res.json();
 		},
 	});
 
@@ -183,10 +177,10 @@ function HomeComponent() {
 						))}
 					</div>
 				</section>
-				{newReleases?.albums.items ? (
+				{newReleases?.items ? (
 					<AlbumRows
 						title="New releases"
-						albumOrPlaylists={newReleases.albums.items}
+						albumOrPlaylists={newReleases.items}
 					/>
 				) : null}
 			</div>

@@ -7,9 +7,10 @@ import {
 	useParams,
 	useRouter,
 } from "@tanstack/react-router";
-import { ChevronLeft, Play } from "lucide-react";
+import { ChevronLeft, Heart, HeartOff, Play } from "lucide-react";
 import { MediaHeader } from "../../components/media/header";
 import { Button } from "../../components/ui/button";
+import { useIsLiked, useLikeMutation } from "../../hooks/use-likes";
 import { formatTime } from "../../lib/format-time";
 import { client } from "../../lib/hono-rpc";
 import { useQueueStore } from "../../store/queue";
@@ -41,12 +42,12 @@ function RouteComponent() {
 				throw new Error("Could not fetch playlist");
 			}
 
-			const json = await res.json();
-
-			return json;
+			return res.json();
 		},
 	});
 	const { play } = useQueueStore();
+	const { isLiked, likeEntry } = useIsLiked(id, "playlist");
+	const { like, unlike } = useLikeMutation();
 
 	return (
 		<div className="flex flex-col space-y-4">
@@ -74,7 +75,7 @@ function RouteComponent() {
 								data.tracks.items.map(({ track }) =>
 									toSimpleTrack(track, track.album),
 								),
-								0
+								0,
 							);
 						}
 					}}
@@ -82,6 +83,31 @@ function RouteComponent() {
 				>
 					<Play strokeWidth={2.5} size={16} fill="#f4f4f5" />
 					<span>Play</span>
+				</Button>
+				<Button
+					onClick={() => {
+						if (isLiked && likeEntry) {
+							unlike.mutate(likeEntry.id);
+						} else if (data) {
+							like.mutate({
+								itemId: id,
+								itemType: "playlist",
+								metadata: {
+									name: data.name,
+									image: data.images[0]?.url ?? "",
+									artist: "",
+								},
+							});
+						}
+					}}
+					className="flex space-x-2 items-center justify-center"
+				>
+					{isLiked ? (
+						<HeartOff strokeWidth={2.5} size={16} />
+					) : (
+						<Heart strokeWidth={2.5} size={16} />
+					)}
+					<span>{isLiked ? "Remove" : "Like"}</span>
 				</Button>
 			</div>
 			<div className="flex flex-col divide-y divide-zinc-800">
@@ -99,7 +125,7 @@ function RouteComponent() {
 								<div className="flex flex-col items-start">
 									<span className="line-clamp-1 text-left">{track.name}</span>
 									<span className="text-sm text-zinc-500">
-										{track.artists[0].name} - {formatTime(track.duration_ms)}
+										{track.artists[0].name} - {formatTime(track.durationMs)}
 									</span>
 								</div>
 							</button>

@@ -1,6 +1,3 @@
-import dayjs from "dayjs";
-import { trpc } from "../../utils/trpc";
-
 type Props = {
 	id: string;
 	name?: string;

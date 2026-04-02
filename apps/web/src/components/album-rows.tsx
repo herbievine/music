@@ -1,11 +1,9 @@
-import type { Album, Playlist } from "@music/api";
+import type { MusicAlbumSummary, MusicPlaylistSummary } from "@music/api";
 import { Link } from "@tanstack/react-router";
 
 type Props = {
 	title: string;
-	albumOrPlaylists:
-		| (Album & { type: "album" })[]
-		| (Playlist & { type: "playlist" })[];
+	albumOrPlaylists: (MusicAlbumSummary | MusicPlaylistSummary)[];
 };
 
 export function AlbumRows({ title, albumOrPlaylists }: Props) {
@@ -18,34 +16,30 @@ export function AlbumRows({ title, albumOrPlaylists }: Props) {
 					scrollbarWidth: "none",
 				}}
 			>
-				{albumOrPlaylists.map((albumOrPlaylist) => (
+				{albumOrPlaylists.map((item) => (
 					<Link
-						key={albumOrPlaylist.id}
-						to={
-							albumOrPlaylist.type === "album" ? "/album/$id" : "/playlist/$id"
-						}
+						key={item.id}
+						to={item.type === "album" ? "/album/$id" : "/playlist/$id"}
 						params={{
-							id: albumOrPlaylist.id,
+							id: item.id,
 						}}
 						className="w-48 h-60 flex-none flex flex-col space-y-2"
 					>
-						{albumOrPlaylist.images && albumOrPlaylist.images.length > 0 ? (
+						{item.images && item.images.length > 0 ? (
 							<img
-								src={albumOrPlaylist.images[0].url}
-								alt={`${albumOrPlaylist.name} cover`}
+								src={item.images[0].url}
+								alt={`${item.name} cover`}
 								className="w-full rounded-2xl"
 								style={{
-									viewTransitionName: `key-${albumOrPlaylist.id}`,
+									viewTransitionName: `key-${item.id}`,
 								}}
 							/>
 						) : null}
 						<div className="w-full flex-1 flex flex-col">
-							<span className="text-sm line-clamp-1">
-								{albumOrPlaylist.name}
-							</span>
-							{albumOrPlaylist.type === "album" ? (
+							<span className="text-sm line-clamp-1">{item.name}</span>
+							{item.type === "album" ? (
 								<span className="text-sm text-neutral-400">
-									{albumOrPlaylist.artists[0].name}
+									{item.artists[0].name}
 								</span>
 							) : null}
 						</div>

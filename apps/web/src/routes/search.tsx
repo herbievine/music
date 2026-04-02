@@ -30,7 +30,7 @@ function RouteComponent() {
 	const { session } = useClerk();
 	const [{ query, type }, setValues] = useQueryStates(searchParams);
 	const debouncedSearchTerm = useDebounce(query, 300);
-	const { data, isLoading } = useQuery({
+	const { data } = useQuery({
 		queryKey: ["search", debouncedSearchTerm, type],
 		queryFn: async () => {
 			const res = await client.search.$get(
@@ -51,32 +51,10 @@ function RouteComponent() {
 				throw new Error("api error");
 			}
 
-			const json = await res.json();
-
-			return json;
+			return res.json();
 		},
 		enabled: debouncedSearchTerm.length > 0,
 	});
-
-	// if (query !== debouncedSearchTerm || isLoading) {
-	// 	return (
-	// 		<ul className="flex flex-col space-y-6">
-	// 			{[...new Array(12).fill("0")].map((_, i) => (
-	// 				<li key={i} className="flex space-x-4 items-center">
-	// 					<div className="w-12 h-12 bg-zinc-800 rounded-lg animate-pulse" />
-	// 					<div className="flex flex-col items-start space-y-2">
-	// 						<div className="h-5 w-40 bg-zinc-800 rounded-2xl animate-pulse" />
-	// 						<div className="h-4 w-52 bg-zinc-800 rounded-2xl animate-pulse" />
-	// 					</div>
-	// 				</li>
-	// 			))}
-	// 		</ul>
-	// 	);
-	// }
-
-	// if (!data || data.length === 0) {
-	// 	return <span>No results :(</span>;
-	// }
 
 	return (
 		<div className="flex flex-col overflow-hidden">
@@ -144,7 +122,7 @@ function RouteComponent() {
 								<div className="flex flex-col items-start">
 									<span className="line-clamp-1 text-left">{result.name}</span>
 									<span className="text-sm text-zinc-500">
-										{dayjs(result.album.release_date).format("YYYY")}
+										{dayjs(result.album.releaseDate).format("YYYY")}
 									</span>
 								</div>
 							</Link>
@@ -171,7 +149,7 @@ function RouteComponent() {
 								<div className="flex flex-col items-start">
 									<span className="line-clamp-1 text-left">{result.name}</span>
 									<span className="text-sm text-zinc-500">
-										{dayjs(result.release_date).format("YYYY")}
+										{dayjs(result.releaseDate).format("YYYY")}
 									</span>
 								</div>
 							</Link>
@@ -202,13 +180,7 @@ function RouteComponent() {
 						</li>
 					) : (
 						<li key={result.id} className="flex space-x-2">
-							<Link
-								to="/playlist/$id"
-								params={{
-									id: result.id,
-								}}
-								className="flex space-x-4 items-center"
-							>
+							<div className="flex space-x-4 items-center">
 								{!!result.images && result.images.length > 0 ? (
 									<img
 										src={result.images[0].url}
@@ -222,7 +194,7 @@ function RouteComponent() {
 								<div className="flex flex-col items-start">
 									<span className="line-clamp-1 text-left">{result.name}</span>
 								</div>
-							</Link>
+							</div>
 						</li>
 					),
 				)}

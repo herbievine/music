@@ -1,18 +1,18 @@
-import type { Track, TrackSimplified } from "@music/api";
+import type { MusicTrack, MusicTrackSimplified } from "@music/api";
 import type { SimpleTrack } from "../store/queue";
 
 export function toSimpleTrack(
-	track: TrackSimplified | Track,
+	track: MusicTrackSimplified | MusicTrack,
 	album: {
 		id: string;
-		name?: string | undefined;
+		name?: string;
 		images: { url: string }[];
 	},
 ): SimpleTrack {
 	return {
 		id: track.id,
 		name: track.name,
-		durationMs: track.duration_ms,
+		durationMs: track.durationMs,
 		artists: track.artists.map(({ id, name }) => ({ id, name })),
 		album: {
 			id: album.id,

@@ -1,12 +1,6 @@
-import {
-	SignedIn,
-	SignedOut,
-	SignInButton,
-	useClerk,
-	useUser,
-} from "@clerk/clerk-react";
+import { useClerk } from "@clerk/clerk-react";
 import { useQuery } from "@tanstack/react-query";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { AlbumRows } from "../components/album-rows";
 import { client } from "../lib/hono-rpc";
 import cn from "../utils/cn";
@@ -33,9 +27,7 @@ function RouteComponent() {
 				throw new Error("Could not fetch playlists");
 			}
 
-			const json = await res.json();
-
-			return json;
+			return res.json();
 		},
 	});
 	const { data: albums } = useQuery({
@@ -54,9 +46,7 @@ function RouteComponent() {
 				throw new Error("Could not fetch albums");
 			}
 
-			const json = await res.json();
-
-			return json;
+			return res.json();
 		},
 	});
 
@@ -76,21 +66,12 @@ function RouteComponent() {
 				</header>
 			</div>
 			{playlists?.items ? (
-				<AlbumRows
-					title="Playlists"
-					albumOrPlaylists={playlists?.items.map((p) => ({
-						...p,
-						type: "playlist",
-					}))}
-				/>
+				<AlbumRows title="Playlists" albumOrPlaylists={playlists.items} />
 			) : null}
 			{albums?.items ? (
 				<AlbumRows
 					title="Albums"
-					albumOrPlaylists={albums?.items.map((p) => ({
-						...p.album,
-						type: "album",
-					}))}
+					albumOrPlaylists={albums.items.map((p) => p.album)}
 				/>
 			) : null}
 		</div>

@@ -1,12 +1,13 @@
-import { clerkMiddleware, getAuth } from "@hono/clerk-auth";
+import { clerkMiddleware } from "@hono/clerk-auth";
 import { serve } from "@hono/node-server";
 import { zValidator } from "@hono/zod-validator";
 import { config } from "dotenv";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { z } from "zod";
-import { spotifyClient } from "./lib/spotify.js";
+import { getMusicProvider, providerMiddleware } from "./lib/middleware.js";
 import albumRoutes from "./routes/albums.js";
+import likesRoutes from "./routes/likes.js";
 import playerRoutes from "./routes/player.js";
 import playlistRoutes from "./routes/playlists.js";
 
@@ -21,8 +22,8 @@ const app = new Hono();
 app.use(
 	cors({
 		origin: process.env.CORS_ORIGIN,
-		allowHeaders: [],
-		allowMethods: ["GET"],
+		allowHeaders: ["Content-Type", "Authorization"],
+		allowMethods: ["GET", "POST", "DELETE"],
 		exposeHeaders: ["Content-Length"],
 		maxAge: 600,
 		credentials: true,
@@ -30,25 +31,13 @@ app.use(
 );
 
 app.use("*", clerkMiddleware());
-app.use("*", async (c, next) => {
-	const auth = getAuth(c);
-
-	if (!auth?.userId) {
-		return c.json(
-			{
-				message: "You are not logged in.",
-			},
-			400,
-		);
-	}
-
-	return next();
-});
+app.use("*", providerMiddleware);
 
 const routes = app
 	.route("/", playerRoutes)
 	.route("/albums", albumRoutes)
 	.route("/playlists", playlistRoutes)
+	.route("/likes", likesRoutes)
 	.get(
 		"/search",
 		zValidator(
@@ -59,74 +48,16 @@ const routes = app
 			}),
 		),
 		async (c) => {
-			const auth = getAuth(c);
-			const client = c.get("clerk");
-
-			if (!auth?.userId) {
-				return c.text("Error", 500);
-			}
-
-			const oauthTokens = await client.users.getUserOauthAccessToken(
-				auth?.userId,
-				"spotify",
-			);
-
-			if (oauthTokens.totalCount === 0) {
-				return c.json({ error: true }, 500);
-			}
-
-			const { token } = oauthTokens.data[0];
-
+			const provider = getMusicProvider(c);
 			const query = c.req.valid("query");
-
-			const results = await spotifyClient(token).search.get(query.q, {
-				include: {
-					track: query.type === "track",
-					album: query.type === "album",
-					artist: query.type === "artist",
-					playlist: query.type === "playlist",
-				},
-			});
-
-			const data = Object.assign(
-				results.tracks ?? {},
-				results.albums ?? {},
-				results.artists ?? {},
-				results.playlists ?? {},
-			);
-
-			const { items, ...meta } = data;
-
-			return c.json({
-				results: items.filter((i) => !!i),
-				meta,
-			});
+			const result = await provider.search(query.q, query.type);
+			return c.json(result);
 		},
 	)
 	.get("/new-releases", async (c) => {
-		const auth = getAuth(c);
-		const client = c.get("clerk");
-
-		if (!auth?.userId) {
-			return c.text("Error", 500);
-		}
-
-		const oauthTokens = await client.users.getUserOauthAccessToken(
-			auth?.userId,
-			"spotify",
-		);
-
-		if (oauthTokens.totalCount === 0) {
-			return c.json({ error: true }, 500);
-		}
-
-		const { token } = oauthTokens.data[0];
-
-		const results = await spotifyClient(token).albums.newReleases({
-			limit: 10,
-		});
-
-		return c.json(results);
+		const provider = getMusicProvider(c);
+		const result = await provider.getNewReleases({ limit: 10 });
+		return c.json(result);
 	})
 	.get(
 		"/recents",
@@ -140,31 +71,13 @@ const routes = app
 			}),
 		),
 		async (c) => {
-			const auth = getAuth(c);
-			const client = c.get("clerk");
-
-			if (!auth?.userId) {
-				return c.text("Error", 500);
-			}
-
-			const oauthTokens = await client.users.getUserOauthAccessToken(
-				auth?.userId,
-				"spotify",
-			);
-
-			if (oauthTokens.totalCount === 0) {
-				return c.json({ error: true }, 500);
-			}
-
-			const { token } = oauthTokens.data[0];
-
-			const recents = await spotifyClient(token).me.top("tracks", {
-				timeRange: c.req.valid("query").range,
-				limit: c.req.valid("query").limit, // add one more for top pick
-				offset: 0,
+			const provider = getMusicProvider(c);
+			const query = c.req.valid("query");
+			const result = await provider.getTopTracks({
+				timeRange: query.range,
+				limit: query.limit,
 			});
-
-			return c.json(recents);
+			return c.json(result);
 		},
 	);
 
