@@ -1,6 +1,7 @@
 import type {
 	MusicAlbum,
 	MusicAlbumSummary,
+	MusicArtistDetail,
 	MusicPlaylist,
 	MusicPlaylistSummary,
 	MusicSearchResult,
@@ -10,6 +11,7 @@ import type {
 export interface MusicProvider {
 	getAlbum(id: string): Promise<MusicAlbum>;
 	getTrack(id: string): Promise<MusicTrack>;
+	getArtist(id: string): Promise<MusicArtistDetail>;
 	getPlaylist(id: string): Promise<MusicPlaylist>;
 
 	getUserAlbums(options?: { limit?: number; offset?: number }): Promise<{

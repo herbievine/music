@@ -37,9 +37,15 @@ export default function QueuePanel() {
 					<p className="font-semibold text-sm truncate leading-tight">
 						{currentSong.name}
 					</p>
-					<p className="text-xs text-muted-foreground truncate mt-0.5">
-						{currentSong.artists[0]?.name}
-					</p>
+					{currentSong.artists[0] && (
+						<Link
+							to="/artist/$id"
+							params={{ id: currentSong.artists[0].id }}
+							className="text-xs text-muted-foreground hover:text-foreground transition-colors truncate block mt-0.5"
+						>
+							{currentSong.artists[0].name}
+						</Link>
+					)}
 					<Link
 						to="/album/$id"
 						params={{ id: currentSong.album.id }}
@@ -124,7 +130,7 @@ function LikeButton({
 			}}
 			className={cn(
 				"flex-shrink-0 p-1 transition-colors mt-0.5",
-				isLiked ? "text-green-400 hover:text-green-300" : "text-muted-foreground/50 hover:text-foreground",
+				isLiked ? "text-emerald-400 hover:text-emerald-300" : "text-muted-foreground/50 hover:text-foreground",
 			)}
 		>
 			{isLiked ? <HeartOff className="w-4 h-4" /> : <Heart className="w-4 h-4" />}

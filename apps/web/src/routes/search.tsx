@@ -383,8 +383,14 @@ function ResultRow({ result }: { result: SearchResult }) {
 			</li>
 		);
 	}
-	// artist — no route yet
-	return <li>{inner}</li>;
+	// artist
+	return (
+		<li>
+			<Link to="/artist/$id" params={{ id: result.id }}>
+				{inner}
+			</Link>
+		</li>
+	);
 }
 
 // ─── Search input ─────────────────────────────────────────────────────────────

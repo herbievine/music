@@ -61,6 +61,10 @@ export type MusicPlaylist = MusicPlaylistSummary & {
 	};
 };
 
+export type MusicArtistDetail = MusicArtist & {
+	topTracks: MusicTrack[];
+};
+
 export type MusicSearchResult =
 	| MusicTrack
 	| MusicAlbumSummary

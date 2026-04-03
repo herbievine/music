@@ -7,6 +7,7 @@ import { cors } from "hono/cors";
 import { z } from "zod";
 import { getMusicProvider, providerMiddleware } from "./lib/middleware.js";
 import albumRoutes from "./routes/albums.js";
+import artistRoutes from "./routes/artists.js";
 import likesRoutes from "./routes/likes.js";
 import playerRoutes from "./routes/player.js";
 import playlistRoutes from "./routes/playlists.js";
@@ -36,6 +37,7 @@ app.use("*", providerMiddleware);
 const routes = app
 	.route("/", playerRoutes)
 	.route("/albums", albumRoutes)
+	.route("/artists", artistRoutes)
 	.route("/playlists", playlistRoutes)
 	.route("/likes", likesRoutes)
 	.get(

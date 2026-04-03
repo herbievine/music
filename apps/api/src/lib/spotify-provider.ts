@@ -11,6 +11,7 @@ import type {
 	MusicAlbum,
 	MusicAlbumSummary,
 	MusicArtist,
+	MusicArtistDetail,
 	MusicImage,
 	MusicPlaylist,
 	MusicPlaylistSummary,
@@ -129,6 +130,35 @@ export class SpotifyProvider implements MusicProvider {
 	async getTrack(id: string): Promise<MusicTrack> {
 		const track = await this.client.tracks.get(id);
 		return mapTrack(track);
+	}
+
+	async getArtist(id: string): Promise<MusicArtistDetail> {
+		const [artistRes, topTracksRes] = await Promise.all([
+			fetch(`https://api.spotify.com/v1/artists/${encodeURIComponent(id)}`, {
+				headers: { Authorization: `Bearer ${this.token}` },
+			}),
+			fetch(
+				`https://api.spotify.com/v1/artists/${encodeURIComponent(id)}/top-tracks?market=from_token`,
+				{ headers: { Authorization: `Bearer ${this.token}` } },
+			),
+		]);
+
+		if (!artistRes.ok || !topTracksRes.ok) {
+			throw new Error("Could not fetch artist");
+		}
+
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		const artist = (await artistRes.json()) as any;
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		const { tracks } = (await topTracksRes.json()) as { tracks: any[] };
+
+		return {
+			id: artist.id,
+			name: artist.name,
+			images: (artist.images ?? []).map(mapImage),
+			type: "artist" as const,
+			topTracks: tracks.map(mapTrack),
+		};
 	}
 
 	async getPlaylist(id: string): Promise<MusicPlaylist> {

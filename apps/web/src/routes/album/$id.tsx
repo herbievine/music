@@ -1,13 +1,14 @@
 import { useClerk } from "@clerk/clerk-react";
 import { useQuery } from "@tanstack/react-query";
 import {
+	Link,
 	createFileRoute,
 	useCanGoBack,
 	useNavigate,
 	useParams,
 	useRouter,
 } from "@tanstack/react-router";
-import { ChevronLeft, Heart, HeartOff, Play } from "lucide-react";
+import { ChevronLeft, Heart, HeartOff, Pause, Play } from "lucide-react";
 import { z } from "zod";
 import { useIsLiked, useLikeMutation } from "../../hooks/use-likes";
 import { formatTime } from "../../lib/format-time";
@@ -44,7 +45,7 @@ function RouteComponent() {
 			return res.json();
 		},
 	});
-	const { play, songs, songIndex } = useQueueStore();
+	const { play, pause, songs, songIndex, isPlaying } = useQueueStore();
 	const { isLiked, likeEntry } = useIsLiked(id, "album");
 	const { like, unlike } = useLikeMutation();
 
@@ -110,7 +111,18 @@ function RouteComponent() {
 							{data ? (
 								<>
 									<span className="font-semibold text-white">
-										{data.artists.map((a) => a.name).join(", ")}
+										{data.artists.map((a, i) => (
+											<span key={a.id}>
+												{i > 0 && ", "}
+												<Link
+													to="/artist/$id"
+													params={{ id: a.id }}
+													className="hover:underline"
+												>
+													{a.name}
+												</Link>
+											</span>
+										))}
 									</span>
 									{year && <><span>•</span><span>{year}</span></>}
 									<span>•</span>
@@ -136,7 +148,7 @@ function RouteComponent() {
 							play(data.tracks.items.map((t) => toSimpleTrack(t, data)), 0);
 						}
 					}}
-					className="w-14 h-14 bg-green-500 hover:bg-green-400 hover:scale-105 active:scale-100 rounded-full flex items-center justify-center shadow-lg transition-all flex-shrink-0"
+					className="w-14 h-14 bg-emerald-500 hover:bg-emerald-400 hover:scale-105 active:scale-100 rounded-full flex items-center justify-center shadow-lg transition-all flex-shrink-0"
 				>
 					<Play className="w-6 h-6 text-black fill-black ml-0.5" />
 				</button>
@@ -161,7 +173,7 @@ function RouteComponent() {
 					className={cn(
 						"w-8 h-8 flex items-center justify-center transition-colors",
 						isLiked
-							? "text-green-400 hover:text-green-300"
+							? "text-emerald-400 hover:text-emerald-300"
 							: "text-muted-foreground hover:text-foreground",
 					)}
 				>
@@ -186,26 +198,38 @@ function RouteComponent() {
 								<button
 									key={track.id}
 									type="button"
-									onClick={() => play([toSimpleTrack(track, data)])}
+									onClick={() => {
+										if (isCurrentTrack && isPlaying) {
+											pause();
+										} else {
+											play([toSimpleTrack(track, data)]);
+										}
+									}}
 									className={cn(
 										"w-full grid grid-cols-[2rem_1fr_auto] items-center px-0 py-2.5 rounded-md transition-colors group text-left",
 										"hover:bg-white/5",
-										isCurrentTrack && "text-green-400",
+										isCurrentTrack && "text-primary",
 									)}
 								>
-									{/* Number / play on hover */}
+									{/* Number / play / pause */}
 									<span className="text-sm text-center flex items-center justify-center">
-										<span className={cn("tabular-nums group-hover:hidden", isCurrentTrack ? "text-green-400" : "text-muted-foreground")}>
-											{i + 1}
-										</span>
-										<Play className="hidden group-hover:block w-3.5 h-3.5 fill-current" />
+										{isCurrentTrack && isPlaying ? (
+											<Pause className="w-3.5 h-3.5 fill-current text-primary" />
+										) : (
+											<>
+												<span className={cn("tabular-nums group-hover:hidden", isCurrentTrack ? "text-primary" : "text-muted-foreground")}>
+													{i + 1}
+												</span>
+												<Play className="hidden group-hover:block w-3.5 h-3.5 fill-current" />
+											</>
+										)}
 									</span>
 
 									{/* Track info */}
 									<div className="pl-3 min-w-0 flex flex-col">
 										<span className={cn(
 											"text-sm font-medium truncate",
-											isCurrentTrack ? "text-green-400" : "text-foreground",
+											isCurrentTrack ? "text-primary" : "text-foreground",
 										)}>
 											{track.name}
 										</span>
