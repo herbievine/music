@@ -133,12 +133,12 @@ export class SpotifyProvider implements MusicProvider {
 	}
 
 	async getArtist(id: string): Promise<MusicArtistDetail> {
-		const [artistRes, topTracksRes] = await Promise.all([
+		const [artistRes, albumsRes] = await Promise.all([
 			fetch(`https://api.spotify.com/v1/artists/${encodeURIComponent(id)}`, {
 				headers: { Authorization: `Bearer ${this.token}` },
 			}),
 			fetch(
-				`https://api.spotify.com/v1/artists/${encodeURIComponent(id)}/top-tracks?market=from_token`,
+				`https://api.spotify.com/v1/artists/${encodeURIComponent(id)}/albums?limit=50`,
 				{ headers: { Authorization: `Bearer ${this.token}` } },
 			),
 		]);
@@ -148,23 +148,23 @@ export class SpotifyProvider implements MusicProvider {
 			console.error("Spotify artist error", artistRes.status, JSON.stringify(body));
 			throw new Error(`Could not fetch artist: ${artistRes.status} ${JSON.stringify(body)}`);
 		}
-		if (!topTracksRes.ok) {
-			const body = await topTracksRes.json().catch(() => null);
-			console.error("Spotify top-tracks error", topTracksRes.status, JSON.stringify(body));
-			throw new Error(`Could not fetch artist top tracks: ${topTracksRes.status} ${JSON.stringify(body)}`);
+		if (!albumsRes.ok) {
+			const body = await albumsRes.json().catch(() => null);
+			console.error("Spotify artist albums error", albumsRes.status, JSON.stringify(body));
+			throw new Error(`Could not fetch artist albums: ${albumsRes.status} ${JSON.stringify(body)}`);
 		}
 
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		const artist = (await artistRes.json()) as any;
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		const { tracks } = (await topTracksRes.json()) as { tracks: any[] };
+		const { items } = (await albumsRes.json()) as { items: any[] };
 
 		return {
 			id: artist.id,
 			name: artist.name,
 			images: (artist.images ?? []).map(mapImage),
 			type: "artist" as const,
-			topTracks: tracks.map(mapTrack),
+			albums: items.map(mapAlbumSummary),
 		};
 	}
 

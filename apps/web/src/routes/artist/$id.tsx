@@ -1,18 +1,15 @@
 import { useClerk } from "@clerk/clerk-react";
 import { useQuery } from "@tanstack/react-query";
 import {
+	Link,
 	createFileRoute,
 	useCanGoBack,
 	useNavigate,
 	useParams,
 	useRouter,
 } from "@tanstack/react-router";
-import { ChevronLeft, Pause, Play } from "lucide-react";
-import { formatTime } from "../../lib/format-time";
+import { ChevronLeft } from "lucide-react";
 import { client } from "../../lib/hono-rpc";
-import { useQueueStore } from "../../store/queue";
-import { toSimpleTrack } from "../../utils/to-simple-track";
-import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/artist/$id")({
 	component: RouteComponent,
@@ -36,11 +33,6 @@ function RouteComponent() {
 			return res.json();
 		},
 	});
-
-	const { play, pause, songs, songIndex, isPlaying } = useQueueStore();
-	const currentSongId = songs[songIndex]?.id;
-	const isArtistPlaying =
-		data?.topTracks.some((t: { id: string }) => t.id === currentSongId) ?? false;
 
 	const imageUrl = data?.images?.[0]?.url;
 
@@ -94,134 +86,68 @@ function RouteComponent() {
 						) : (
 							<div className="h-12 w-64 bg-white/20 rounded-lg animate-pulse mb-4" />
 						)}
+						{data && (
+							<p className="text-sm text-white/70">
+								{data.albums.length} album{data.albums.length !== 1 ? "s" : ""}
+							</p>
+						)}
 					</div>
 				</div>
 			</div>
 
-			{/* Actions bar */}
-			<div className="px-8 py-4 flex items-center gap-5">
-				<button
-					type="button"
-					onClick={() => {
-						if (!data?.topTracks.length) return;
-						if (isArtistPlaying && isPlaying) {
-							pause();
-						} else {
-							play(
-								data.topTracks.map((t) => toSimpleTrack(t, t.album)),
-								0,
-							);
-						}
-					}}
-					className="w-14 h-14 bg-emerald-500 hover:bg-emerald-400 hover:scale-105 active:scale-100 rounded-full flex items-center justify-center shadow-lg transition-all flex-shrink-0"
-				>
-					{isArtistPlaying && isPlaying ? (
-						<Pause className="w-6 h-6 text-black fill-black" />
-					) : (
-						<Play className="w-6 h-6 text-black fill-black ml-0.5" />
-					)}
-				</button>
-			</div>
-
-			{/* Top tracks */}
+			{/* Albums grid */}
 			<div className="px-8 pb-8">
-				<div className="grid grid-cols-[2rem_1fr_auto] items-center border-b border-border/50 pb-2 mb-1 text-xs uppercase tracking-wider text-muted-foreground select-none">
-					<span className="text-center">#</span>
-					<span className="pl-3">Title</span>
-					<span>Duration</span>
-				</div>
-
-				{data
-					? data.topTracks.map((track, i) => {
-							const isCurrentTrack = track.id === currentSongId;
-							return (
-								<button
-									key={track.id}
-									type="button"
-									onClick={() => {
-										if (isCurrentTrack && isPlaying) {
-											pause();
-										} else {
-											play(
-												data.topTracks.map((t) => toSimpleTrack(t, t.album)),
-												i,
-											);
-										}
-									}}
-									className={cn(
-										"w-full grid grid-cols-[2rem_1fr_auto] items-center px-0 py-2.5 rounded-md transition-colors group text-left",
-										"hover:bg-white/5",
-										isCurrentTrack && "text-primary",
-									)}
-								>
-									<span className="text-sm text-center flex items-center justify-center">
-										{isCurrentTrack && isPlaying ? (
-											<Pause className="w-3.5 h-3.5 fill-current text-primary" />
-										) : (
-											<>
-												<span
-													className={cn(
-														"tabular-nums group-hover:hidden",
-														isCurrentTrack
-															? "text-primary"
-															: "text-muted-foreground",
-													)}
-												>
-													{i + 1}
-												</span>
-												<Play className="hidden group-hover:block w-3.5 h-3.5 fill-current" />
-											</>
-										)}
-									</span>
-
-									<div className="pl-3 flex items-center gap-3 min-w-0">
-										{track.album.images?.[0] && (
-											<img
-												src={track.album.images[0].url}
-												alt={track.album.name}
-												className="w-10 h-10 rounded-md flex-shrink-0 object-cover"
-											/>
-										)}
-										<div className="flex flex-col min-w-0">
-											<span
-												className={cn(
-													"text-sm font-medium truncate",
-													isCurrentTrack
-														? "text-primary"
-														: "text-foreground",
-												)}
-											>
-												{track.name}
-											</span>
-											<span className="text-xs text-muted-foreground truncate">
-												{track.album.name}
-											</span>
+				{data ? (
+					data.albums.length > 0 ? (
+						<div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+							{data.albums.map((album) => {
+								const year = album.releaseDate.slice(0, 4);
+								return (
+									<Link
+										key={album.id}
+										to="/album/$id"
+										params={{ id: album.id }}
+										className="group cursor-pointer"
+									>
+										<div className="relative aspect-square mb-3 overflow-hidden rounded-lg">
+											{album.images?.[0] ? (
+												<img
+													src={album.images[0].url}
+													alt={album.name}
+													className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+													style={{ viewTransitionName: `key-${album.id}` }}
+												/>
+											) : (
+												<div className="w-full h-full bg-secondary" />
+											)}
 										</div>
-									</div>
-
-									<span className="text-xs text-muted-foreground tabular-nums">
-										{formatTime(track.durationMs)}
-									</span>
-								</button>
-							);
-						})
-					: [...Array(10)].map((_, i) => (
+										<p className="font-medium text-sm truncate group-hover:text-primary transition-colors">
+											{album.name}
+										</p>
+										<p className="text-xs text-muted-foreground truncate">
+											{year}
+										</p>
+									</Link>
+								);
+							})}
+						</div>
+					) : (
+						<div className="text-center py-8 text-muted-foreground">
+							No albums found
+						</div>
+					)
+				) : (
+					<div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+						{[...Array(12)].map((_, i) => (
 							// biome-ignore lint/suspicious/noArrayIndexKey: skeleton
-							<div
-								key={i}
-								className="grid grid-cols-[2rem_1fr_auto] items-center py-3"
-							>
-								<div />
-								<div className="pl-3 flex items-center gap-3">
-									<div className="w-10 h-10 bg-secondary rounded-md animate-pulse flex-shrink-0" />
-									<div className="flex flex-col gap-1.5">
-										<div className="h-4 w-44 bg-secondary rounded animate-pulse" />
-										<div className="h-3 w-28 bg-secondary/60 rounded animate-pulse" />
-									</div>
-								</div>
-								<div className="h-3 w-8 bg-secondary/60 rounded animate-pulse" />
+							<div key={i}>
+								<div className="aspect-square bg-secondary rounded-lg animate-pulse mb-3" />
+								<div className="h-4 bg-secondary rounded animate-pulse mb-2" />
+								<div className="h-3 w-2/3 bg-secondary/60 rounded animate-pulse" />
 							</div>
 						))}
+					</div>
+				)}
 			</div>
 		</div>
 	);
