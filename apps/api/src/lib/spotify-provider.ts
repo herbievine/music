@@ -218,7 +218,9 @@ export class SpotifyProvider implements MusicProvider {
 		});
 
 		if (!res.ok) {
-			throw new Error(`Search failed: ${res.status}`);
+			const body = await res.json().catch(() => null);
+			console.error("Spotify search error", res.status, JSON.stringify(body));
+			throw new Error(`Search failed: ${res.status} ${JSON.stringify(body)}`);
 		}
 
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
