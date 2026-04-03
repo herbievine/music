@@ -42,9 +42,10 @@ export function AudioProvider({ children }: { children: ReactNode }) {
 			const res = await client.play[":spotifyId"].$get(
 				{
 					param: { spotifyId: songs[songIndex].id },
-					...(songs[songIndex + 1]
-						? { query: { next: songs[songIndex + 1].id } }
-						: {}),
+					query: {
+						duration: Math.round(songs[songIndex].durationMs / 1000).toString(),
+						...(songs[songIndex + 1] ? { next: songs[songIndex + 1].id } : {}),
+					},
 				},
 				{
 					headers: {

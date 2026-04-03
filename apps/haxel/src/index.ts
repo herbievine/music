@@ -67,11 +67,14 @@ const routes = app
 
 			console.log("Processing new song:", track.id);
 
+			const durationParam = c.req.query("duration");
+
 			const {
 				items: [video],
 			} = await youtube(
 				`${track.artists[0].name} ${track.name} audio`,
 				c.env.YOUTUBE_API_KEY,
+				durationParam ? parseInt(durationParam) : undefined,
 			);
 
 			console.log("Youtube video ID:", video.id.videoId);
