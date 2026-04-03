@@ -143,8 +143,15 @@ export class SpotifyProvider implements MusicProvider {
 			),
 		]);
 
-		if (!artistRes.ok || !topTracksRes.ok) {
-			throw new Error("Could not fetch artist");
+		if (!artistRes.ok) {
+			const body = await artistRes.json().catch(() => null);
+			console.error("Spotify artist error", artistRes.status, JSON.stringify(body));
+			throw new Error(`Could not fetch artist: ${artistRes.status} ${JSON.stringify(body)}`);
+		}
+		if (!topTracksRes.ok) {
+			const body = await topTracksRes.json().catch(() => null);
+			console.error("Spotify top-tracks error", topTracksRes.status, JSON.stringify(body));
+			throw new Error(`Could not fetch artist top tracks: ${topTracksRes.status} ${JSON.stringify(body)}`);
 		}
 
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
