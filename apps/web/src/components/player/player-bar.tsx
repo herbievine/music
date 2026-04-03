@@ -30,7 +30,7 @@ export function PlayerBar() {
 	const currentSong = songs[songIndex];
 	if (!currentSong) return null;
 
-	const duration = audioRef.current?.duration ?? 0;
+	const duration = currentSong.durationMs / 1000;
 
 	return (
 		<div className="h-[72px] flex-shrink-0 bg-background border-t border-border/50 px-4">
