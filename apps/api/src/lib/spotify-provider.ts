@@ -210,8 +210,6 @@ export class SpotifyProvider implements MusicProvider {
 		const url = new URL("/v1/search", "https://api.spotify.com");
 		url.searchParams.append("q", query);
 		url.searchParams.append("type", type);
-		url.searchParams.append("limit", "20");
-		url.searchParams.append("offset", "0");
 
 		const res = await fetch(url, {
 			headers: { Authorization: `Bearer ${this.token}` },
