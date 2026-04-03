@@ -4,7 +4,10 @@ import { createRootRoute, Link, Outlet } from "@tanstack/react-router";
 import { HomeIcon, LibraryBigIcon, SearchIcon, UserIcon } from "lucide-react";
 import { NuqsAdapter } from "nuqs/adapters/react";
 import { useState } from "react";
+import QueuePanel from "../components/queue-panel";
+import { PlayerBar } from "../components/player/player-bar";
 import { Player } from "../components/player/player";
+import Sidebar from "../components/sidebar";
 import { useQueueStore } from "../store/queue";
 import cn from "../utils/cn";
 
@@ -20,11 +23,12 @@ function RootComponent() {
 		<QueryClientProvider client={queryClient}>
 			<NuqsAdapter>
 				<SignedIn>
-					<div className="h-screen flex flex-col">
+					{/* ── MOBILE ── */}
+					<div className="lg:hidden h-screen flex flex-col">
 						<main className="flex-1 h-[calc(100vh_-_16rem)] w-full max-w-lg mx-auto flex flex-col relative">
 							<div
 								className={cn(
-									"px-4 py-2 overfow-auto",
+									"px-4 py-2 overflow-auto",
 									store.isPlaying ? "pb-36" : "pb-24",
 								)}
 							>
@@ -59,7 +63,27 @@ function RootComponent() {
 							</nav>
 						</div>
 					</div>
+
+					{/* ── DESKTOP ── */}
+					<div className="hidden lg:flex h-screen overflow-hidden flex-col">
+						<div className="flex flex-1 overflow-hidden">
+							{/* Left sidebar */}
+							<Sidebar />
+
+							{/* Main content */}
+							<main className="flex-1 overflow-y-auto px-8 py-6 pb-24">
+								<Outlet />
+							</main>
+
+							{/* Right queue panel */}
+							<QueuePanel />
+						</div>
+
+						{/* Desktop player bar */}
+						<PlayerBar />
+					</div>
 				</SignedIn>
+
 				<SignedOut>
 					<main className="w-full h-screen flex justify-center items-center">
 						<SignInButton />
