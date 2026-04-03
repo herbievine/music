@@ -207,30 +207,38 @@ export class SpotifyProvider implements MusicProvider {
 		query: string,
 		type: "track" | "album" | "artist" | "playlist",
 	): Promise<{ results: MusicSearchResult[]; total: number }> {
-		const results = await this.client.search.get(query, {
-			include: {
-				track: type === "track",
-				album: type === "album",
-				artist: type === "artist",
-				playlist: type === "playlist",
-			},
+		const url = new URL("/v1/search", "https://api.spotify.com");
+		url.searchParams.append("q", query);
+		url.searchParams.append("type", type);
+		url.searchParams.append("limit", "20");
+		url.searchParams.append("offset", "0");
+
+		const res = await fetch(url, {
+			headers: { Authorization: `Bearer ${this.token}` },
 		});
+
+		if (!res.ok) {
+			throw new Error(`Search failed: ${res.status}`);
+		}
+
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		const data = (await res.json()) as any;
 
 		let items: MusicSearchResult[] = [];
 		let total = 0;
 
-		if (type === "track" && results.tracks) {
-			items = results.tracks.items.filter(Boolean).map(mapTrack);
-			total = results.tracks.total;
-		} else if (type === "album" && results.albums) {
-			items = results.albums.items.filter(Boolean).map(mapAlbumSummary);
-			total = results.albums.total;
-		} else if (type === "artist" && results.artists) {
-			items = results.artists.items.filter(Boolean).map(mapArtist);
-			total = results.artists.total;
-		} else if (type === "playlist" && results.playlists) {
-			items = results.playlists.items.filter(Boolean).map(mapPlaylistSummary);
-			total = results.playlists.total;
+		if (type === "track" && data.tracks) {
+			items = data.tracks.items.filter(Boolean).map(mapTrack);
+			total = data.tracks.total;
+		} else if (type === "album" && data.albums) {
+			items = data.albums.items.filter(Boolean).map(mapAlbumSummary);
+			total = data.albums.total;
+		} else if (type === "artist" && data.artists) {
+			items = data.artists.items.filter(Boolean).map(mapArtist);
+			total = data.artists.total;
+		} else if (type === "playlist" && data.playlists) {
+			items = data.playlists.items.filter(Boolean).map(mapPlaylistSummary);
+			total = data.playlists.total;
 		}
 
 		return { results: items, total };
