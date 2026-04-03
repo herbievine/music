@@ -156,7 +156,7 @@ function LikeButton({
 			}}
 			className={cn(
 				"flex-shrink-0 p-1 transition-colors",
-				isLiked ? "text-green-400 hover:text-green-300" : "text-muted-foreground hover:text-foreground",
+				isLiked ? "text-emerald-400 hover:text-emerald-300" : "text-muted-foreground hover:text-foreground",
 			)}
 		>
 			{isLiked ? <HeartOff className="w-4 h-4" /> : <Heart className="w-4 h-4" />}

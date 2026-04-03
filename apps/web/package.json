@@ -12,6 +12,7 @@
 		"pwa:gen": "pwa-assets-generator"
 	},
 	"devDependencies": {
+		"@tailwindcss/vite": "^4.2.2",
 		"@tanstack/router-plugin": "^1.91.1",
 		"@types/react": "^18.3.3",
 		"@types/react-dom": "^18.3.0",
@@ -19,7 +20,7 @@
 		"@vitejs/plugin-react": "^4.3.2",
 		"autoprefixer": "^10.4.20",
 		"postcss": "^8.4.49",
-		"tailwindcss": "^3.4.17",
+		"tailwindcss": "^4.2.2",
 		"vite": "^6.0.3"
 	},
 	"dependencies": {
@@ -49,6 +50,7 @@
 		"radix-ui": "^1.4.3",
 		"react": "^18.3.1",
 		"react-dom": "^18.3.1",
+		"shadcn": "^4.1.2",
 		"sonner": "^2.0.7",
 		"spotify-api-sdk": "1.0.0",
 		"tailwind-merge": "^2.5.5",
