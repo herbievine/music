@@ -75,7 +75,7 @@ function RootComponent() {
 								<Sidebar />
 
 								{/* Main content */}
-								<main className="flex-1 overflow-y-auto rounded-xl bg-card px-8 py-6 pb-28 min-w-0">
+								<main className="flex-1 overflow-y-auto overflow-x-hidden rounded-xl bg-card pb-28 min-w-0">
 									<Outlet />
 								</main>
 

@@ -53,7 +53,7 @@ function RouteComponent() {
 	});
 
 	return (
-		<div className="flex flex-col gap-4">
+		<div className="flex flex-col gap-4 px-8 py-6">
 			{/* Mobile header */}
 			<div className="lg:hidden h-24 flex items-center">
 				<header className="w-full h-24 fixed top-0 left-1/2 -translate-x-1/2 z-10 backdrop-blur-md bg-background/70">

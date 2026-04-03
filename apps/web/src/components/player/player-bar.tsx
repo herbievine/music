@@ -1,10 +1,9 @@
-import { Pause, Play, SkipBack, SkipForward, Volume2 } from "lucide-react";
+import { Heart, HeartOff, Pause, Play, SkipBack, SkipForward, Volume2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useAudioContext } from "../../contexts/audio-context";
 import { useQueueStore } from "../../store/queue";
+import { useIsLiked, useLikeMutation } from "../../hooks/use-likes";
 import { Slider } from "@/components/ui/slider";
-import { Button } from "@/components/ui/button";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 
 function formatTime(seconds: number): string {
@@ -34,73 +33,62 @@ export function PlayerBar() {
 	const duration = audioRef.current?.duration ?? 0;
 
 	return (
-		<div className="h-20 flex-shrink-0 bg-background border-t border-border px-4">
-			<div className="grid grid-cols-3 items-center h-full max-w-screen-2xl mx-auto">
-				{/* Left: track info */}
+		<div className="h-[72px] flex-shrink-0 bg-background border-t border-border/50 px-4">
+			<div className="grid grid-cols-3 items-center h-full max-w-screen-2xl mx-auto gap-4">
+
+				{/* Left: track info + like */}
 				<div className="flex items-center gap-3 min-w-0">
 					<img
 						src={currentSong.album.image}
 						alt={currentSong.album.name}
-						className="w-11 h-11 rounded-lg object-cover flex-shrink-0"
+						className="w-[52px] h-[52px] rounded-md object-cover flex-shrink-0"
 					/>
-					<div className="min-w-0">
-						<p className="text-sm font-medium truncate">{currentSong.name}</p>
-						<p className="text-xs text-muted-foreground truncate">
+					<div className="min-w-0 flex-1">
+						<p className="text-sm font-medium truncate leading-tight">
+							{currentSong.name}
+						</p>
+						<p className="text-xs text-muted-foreground truncate mt-0.5">
 							{currentSong.artists[0]?.name}
 						</p>
 					</div>
+					<LikeButton songId={currentSong.id} song={currentSong} />
 				</div>
 
 				{/* Center: controls + progress */}
-				<div className="flex flex-col items-center gap-2">
-					<div className="flex items-center gap-1">
-						<Tooltip>
-							<TooltipTrigger asChild>
-								<Button
-									variant="ghost"
-									size="icon-sm"
-									onClick={previous}
-									className="text-muted-foreground hover:text-foreground"
-								>
-									<SkipBack className="w-4 h-4" />
-								</Button>
-							</TooltipTrigger>
-							<TooltipContent>Previous</TooltipContent>
-						</Tooltip>
+				<div className="flex flex-col items-center gap-1.5">
+					<div className="flex items-center gap-3">
+						<button
+							type="button"
+							onClick={previous}
+							className="text-muted-foreground hover:text-foreground transition-colors p-1"
+						>
+							<SkipBack className="w-4 h-4 fill-current" />
+						</button>
 
-						<Button
-							variant="outline"
-							size="icon"
+						<button
+							type="button"
 							onClick={() => (isPlaying ? pause() : play())}
-							className={cn(
-								"rounded-full mx-1",
-								"text-foreground",
-							)}
+							className="w-8 h-8 bg-white hover:scale-105 active:scale-100 rounded-full flex items-center justify-center transition-transform flex-shrink-0 shadow"
 						>
 							{isPlaying ? (
-								<Pause className="w-4 h-4" fill="currentColor" />
+								<Pause className="w-4 h-4 text-black fill-black" />
 							) : (
-								<Play className="w-4 h-4" fill="currentColor" />
+								<Play className="w-4 h-4 text-black fill-black ml-0.5" />
 							)}
-						</Button>
+						</button>
 
-						<Tooltip>
-							<TooltipTrigger asChild>
-								<Button
-									variant="ghost"
-									size="icon-sm"
-									onClick={next}
-									className="text-muted-foreground hover:text-foreground"
-								>
-									<SkipForward className="w-4 h-4" />
-								</Button>
-							</TooltipTrigger>
-							<TooltipContent>Next</TooltipContent>
-						</Tooltip>
+						<button
+							type="button"
+							onClick={next}
+							className="text-muted-foreground hover:text-foreground transition-colors p-1"
+						>
+							<SkipForward className="w-4 h-4 fill-current" />
+						</button>
 					</div>
 
-					<div className="flex items-center gap-2 w-full max-w-sm">
-						<span className="text-xs text-muted-foreground w-8 text-right tabular-nums">
+					{/* Progress */}
+					<div className="flex items-center gap-2 w-full max-w-md">
+						<span className="text-[10px] text-muted-foreground w-7 text-right tabular-nums">
 							{formatTime(progress)}
 						</span>
 						<Slider
@@ -110,27 +98,19 @@ export function PlayerBar() {
 							value={[progress]}
 							onValueChange={([val]) => {
 								setProgress(val);
-								if (audioRef.current) {
-									audioRef.current.currentTime = val;
-								}
+								if (audioRef.current) audioRef.current.currentTime = val;
 							}}
 							className="flex-1"
 						/>
-						{/* hidden input for backward compat with AudioTag */}
-						<input
-							ref={progressRef}
-							type="range"
-							className="hidden"
-							readOnly
-						/>
-						<span className="text-xs text-muted-foreground w-8 tabular-nums">
+						<input ref={progressRef} type="range" className="hidden" readOnly />
+						<span className="text-[10px] text-muted-foreground w-7 tabular-nums">
 							{formatTime(duration)}
 						</span>
 					</div>
 				</div>
 
 				{/* Right: volume */}
-				<div className="flex items-center justify-end gap-3">
+				<div className="flex items-center justify-end gap-2">
 					<Volume2 className="w-4 h-4 text-muted-foreground flex-shrink-0" />
 					<Slider
 						min={0}
@@ -143,5 +123,43 @@ export function PlayerBar() {
 				</div>
 			</div>
 		</div>
+	);
+}
+
+function LikeButton({
+	songId,
+	song,
+}: {
+	songId: string;
+	song: { name: string; album: { image: string; id: string }; artists: { name: string }[] };
+}) {
+	const { isLiked, likeEntry } = useIsLiked(songId, "track");
+	const { like, unlike } = useLikeMutation();
+
+	return (
+		<button
+			type="button"
+			onClick={() => {
+				if (isLiked && likeEntry) {
+					unlike.mutate(likeEntry.id);
+				} else {
+					like.mutate({
+						itemId: songId,
+						itemType: "track",
+						metadata: {
+							name: song.name,
+							image: song.album.image,
+							artist: song.artists[0]?.name ?? "",
+						},
+					});
+				}
+			}}
+			className={cn(
+				"flex-shrink-0 p-1 transition-colors",
+				isLiked ? "text-green-400 hover:text-green-300" : "text-muted-foreground hover:text-foreground",
+			)}
+		>
+			{isLiked ? <HeartOff className="w-4 h-4" /> : <Heart className="w-4 h-4" />}
+		</button>
 	);
 }
