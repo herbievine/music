@@ -10,7 +10,7 @@ import {
 	useQueryStates,
 } from "nuqs";
 import { client } from "../lib/hono-rpc";
-import cn from "../utils/cn";
+import { cn } from "@/lib/utils";
 
 const searchParams = {
 	query: parseAsString.withDefault(""),
@@ -46,159 +46,166 @@ function RouteComponent() {
 					},
 				},
 			);
-
-			if (!res.ok) {
-				throw new Error("api error");
-			}
-
+			if (!res.ok) throw new Error("api error");
 			return res.json();
 		},
 		enabled: debouncedSearchTerm.length > 0,
 	});
 
 	return (
-		<div className="flex flex-col overflow-hidden">
-			<div className="h-24 flex items-center">
-				<header
-					className={cn(
-						"w-full h-24",
-						"fixed top-0 left-1/2 -translate-x-1/2",
-						"z-10 backdrop-blur-md bg-neutral-900/70",
-					)}
-				>
-					<div className="w-full h-24 px-4 max-w-lg mx-auto flex flex-col justify-center space-y-2">
-						<input
-							type="text"
-							placeholder="Search..."
-							className="w-full px-4 py-2 rounded-xl text-zinc-100 bg-zinc-800 outline-none"
-							value={query ?? ""}
-							onChange={(e) => {
-								setValues({ query: e.target.value });
-							}}
-						/>
-						<div className="w-full flex items-center space-x-2">
-							{(["track", "album", "artist", "playlist"] as const).map(
-								(typeName) => (
-									<button
-										key={typeName}
-										type="button"
-										onClick={() => {
-											setValues({ type: typeName });
-										}}
-										className={cn(
-											"px-2.5 py-0.5 text-sm rounded-full capitalize",
-											type === typeName ? "border border-neutral-700" : "",
-										)}
-									>
-										{typeName}
-									</button>
-								),
-							)}
-						</div>
+		<div className="flex flex-col gap-4">
+			{/* Mobile header */}
+			<div className="lg:hidden h-24 flex items-center">
+				<header className="w-full h-24 fixed top-0 left-1/2 -translate-x-1/2 z-10 backdrop-blur-md bg-background/70">
+					<div className="w-full h-24 px-4 max-w-lg mx-auto flex flex-col justify-center gap-2">
+						<SearchInput query={query} setQuery={(q) => setValues({ query: q })} />
+						<TypePills type={type} setType={(t) => setValues({ type: t })} />
 					</div>
 				</header>
 			</div>
-			<ul className="flex flex-col space-y-6">
+
+			{/* Desktop header */}
+			<div className="hidden lg:flex flex-col gap-3">
+				<h1 className="text-2xl font-bold">Search</h1>
+				<SearchInput query={query} setQuery={(q) => setValues({ query: q })} />
+				<TypePills type={type} setType={(t) => setValues({ type: t })} />
+			</div>
+
+			<ul className="flex flex-col gap-4">
 				{data?.results.map((result) =>
 					result.type === "track" ? (
-						<li key={result.id} className="flex space-x-2">
+						<li key={result.id}>
 							<Link
 								to="/album/$id"
-								params={{
-									id: result.album.id,
-								}}
-								className="flex space-x-4 items-center"
+								params={{ id: result.album.id }}
+								className="flex items-center gap-4 hover:bg-secondary/50 rounded-lg p-2 transition-colors"
 							>
-								{!!result.album.images && result.album.images.length > 0 ? (
+								{result.album.images?.length > 0 && (
 									<img
 										src={result.album.images[0].url}
 										alt={`${result.album.name} cover`}
-										className="w-12 h-12 rounded-lg"
-										style={{
-											viewTransitionName: `key-${result.album.id}`,
-										}}
+										className="w-12 h-12 rounded-lg flex-shrink-0 object-cover"
+										style={{ viewTransitionName: `key-${result.album.id}` }}
 									/>
-								) : null}
-								<div className="flex flex-col items-start">
-									<span className="line-clamp-1 text-left">{result.name}</span>
-									<span className="text-sm text-zinc-500">
-										{dayjs(result.album.releaseDate).format("YYYY")}
+								)}
+								<div className="flex flex-col min-w-0">
+									<span className="font-medium line-clamp-1">{result.name}</span>
+									<span className="text-sm text-muted-foreground">
+										{result.artists?.[0]?.name} · {dayjs(result.album.releaseDate).format("YYYY")}
 									</span>
 								</div>
 							</Link>
 						</li>
 					) : result.type === "album" ? (
-						<li key={result.id} className="flex space-x-2">
+						<li key={result.id}>
 							<Link
 								to="/album/$id"
-								params={{
-									id: result.id,
-								}}
-								className="flex space-x-4 items-center"
+								params={{ id: result.id }}
+								className="flex items-center gap-4 hover:bg-secondary/50 rounded-lg p-2 transition-colors"
 							>
-								{!!result.images && result.images.length > 0 ? (
+								{result.images?.length > 0 && (
 									<img
 										src={result.images[0].url}
 										alt={`${result.name} cover`}
-										className="w-12 h-12 rounded-lg"
-										style={{
-											viewTransitionName: `key-${result.id}`,
-										}}
+										className="w-12 h-12 rounded-lg flex-shrink-0 object-cover"
+										style={{ viewTransitionName: `key-${result.id}` }}
 									/>
-								) : null}
-								<div className="flex flex-col items-start">
-									<span className="line-clamp-1 text-left">{result.name}</span>
-									<span className="text-sm text-zinc-500">
-										{dayjs(result.releaseDate).format("YYYY")}
+								)}
+								<div className="flex flex-col min-w-0">
+									<span className="font-medium line-clamp-1">{result.name}</span>
+									<span className="text-sm text-muted-foreground">
+										Album · {dayjs(result.releaseDate).format("YYYY")}
 									</span>
 								</div>
 							</Link>
 						</li>
 					) : result.type === "playlist" ? (
-						<li key={result.id} className="flex space-x-2">
+						<li key={result.id}>
 							<Link
 								to="/playlist/$id"
-								params={{
-									id: result.id,
-								}}
-								className="flex space-x-4 items-center"
+								params={{ id: result.id }}
+								className="flex items-center gap-4 hover:bg-secondary/50 rounded-lg p-2 transition-colors"
 							>
-								{!!result.images && result.images.length > 0 ? (
+								{result.images?.length > 0 && (
 									<img
 										src={result.images[0].url}
 										alt={`${result.name} cover`}
-										className="w-12 h-12 rounded-lg"
-										style={{
-											viewTransitionName: `key-${result.id}`,
-										}}
+										className="w-12 h-12 rounded-lg flex-shrink-0 object-cover"
+										style={{ viewTransitionName: `key-${result.id}` }}
 									/>
-								) : null}
-								<div className="flex flex-col items-start">
-									<span className="line-clamp-1 text-left">{result.name}</span>
+								)}
+								<div className="flex flex-col min-w-0">
+									<span className="font-medium line-clamp-1">{result.name}</span>
+									<span className="text-sm text-muted-foreground">Playlist</span>
 								</div>
 							</Link>
 						</li>
 					) : (
-						<li key={result.id} className="flex space-x-2">
-							<div className="flex space-x-4 items-center">
-								{!!result.images && result.images.length > 0 ? (
+						<li key={result.id}>
+							<div className="flex items-center gap-4 p-2">
+								{result.images?.length > 0 && (
 									<img
 										src={result.images[0].url}
 										alt={result.name}
-										className="w-12 h-12 rounded-lg"
-										style={{
-											viewTransitionName: `key-${result.id}`,
-										}}
+										className="w-12 h-12 rounded-full flex-shrink-0 object-cover"
+										style={{ viewTransitionName: `key-${result.id}` }}
 									/>
-								) : null}
-								<div className="flex flex-col items-start">
-									<span className="line-clamp-1 text-left">{result.name}</span>
+								)}
+								<div className="flex flex-col min-w-0">
+									<span className="font-medium line-clamp-1">{result.name}</span>
+									<span className="text-sm text-muted-foreground">Artist</span>
 								</div>
 							</div>
 						</li>
 					),
 				)}
 			</ul>
+		</div>
+	);
+}
+
+function SearchInput({
+	query,
+	setQuery,
+}: {
+	query: string;
+	setQuery: (q: string) => void;
+}) {
+	return (
+		<input
+			type="text"
+			placeholder="Search..."
+			className="w-full px-4 py-2.5 rounded-xl text-foreground bg-secondary/70 outline-none border border-border focus:border-ring transition-colors placeholder:text-muted-foreground"
+			value={query}
+			onChange={(e) => setQuery(e.target.value)}
+		/>
+	);
+}
+
+function TypePills({
+	type,
+	setType,
+}: {
+	type: string;
+	setType: (t: "album" | "track" | "artist" | "playlist") => void;
+}) {
+	return (
+		<div className="flex items-center gap-2">
+			{(["track", "album", "artist", "playlist"] as const).map((typeName) => (
+				<button
+					key={typeName}
+					type="button"
+					onClick={() => setType(typeName)}
+					className={cn(
+						"px-3 py-1 text-sm rounded-full capitalize transition-colors",
+						type === typeName
+							? "bg-secondary text-foreground border border-border"
+							: "text-muted-foreground hover:text-foreground",
+					)}
+				>
+					{typeName}
+				</button>
+			))}
 		</div>
 	);
 }
