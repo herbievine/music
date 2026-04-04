@@ -10,9 +10,17 @@ export default app.get("/play/:spotifyId", async (c) => {
 	const oauthToken = getOAuthToken(c);
 	const spotifyId = c.req.param("spotifyId");
 	const nextSpotifyId = c.req.query("next");
+	const youtubeVideoId = c.req.query("youtubeVideoId");
+
+	const params = new URLSearchParams();
+	if (youtubeVideoId) {
+		params.append("youtubeVideoId", youtubeVideoId);
+	}
+	const queryString = params.toString();
+	const haxelUrl = `${process.env.HAXEL_API_URL}/${spotifyId}${queryString ? `?${queryString}` : ""}`;
 
 	const audioPromise = fetcher(
-		`${process.env.HAXEL_API_URL}/${spotifyId}`,
+		haxelUrl,
 		z.object({
 			url: z.string().url(),
 		}),
