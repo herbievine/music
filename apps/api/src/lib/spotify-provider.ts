@@ -138,7 +138,7 @@ export class SpotifyProvider implements MusicProvider {
 				headers: { Authorization: `Bearer ${this.token}` },
 			}),
 			fetch(
-				`https://api.spotify.com/v1/artists/${encodeURIComponent(id)}/albums?limit=50`,
+				`https://api.spotify.com/v1/artists/${encodeURIComponent(id)}/albums`,
 				{ headers: { Authorization: `Bearer ${this.token}` } },
 			),
 		]);

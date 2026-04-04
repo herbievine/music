@@ -277,6 +277,13 @@ function TopResultCard({ result }: { result: SearchResult }) {
 			</Link>
 		);
 	}
+	if (result.type === "artist") {
+		return (
+			<Link to="/artist/$id" params={{ id: result.id }}>
+				{inner}
+			</Link>
+		);
+	}
 	return inner;
 }
 
