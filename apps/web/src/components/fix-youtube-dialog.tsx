@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { client } from "@/lib/hono-rpc";
 import { useClerk } from "@clerk/clerk-react";
+import { useAudioContext } from "../contexts/audio-context";
 
 function extractYoutubeVideoId(url: string): string | null {
 	try {
@@ -38,6 +39,7 @@ export function FixYoutubeDialog({
 	const [error, setError] = useState<string | null>(null);
 	const queryClient = useQueryClient();
 	const { session } = useClerk();
+	const { audioRef } = useAudioContext();
 
 	async function handleSubmit() {
 		const videoId = extractYoutubeVideoId(url);
@@ -55,7 +57,7 @@ export function FixYoutubeDialog({
 				{
 					param: { spotifyId },
 					query: { youtubeVideoId: videoId },
-				},
+				} as any,
 				{
 					headers: {
 						Authorization: `Bearer ${await session?.getToken()}`,
@@ -67,7 +69,18 @@ export function FixYoutubeDialog({
 				throw new Error("Failed to fix YouTube URL");
 			}
 
-			// Invalidate the play query so it re-fetches
+			const data = await res.json();
+
+			// Update audio element directly with the new URL
+			if (audioRef.current) {
+				audioRef.current.src = data.url;
+				audioRef.current.load();
+				audioRef.current.play().catch(() => {
+					// Playback might fail if paused, that's okay
+				});
+			}
+
+			// Invalidate the play query so metadata is fresh
 			queryClient.invalidateQueries({ queryKey: ["play"] });
 
 			setUrl("");
