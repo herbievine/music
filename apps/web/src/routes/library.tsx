@@ -1,8 +1,12 @@
+import { useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Music2, Disc3, ListMusic, Play } from "lucide-react";
+import { Music2, Disc3, ListMusic, Play, Plus } from "lucide-react";
 import { useLikes } from "@/api/likes";
+import { useUserPlaylists, useCreatePlaylist } from "@/api/user-playlists";
 import { useQueueStore } from "../store/queue";
 import { cn } from "@/lib/utils";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/library")({
 	component: RouteComponent,
@@ -10,14 +14,19 @@ export const Route = createFileRoute("/library")({
 
 function RouteComponent() {
 	const { data, isLoading } = useLikes();
+	const { data: myPlaylistsData, isLoading: myPlaylistsLoading } = useUserPlaylists();
 	const { play } = useQueueStore();
 
-	const likedTracks =
-		data?.items.filter((l) => l.itemType === "track") ?? [];
-	const likedAlbums =
-		data?.items.filter((l) => l.itemType === "album") ?? [];
-	const likedPlaylists =
-		data?.items.filter((l) => l.itemType === "playlist") ?? [];
+	const likedTracks = data?.items.filter((l) => l.itemType === "track") ?? [];
+	const likedAlbums = data?.items.filter((l) => l.itemType === "album") ?? [];
+	const likedPlaylists = data?.items.filter((l) => l.itemType === "playlist") ?? [];
+	const myPlaylists = myPlaylistsData?.playlists ?? [];
+
+	const hasAnything =
+		likedTracks.length > 0 ||
+		likedAlbums.length > 0 ||
+		likedPlaylists.length > 0 ||
+		myPlaylists.length > 0;
 
 	return (
 		<div className="flex flex-col gap-8 px-8 py-6">
@@ -33,10 +42,13 @@ function RouteComponent() {
 			{/* Desktop header */}
 			<h1 className="hidden lg:block text-2xl font-bold">Your library</h1>
 
-			{isLoading ? (
+			{isLoading && myPlaylistsLoading ? (
 				<LibrarySkeleton />
 			) : (
 				<>
+					{/* My Playlists */}
+					<MyPlaylistsSection playlists={myPlaylists} />
+
 					{/* Liked Tracks */}
 					{likedTracks.length > 0 && (
 						<section className="flex flex-col gap-3">
@@ -57,7 +69,7 @@ function RouteComponent() {
 												{
 													id: like.itemId,
 													name: like.metadata.name,
-													artists: [{ name: like.metadata.artist }],
+													artists: [{ id: like.itemId, name: like.metadata.artist }],
 													album: {
 														id: like.itemId,
 														name: "",
@@ -79,12 +91,8 @@ function RouteComponent() {
 											className="w-9 h-9 rounded-md object-cover flex-shrink-0"
 										/>
 										<div className="min-w-0">
-											<p className="text-sm font-medium truncate">
-												{like.metadata.name}
-											</p>
-											<p className="text-xs text-muted-foreground truncate">
-												{like.metadata.artist}
-											</p>
+											<p className="text-sm font-medium truncate">{like.metadata.name}</p>
+											<p className="text-xs text-muted-foreground truncate">{like.metadata.artist}</p>
 										</div>
 									</button>
 								))}
@@ -98,9 +106,7 @@ function RouteComponent() {
 							<div className="flex items-center gap-2">
 								<Disc3 className="w-4 h-4 text-muted-foreground" />
 								<h2 className="text-base font-semibold">Liked Albums</h2>
-								<span className="text-xs text-muted-foreground ml-1">
-									{likedAlbums.length}
-								</span>
+								<span className="text-xs text-muted-foreground ml-1">{likedAlbums.length}</span>
 							</div>
 							<MediaGrid>
 								{likedAlbums.map((like) => (
@@ -116,17 +122,11 @@ function RouteComponent() {
 												alt={like.metadata.name}
 												className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
 											/>
-											<div className={cn(
-												"absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors",
-											)} />
+											<div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors" />
 										</div>
 										<div>
-											<p className="text-sm font-medium truncate">
-												{like.metadata.name}
-											</p>
-											<p className="text-xs text-muted-foreground truncate">
-												{like.metadata.artist}
-											</p>
+											<p className="text-sm font-medium truncate">{like.metadata.name}</p>
+											<p className="text-xs text-muted-foreground truncate">{like.metadata.artist}</p>
 										</div>
 									</Link>
 								))}
@@ -140,9 +140,7 @@ function RouteComponent() {
 							<div className="flex items-center gap-2">
 								<ListMusic className="w-4 h-4 text-muted-foreground" />
 								<h2 className="text-base font-semibold">Liked Playlists</h2>
-								<span className="text-xs text-muted-foreground ml-1">
-									{likedPlaylists.length}
-								</span>
+								<span className="text-xs text-muted-foreground ml-1">{likedPlaylists.length}</span>
 							</div>
 							<MediaGrid>
 								{likedPlaylists.map((like) => (
@@ -160,10 +158,8 @@ function RouteComponent() {
 											/>
 										</div>
 										<div>
-											<p className="text-sm font-medium truncate">
-												{like.metadata.name}
-											</p>
-											<p className="text-xs text-muted-foreground">Playlist</p>
+											<p className="text-sm font-medium truncate">{like.metadata.name}</p>
+											<p className="text-xs text-muted-foreground">Spotify Playlist</p>
 										</div>
 									</Link>
 								))}
@@ -172,21 +168,112 @@ function RouteComponent() {
 					)}
 
 					{/* Empty state */}
-					{!isLoading &&
-						likedTracks.length === 0 &&
-						likedAlbums.length === 0 &&
-						likedPlaylists.length === 0 && (
-							<div className="flex flex-col items-center justify-center py-20 gap-3 text-muted-foreground/50">
-								<Music2 className="w-12 h-12" strokeWidth={1} />
-								<p className="text-sm">Nothing liked yet</p>
-								<p className="text-xs">
-									Heart tracks, albums, and playlists to see them here
-								</p>
-							</div>
-						)}
+					{!hasAnything && !isLoading && !myPlaylistsLoading && (
+						<div className="flex flex-col items-center justify-center py-20 gap-3 text-muted-foreground/50">
+							<Music2 className="w-12 h-12" strokeWidth={1} />
+							<p className="text-sm">Nothing here yet</p>
+							<p className="text-xs">Heart tracks, albums, and playlists to see them here</p>
+						</div>
+					)}
 				</>
 			)}
 		</div>
+	);
+}
+
+function MyPlaylistsSection({ playlists }: { playlists: { id: string; name: string; description: string | null }[] }) {
+	const createPlaylist = useCreatePlaylist();
+	const [showForm, setShowForm] = useState(false);
+	const [name, setName] = useState("");
+
+	function handleCreate() {
+		if (!name.trim()) return;
+		createPlaylist.mutate(
+			{ name: name.trim() },
+			{
+				onSuccess: () => {
+					setName("");
+					setShowForm(false);
+				},
+			},
+		);
+	}
+
+	return (
+		<section className="flex flex-col gap-3">
+			<div className="flex items-center gap-2">
+				<ListMusic className="w-4 h-4 text-muted-foreground" />
+				<h2 className="text-base font-semibold">My Playlists</h2>
+				{playlists.length > 0 && (
+					<span className="text-xs text-muted-foreground ml-1">{playlists.length}</span>
+				)}
+				<button
+					type="button"
+					onClick={() => setShowForm((v) => !v)}
+					className="ml-auto flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+				>
+					<Plus className="w-3.5 h-3.5" />
+					New playlist
+				</button>
+			</div>
+
+			{showForm && (
+				<div className="flex gap-2">
+					<Input
+						autoFocus
+						placeholder="Playlist name…"
+						value={name}
+						onChange={(e) => setName(e.target.value)}
+						onKeyDown={(e) => {
+							if (e.key === "Enter") handleCreate();
+							if (e.key === "Escape") { setShowForm(false); setName(""); }
+						}}
+						className="flex-1 h-8 text-sm"
+					/>
+					<Button
+						size="sm"
+						onClick={handleCreate}
+						disabled={!name.trim() || createPlaylist.isPending}
+						className="bg-primary hover:bg-primary/90 text-primary-foreground h-8 px-3 text-sm"
+					>
+						Create
+					</Button>
+					<Button
+						size="sm"
+						variant="ghost"
+						onClick={() => { setShowForm(false); setName(""); }}
+						className="h-8 px-3 text-sm"
+					>
+						Cancel
+					</Button>
+				</div>
+			)}
+
+			{playlists.length === 0 && !showForm ? (
+				<p className="text-sm text-muted-foreground/60 py-1">
+					Create a playlist to organize your music.
+				</p>
+			) : (
+				<MediaGrid>
+					{playlists.map((pl) => (
+						<Link
+							key={pl.id}
+							to="/my-playlist/$id"
+							params={{ id: pl.id }}
+							className="flex flex-col gap-2 group"
+						>
+							<div className="relative aspect-square overflow-hidden rounded-xl bg-card border border-white/5 flex items-center justify-center group-hover:border-white/10 transition-colors">
+								<ListMusic className="w-10 h-10 text-white/20 group-hover:text-white/30 transition-colors" strokeWidth={1} />
+							</div>
+							<div>
+								<p className="text-sm font-medium truncate">{pl.name}</p>
+								<p className="text-xs text-muted-foreground">My playlist</p>
+							</div>
+						</Link>
+					))}
+				</MediaGrid>
+			)}
+		</section>
 	);
 }
 
@@ -201,7 +288,7 @@ function MediaGrid({ children }: { children: React.ReactNode }) {
 function LibrarySkeleton() {
 	return (
 		<div className="flex flex-col gap-8">
-			{[5, 4].map((count, si) => (
+			{[4, 5, 4].map((count, si) => (
 				// biome-ignore lint/suspicious/noArrayIndexKey: skeleton
 				<section key={si} className="flex flex-col gap-3">
 					<div className="h-5 w-32 bg-secondary rounded animate-pulse" />

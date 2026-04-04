@@ -8,7 +8,9 @@ import {
 	useParams,
 	useRouter,
 } from "@tanstack/react-router";
-import { ChevronLeft, Heart, HeartOff, Pause, Play } from "lucide-react";
+import { ChevronLeft, Heart, HeartOff, ListPlus, Pause, Play } from "lucide-react";
+import { useState } from "react";
+import { AddToPlaylistDialog } from "../../components/add-to-playlist-dialog";
 import { z } from "zod";
 import { useIsLiked, useLikeMutation } from "../../hooks/use-likes";
 import { formatTime } from "../../lib/format-time";
@@ -57,7 +59,9 @@ function RouteComponent() {
 		: null;
 
 	const currentSongId = songs[songIndex]?.id;
-	const isAlbumPlaying = data?.tracks.items.some((t) => t.id === currentSongId);
+	const [dialogTrack, setDialogTrack] = useState<null | {
+		id: string; name: string; artists: string[]; albumName: string; albumImage: string; durationMs: number;
+	}>(null);
 
 	return (
 		<div className="flex flex-col">
@@ -184,10 +188,11 @@ function RouteComponent() {
 			{/* Track list */}
 			<div className="px-8 pb-8">
 				{/* Column headers */}
-				<div className="grid grid-cols-[2rem_1fr_auto] items-center border-b border-border/50 pb-2 mb-1 text-xs uppercase tracking-wider text-muted-foreground select-none">
+				<div className="grid grid-cols-[2rem_1fr_auto_1.75rem] items-center border-b border-border/50 pb-2 mb-1 text-xs uppercase tracking-wider text-muted-foreground select-none">
 					<span className="text-center">#</span>
 					<span className="pl-3">Title</span>
 					<span>Duration</span>
+					<span />
 				</div>
 
 				{data
@@ -195,24 +200,20 @@ function RouteComponent() {
 						data.tracks.items.map((track, i) => {
 							const isCurrentTrack = track.id === currentSongId;
 							return (
-								<button
+								<div
 									key={track.id}
-									type="button"
-									onClick={() => {
-										if (isCurrentTrack && isPlaying) {
-											pause();
-										} else {
-											play([toSimpleTrack(track, data)]);
-										}
-									}}
 									className={cn(
-										"w-full grid grid-cols-[2rem_1fr_auto] items-center px-0 py-2.5 rounded-md transition-colors group text-left",
+										"grid grid-cols-[2rem_1fr_auto_1.75rem] items-center px-0 py-2.5 rounded-md transition-colors group",
 										"hover:bg-white/5",
 										isCurrentTrack && "text-primary",
 									)}
 								>
 									{/* Number / play / pause */}
-									<span className="text-sm text-center flex items-center justify-center">
+									<button
+										type="button"
+										onClick={() => { if (isCurrentTrack && isPlaying) pause(); else play([toSimpleTrack(track, data)]); }}
+										className="text-sm text-center flex items-center justify-center"
+									>
 										{isCurrentTrack && isPlaying ? (
 											<Pause className="w-3.5 h-3.5 fill-current text-primary" />
 										) : (
@@ -223,26 +224,43 @@ function RouteComponent() {
 												<Play className="hidden group-hover:block w-3.5 h-3.5 fill-current" />
 											</>
 										)}
-									</span>
+									</button>
 
 									{/* Track info */}
-									<div className="pl-3 min-w-0 flex flex-col">
-										<span className={cn(
-											"text-sm font-medium truncate",
-											isCurrentTrack ? "text-primary" : "text-foreground",
-										)}>
+									<button
+										type="button"
+										onClick={() => { if (isCurrentTrack && isPlaying) pause(); else play([toSimpleTrack(track, data)]); }}
+										className="pl-3 min-w-0 flex flex-col text-left"
+									>
+										<span className={cn("text-sm font-medium truncate", isCurrentTrack ? "text-primary" : "text-foreground")}>
 											{track.name}
 										</span>
 										<span className="text-xs text-muted-foreground truncate">
 											{track.artists.map((a) => a.name).join(", ")}
 										</span>
-									</div>
+									</button>
 
 									{/* Duration */}
 									<span className="text-xs text-muted-foreground tabular-nums">
 										{formatTime(track.durationMs)}
 									</span>
-								</button>
+
+									{/* Add to playlist */}
+									<button
+										type="button"
+										onClick={() => setDialogTrack({
+											id: track.id,
+											name: track.name,
+											artists: track.artists.map((a) => a.name),
+											albumName: data.name,
+											albumImage: data.images[0]?.url ?? "",
+											durationMs: track.durationMs,
+										})}
+										className="flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground/50 hover:text-foreground"
+									>
+										<ListPlus className="w-3.5 h-3.5" />
+									</button>
+								</div>
 							);
 						})
 					: [...Array(12)].map((_, i) => (
@@ -258,5 +276,13 @@ function RouteComponent() {
 						))}
 			</div>
 		</div>
+
+		{dialogTrack && (
+			<AddToPlaylistDialog
+				track={dialogTrack}
+				open={!!dialogTrack}
+				onOpenChange={(open) => { if (!open) setDialogTrack(null); }}
+			/>
+		)}
 	);
 }

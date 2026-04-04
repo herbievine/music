@@ -11,6 +11,7 @@ import artistRoutes from "./routes/artists.js";
 import likesRoutes from "./routes/likes.js";
 import playerRoutes from "./routes/player.js";
 import playlistRoutes from "./routes/playlists.js";
+import userPlaylistRoutes from "./routes/user-playlists.js";
 
 config();
 
@@ -24,7 +25,7 @@ app.use(
 	cors({
 		origin: process.env.CORS_ORIGIN,
 		allowHeaders: ["Content-Type", "Authorization"],
-		allowMethods: ["GET", "POST", "DELETE"],
+		allowMethods: ["GET", "POST", "PATCH", "DELETE"],
 		exposeHeaders: ["Content-Length"],
 		maxAge: 600,
 		credentials: true,
@@ -40,6 +41,7 @@ const routes = app
 	.route("/artists", artistRoutes)
 	.route("/playlists", playlistRoutes)
 	.route("/likes", likesRoutes)
+	.route("/user-playlists", userPlaylistRoutes)
 	.get(
 		"/search",
 		zValidator(
