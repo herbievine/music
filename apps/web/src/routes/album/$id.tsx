@@ -64,8 +64,9 @@ function RouteComponent() {
 	}>(null);
 
 	return (
-		<div className="flex flex-col">
-			{/* Hero — full bleed */}
+		<>
+			<div className="flex flex-col">
+				{/* Hero — full bleed */}
 			<div className="relative">
 				{/* Blurred art background */}
 				{imageUrl && (
@@ -284,5 +285,6 @@ function RouteComponent() {
 				onOpenChange={(open) => { if (!open) setDialogTrack(null); }}
 			/>
 		)}
+		</>
 	);
 }
