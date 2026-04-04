@@ -62,7 +62,7 @@ function RootComponent() {
 							</div>
 
 							{/* ── DESKTOP ── */}
-							<div className="hidden lg:flex h-screen overflow-hidden flex-col bg-background">
+							<div className="hidden lg:flex h-screen overflow-hidden flex-col bg-background pb-[72px]">
 								<SidebarProvider
 									className="flex-1 overflow-hidden"
 									style={{ "--sidebar-width": "220px" } as React.CSSProperties}
@@ -71,14 +71,14 @@ function RootComponent() {
 
 									{/* Main + queue area */}
 									<div className="flex flex-1 overflow-hidden gap-2 p-2 pb-0">
-										<main className="flex-1 overflow-y-auto overflow-x-hidden rounded-xl bg-card pb-28 min-w-0">
+										<main className="flex-1 overflow-y-auto overflow-x-hidden rounded-xl bg-card pb-6 min-w-0">
 											<Outlet />
 										</main>
 										<QueuePanel />
 									</div>
 								</SidebarProvider>
 
-								<div className="flex-shrink-0">
+								<div className="fixed bottom-0 left-0 right-0 z-50">
 									<PlayerBar />
 								</div>
 							</div>
