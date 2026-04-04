@@ -65,22 +65,16 @@ export function AudioProvider({ children }: { children: ReactNode }) {
 
 	useMediaSession({ audioRef });
 
-	// Sync store with audio ref
+	// Sync audio element with store state.
+	// Always require `data` before playing — without it, the audio element still
+	// has the previous song's src buffered and would briefly replay the old track.
 	useEffect(() => {
-		if (songIndex !== -1 && isPlaying) {
-			audioRef.current?.play();
-		}
-		if (songIndex === -1 || !isPlaying) {
+		if (songIndex === -1 || !isPlaying || !data) {
 			audioRef.current?.pause();
-		}
-	}, [songIndex, isPlaying]);
-
-	// Trigger play after song link is loaded
-	useEffect(() => {
-		if (isPlaying && data) {
+		} else {
 			audioRef.current?.play();
 		}
-	}, [data, isPlaying]);
+	}, [songIndex, isPlaying, data]);
 
 	return (
 		<AudioContext.Provider value={{ audioRef, progressRef, progress, setProgress, data }}>
