@@ -4,40 +4,23 @@ import { client } from "@/lib/hono-rpc";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-export type UserPlaylist = {
+export type SpotifyPlaylist = {
 	id: string;
-	userId: string;
 	name: string;
 	description: string | null;
-	createdAt: string;
-	updatedAt: string;
-};
-
-export type PlaylistTrackEntry = {
-	id: string;
-	playlistId: string;
-	trackId: string;
-	trackMetadata: {
-		name: string;
-		artists: string[];
-		albumName: string;
-		albumImage: string;
-		durationMs: number;
-	};
-	position: number;
-	addedAt: string;
-};
-
-export type UserPlaylistWithTracks = UserPlaylist & {
-	tracks: PlaylistTrackEntry[];
+	images: { url: string; height?: number; width?: number }[];
+	tracks: { total: number };
+	public: boolean;
+	collaborative: boolean;
+	owner: { display_name: string };
 };
 
 // ─── Query keys ───────────────────────────────────────────────────────────────
 
 export const playlistKeys = {
-	all: ["user-playlists"] as const,
-	list: () => ["user-playlists", "list"] as const,
-	detail: (id: string) => ["user-playlists", "detail", id] as const,
+	all: ["playlists"] as const,
+	list: () => ["playlists", "list"] as const,
+	detail: (id: string) => ["playlists", "detail", id] as const,
 };
 
 // ─── Hooks ────────────────────────────────────────────────────────────────────
@@ -47,12 +30,12 @@ export function useUserPlaylists() {
 	return useQuery({
 		queryKey: playlistKeys.list(),
 		queryFn: async () => {
-			const res = await client["user-playlists"].$get(
+			const res = await client.playlists.$get(
 				{},
 				{ headers: { Authorization: `Bearer ${await session?.getToken()}` } },
 			);
 			if (!res.ok) throw new Error("Failed to fetch playlists");
-			return res.json() as Promise<{ playlists: UserPlaylist[] }>;
+			return res.json() as Promise<{ playlists: SpotifyPlaylist[] }>;
 		},
 	});
 }
@@ -62,12 +45,12 @@ export function useUserPlaylist(id: string) {
 	return useQuery({
 		queryKey: playlistKeys.detail(id),
 		queryFn: async () => {
-			const res = await client["user-playlists"][":id"].$get(
+			const res = await client.playlists[":id"].$get(
 				{ param: { id } },
 				{ headers: { Authorization: `Bearer ${await session?.getToken()}` } },
 			);
 			if (!res.ok) throw new Error("Failed to fetch playlist");
-			return res.json() as Promise<UserPlaylistWithTracks>;
+			return res.json() as Promise<SpotifyPlaylist>;
 		},
 		enabled: !!id,
 	});
@@ -77,13 +60,13 @@ export function useCreatePlaylist() {
 	const { session } = useClerk();
 	const queryClient = useQueryClient();
 	return useMutation({
-		mutationFn: async (payload: { name: string; description?: string }) => {
-			const res = await client["user-playlists"].$post(
+		mutationFn: async (payload: { name: string; description?: string; isPublic?: boolean }) => {
+			const res = await client.playlists.$post(
 				{ json: payload },
 				{ headers: { Authorization: `Bearer ${await session?.getToken()}` } },
 			);
 			if (!res.ok) throw new Error("Failed to create playlist");
-			return res.json() as Promise<UserPlaylist>;
+			return res.json() as Promise<SpotifyPlaylist>;
 		},
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: playlistKeys.list() });
@@ -96,7 +79,7 @@ export function useDeletePlaylist() {
 	const queryClient = useQueryClient();
 	return useMutation({
 		mutationFn: async (id: string) => {
-			const res = await client["user-playlists"][":id"].$delete(
+			const res = await client.playlists[":id"].$delete(
 				{ param: { id } },
 				{ headers: { Authorization: `Bearer ${await session?.getToken()}` } },
 			);
@@ -104,7 +87,7 @@ export function useDeletePlaylist() {
 			return res.json();
 		},
 		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: playlistKeys.all });
+			queryClient.invalidateQueries({ queryKey: playlistKeys.list() });
 		},
 	});
 }
@@ -113,24 +96,11 @@ export function useAddTrackToPlaylist() {
 	const { session } = useClerk();
 	const queryClient = useQueryClient();
 	return useMutation({
-		mutationFn: async (payload: {
-			playlistId: string;
-			trackId: string;
-			trackMetadata: {
-				name: string;
-				artists: string[];
-				albumName: string;
-				albumImage: string;
-				durationMs: number;
-			};
-		}) => {
-			const res = await client["user-playlists"][":id"]["tracks"].$post(
+		mutationFn: async (payload: { playlistId: string; trackId: string }) => {
+			const res = await client.playlists[":id"].tracks.$post(
 				{
 					param: { id: payload.playlistId },
-					json: {
-						trackId: payload.trackId,
-						trackMetadata: payload.trackMetadata,
-					},
+					json: { trackId: payload.trackId },
 				},
 				{ headers: { Authorization: `Bearer ${await session?.getToken()}` } },
 			);
@@ -149,32 +119,16 @@ export function useRemoveTrackFromPlaylist() {
 	const { session } = useClerk();
 	const queryClient = useQueryClient();
 	return useMutation({
-		mutationFn: async (payload: { playlistId: string; entryId: string }) => {
-			const res = await client["user-playlists"][":id"]["tracks"][":entryId"].$delete(
-				{ param: { id: payload.playlistId, entryId: payload.entryId } },
+		mutationFn: async (payload: { playlistId: string; trackId: string }) => {
+			const res = await client.playlists[":id"].tracks[":trackId"].$delete(
+				{ param: { id: payload.playlistId, trackId: payload.trackId } },
 				{ headers: { Authorization: `Bearer ${await session?.getToken()}` } },
 			);
 			if (!res.ok) throw new Error("Failed to remove track");
 			return res.json();
 		},
-		onMutate: async ({ playlistId, entryId }) => {
-			await queryClient.cancelQueries({ queryKey: playlistKeys.detail(playlistId) });
-			const previous = queryClient.getQueryData<UserPlaylistWithTracks>(
-				playlistKeys.detail(playlistId),
-			);
-			queryClient.setQueryData<UserPlaylistWithTracks>(
-				playlistKeys.detail(playlistId),
-				(old) => old ? { ...old, tracks: old.tracks.filter((t) => t.id !== entryId) } : old,
-			);
-			return { previous };
-		},
-		onError: (_err, { playlistId }, ctx) => {
-			if (ctx?.previous) {
-				queryClient.setQueryData(playlistKeys.detail(playlistId), ctx.previous);
-			}
-		},
-		onSettled: (_data, _err, { playlistId }) => {
-			queryClient.invalidateQueries({ queryKey: playlistKeys.detail(playlistId) });
+		onSuccess: (_data, variables) => {
+			queryClient.invalidateQueries({ queryKey: playlistKeys.detail(variables.playlistId) });
 		},
 	});
 }

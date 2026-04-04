@@ -11,7 +11,6 @@ import artistRoutes from "./routes/artists.js";
 import likesRoutes from "./routes/likes.js";
 import playerRoutes from "./routes/player.js";
 import playlistRoutes from "./routes/playlists.js";
-import userPlaylistRoutes from "./routes/user-playlists.js";
 
 config();
 
@@ -41,7 +40,6 @@ const routes = app
 	.route("/artists", artistRoutes)
 	.route("/playlists", playlistRoutes)
 	.route("/likes", likesRoutes)
-	.route("/user-playlists", userPlaylistRoutes)
 	.get(
 		"/search",
 		zValidator(
