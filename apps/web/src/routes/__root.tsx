@@ -78,7 +78,9 @@ function RootComponent() {
 									</div>
 								</SidebarProvider>
 
-								<PlayerBar />
+								<div className="flex-shrink-0">
+									<PlayerBar />
+								</div>
 							</div>
 						</AudioProvider>
 					</SignedIn>
