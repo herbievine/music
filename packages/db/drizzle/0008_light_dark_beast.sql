@@ -7,7 +7,7 @@ CREATE TABLE `__new_songs` (
 	`created_at` text DEFAULT (current_timestamp) NOT NULL
 );
 --> statement-breakpoint
-INSERT INTO `__new_songs`("id", "bucket_id", "external_id", "created_at") SELECT "id", "bucket_id", "external_id", "created_at" FROM `songs`;--> statement-breakpoint
+INSERT INTO `__new_songs`("id", "bucket_id", "external_id", "youtube_video_id", "created_at") SELECT "id", "bucket_id", "external_id", "youtube_video_id", "created_at" FROM `songs`;--> statement-breakpoint
 DROP TABLE `songs`;--> statement-breakpoint
 ALTER TABLE `__new_songs` RENAME TO `songs`;--> statement-breakpoint
 PRAGMA foreign_keys=ON;
