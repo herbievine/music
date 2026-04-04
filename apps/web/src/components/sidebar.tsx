@@ -1,6 +1,6 @@
 import { UserButton } from "@clerk/clerk-react";
 import { Link, useMatchRoute } from "@tanstack/react-router";
-import { Home, Library, Music2, Search } from "lucide-react";
+import { Home, Search, Disc3, ListMusic } from "lucide-react";
 import {
 	Sidebar,
 	SidebarContent,
@@ -17,7 +17,8 @@ import {
 const navItems = [
 	{ to: "/", icon: Home, label: "Home" },
 	{ to: "/search", icon: Search, label: "Search" },
-	{ to: "/library", icon: Library, label: "Library" },
+	{ to: "/discography", icon: Disc3, label: "Discography" },
+	{ to: "/playlists", icon: ListMusic, label: "Playlists" },
 ] as const;
 
 export default function AppSidebar() {
