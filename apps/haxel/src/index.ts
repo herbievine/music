@@ -18,8 +18,9 @@ const app = new Hono<{ Bindings: Cloudflare.Env }>();
 
 app.use(contextStorage());
 app.use(async (c, next) => {
+	const origins = c.env.CORS_ORIGINS ? c.env.CORS_ORIGINS.split(",") : "*";
 	return cors({
-		origin: c.env.CORS_ORIGINS.split(","),
+		origin: origins,
 	})(c, next);
 });
 
