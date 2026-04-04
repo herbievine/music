@@ -56,13 +56,11 @@ function PlaylistsSection({ playlists }: { playlists: { id: string; name: string
 
 	return (
 		<div className="flex flex-col gap-6">
-			{/* Create button */}
+			{/* Header with inline button */}
 			<div className="flex items-center justify-between">
 				<div className="flex items-center gap-2">
-					<ListMusic className="w-4 h-4 text-muted-foreground" />
-					<h2 className="text-base font-semibold">Your Playlists</h2>
 					{playlists.length > 0 && (
-						<span className="text-xs text-muted-foreground ml-1">{playlists.length}</span>
+						<span className="text-xs text-muted-foreground">{playlists.length}</span>
 					)}
 				</div>
 				<button
