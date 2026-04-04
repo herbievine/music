@@ -56,8 +56,8 @@ function mapAlbumSummary(album: Album): MusicAlbumSummary {
 	return {
 		id: album.id,
 		name: album.name ?? "",
-		artists: album.artists.map((a) => ({ id: a.id, name: a.name })),
-		images: album.images.map(mapImage),
+		artists: (album.artists ?? []).map((a) => ({ id: a.id, name: a.name })),
+		images: (album.images ?? []).map(mapImage),
 		releaseDate: album.release_date ?? "",
 		type: "album" as const,
 	};
@@ -164,7 +164,7 @@ export class SpotifyProvider implements MusicProvider {
 			name: artist.name,
 			images: (artist.images ?? []).map(mapImage),
 			type: "artist" as const,
-			albums: items.map(mapAlbumSummary),
+			albums: items.filter(Boolean).map(mapAlbumSummary),
 		};
 	}
 

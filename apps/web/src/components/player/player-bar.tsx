@@ -1,5 +1,6 @@
 import { Heart, HeartOff, Pause, Play, SkipBack, SkipForward, Volume2, Wrench } from "lucide-react";
 import { useEffect, useState } from "react";
+import { Link } from "@tanstack/react-router";
 import { useAudioContext } from "../../contexts/audio-context";
 import { useQueueStore } from "../../store/queue";
 import { useIsLiked, useLikeMutation } from "../../hooks/use-likes";
@@ -51,7 +52,15 @@ export function PlayerBar() {
 								{currentSong.name}
 							</p>
 							<p className="text-xs text-muted-foreground truncate mt-0.5">
-								{currentSong.artists[0]?.name}
+								{currentSong.artists[0] ? (
+								<Link
+									to="/artist/$id"
+									params={{ id: currentSong.artists[0].id }}
+									className="hover:text-foreground transition-colors"
+								>
+									{currentSong.artists[0].name}
+								</Link>
+							) : null}
 							</p>
 						</div>
 						<LikeButton songId={currentSong.id} song={currentSong} />
