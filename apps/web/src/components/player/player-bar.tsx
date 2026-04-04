@@ -18,6 +18,7 @@ function formatTime(seconds: number): string {
 export function PlayerBar() {
 	const [volume, setVolume] = useState(1);
 	const [fixYoutubeOpen, setFixYoutubeOpen] = useState(false);
+	const [duration, setDuration] = useState(0);
 	const { songs, songIndex, isPlaying, play, pause, next, previous } =
 		useQueueStore();
 	const { audioRef, progressRef, progress, setProgress } = useAudioContext();
@@ -28,12 +29,19 @@ export function PlayerBar() {
 		}
 	}, [volume, audioRef]);
 
+	useEffect(() => {
+		const audio = audioRef.current;
+		if (!audio) return;
+
+		const updateDuration = () => setDuration(audio.duration || 0);
+		audio.addEventListener("loadedmetadata", updateDuration);
+		return () => audio.removeEventListener("loadedmetadata", updateDuration);
+	}, [audioRef]);
+
 	if (songs.length === 0) return null;
 
 	const currentSong = songs[songIndex];
 	if (!currentSong) return null;
-
-	const duration = currentSong.durationMs / 1000;
 
 	return (
 		<>
