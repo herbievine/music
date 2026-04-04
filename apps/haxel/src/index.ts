@@ -75,9 +75,26 @@ const routes = app
 					httpMetadata: { contentType: "audio/mpeg" },
 				});
 
+				// Delete old R2 object and update database
+				const oldBucketId = song.bucketId;
+				if (oldBucketId) {
+					await c.env.AUDIO.delete(oldBucketId);
+					console.log("Deleted old R2 object:", oldBucketId);
+				}
+
+				// Update database with new bucketId and youtubeVideoId
+				[song] = await db
+					.update(songs)
+					.set({
+						bucketId: key,
+						youtubeVideoId: youtubeVideoIdParam,
+					})
+					.where(eq(songs.externalId, spotifyId))
+					.returning();
+
 				return c.json({
 					url: `https://audio.herbievine.com/${key}`,
-					data: { ...song, bucketId: key },
+					data: song,
 				});
 			}
 		}
