@@ -27,52 +27,61 @@ const routes = app
 	.get("/:spotifyId", async (c) => {
 		const { spotifyId } = c.req.param();
 		const db = drizzle(c.env.DB);
-		const header = c.req.header("Authorization");
+		const youtubeVideoIdParam = c.req.query("youtubeVideoId");
+		const durationParam = c.req.query("duration");
 
 		let [song] = await db
 			.select()
 			.from(songs)
 			.where(eq(songs.externalId, spotifyId));
 
-		// If song exists but bucketId is null/invalid and we have youtubeVideoId override, re-process
-		if (song && !song.bucketId && song.youtubeVideoId) {
-			const token = header?.split(" ")[1];
-			if (token) {
-				const { error, data: track } = await tryCatch(
-					new SpotifyAPI({
-						clientCredentials: {
-							clientId: c.env.SPOTIFY_CLIENT_ID,
-							clientSecret: c.env.SPOTIFY_CLIENT_SECRET,
-						},
-						accessToken: token,
-					}).tracks.get(spotifyId),
-				);
+		// If youtubeVideoId param provided and song exists with cached audio, use the param
+		if (youtubeVideoIdParam && song?.bucketId) {
+			console.log("Using provided YouTube video ID:", youtubeVideoIdParam);
+			const link = await converter(youtubeVideoIdParam, c.env.CONVERTER_API_KEY);
+			const arrayBuffer = await getArrayBuffer(link, {
+				headers: {
+					"content-type": "audio/mpeg",
+					"User-Agent":
+						"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 herbievine",
+				},
+			});
 
-				if (!error && track) {
-					const link = await converter(song.youtubeVideoId, c.env.CONVERTER_API_KEY);
-					const arrayBuffer = await getArrayBuffer(link, {
-						headers: {
-							"content-type": "audio/mpeg",
-							"User-Agent":
-								"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 herbievine",
-						},
-					});
+			const header = c.req.header("Authorization");
+			if (!header) {
+				throw new HTTPException(401, { message: "Not authorized" });
+			}
 
-					const trackWithTags = await write(track, arrayBuffer);
-					const { key } = await c.env.AUDIO.put(id(), trackWithTags, {
-						httpMetadata: { contentType: "audio/mpeg" },
-					});
+			const token = header.split(" ")[1];
+			if (!token) {
+				throw new HTTPException(401, { message: "No token" });
+			}
 
-					[song] = await db
-						.update(songs)
-						.set({ bucketId: key })
-						.where(eq(songs.id, song.id))
-						.returning();
-				}
+			const { error, data: track } = await tryCatch(
+				new SpotifyAPI({
+					clientCredentials: {
+						clientId: c.env.SPOTIFY_CLIENT_ID,
+						clientSecret: c.env.SPOTIFY_CLIENT_SECRET,
+					},
+					accessToken: token,
+				}).tracks.get(spotifyId),
+			);
+
+			if (!error && track) {
+				const trackWithTags = await write(track, arrayBuffer);
+				const { key } = await c.env.AUDIO.put(id(), trackWithTags, {
+					httpMetadata: { contentType: "audio/mpeg" },
+				});
+
+				return c.json({
+					url: `https://audio.herbievine.com/${key}`,
+					data: { ...song, bucketId: key },
+				});
 			}
 		}
 
 		if (!song) {
+			const header = c.req.header("Authorization");
 
 			if (!header) {
 				throw new HTTPException(401, { message: "Not authorized" });
@@ -105,19 +114,23 @@ const routes = app
 
 			console.log("Processing new song:", track.id);
 
-			const durationParam = c.req.query("duration");
+			let videoId = youtubeVideoIdParam;
 
-			const {
-				items: [video],
-			} = await youtube(
-				`${track.artists[0].name} ${track.name} audio`,
-				c.env.YOUTUBE_API_KEY,
-				durationParam ? parseInt(durationParam) : undefined,
-			);
+			// If no videoId param provided, search YouTube
+			if (!videoId) {
+				const {
+					items: [video],
+				} = await youtube(
+					`${track.artists[0].name} ${track.name} audio`,
+					c.env.YOUTUBE_API_KEY,
+					durationParam ? parseInt(durationParam) : undefined,
+				);
+				videoId = video.id.videoId;
+			}
 
-			console.log("Youtube video ID:", video.id.videoId);
+			console.log("Youtube video ID:", videoId);
 
-			const link = await converter(video.id.videoId, c.env.CONVERTER_API_KEY);
+			const link = await converter(videoId, c.env.CONVERTER_API_KEY);
 
 			console.log("Converter link:", link);
 
@@ -167,46 +180,6 @@ const routes = app
 			ok: true,
 			song,
 		});
-	})
-	.patch("/:spotifyId", async (c) => {
-		const db = drizzle(c.env.DB);
-		const { spotifyId } = c.req.param();
-		const { youtubeVideoId } = await c.req.json<{ youtubeVideoId: string }>();
-
-		if (!youtubeVideoId) {
-			throw new HTTPException(400, { message: "youtubeVideoId is required" });
-		}
-
-		// Find existing song
-		const [existingSong] = await db
-			.select()
-			.from(songs)
-			.where(eq(songs.externalId, spotifyId));
-
-		// Delete R2 object if it exists
-		if (existingSong?.bucketId) {
-			await c.env.AUDIO.delete(existingSong.bucketId);
-		}
-
-		// Update with youtubeVideoId and clear bucketId for re-processing
-		if (existingSong) {
-			await db
-				.update(songs)
-				.set({ youtubeVideoId, bucketId: null })
-				.where(eq(songs.id, existingSong.id));
-		} else {
-			// Create new record with youtubeVideoId
-			await db
-				.insert(songs)
-				.values({
-					id: id(),
-					externalId: spotifyId,
-					youtubeVideoId,
-					bucketId: null,
-				});
-		}
-
-		return c.json({ ok: true });
 	})
 	// .delete("/", async (c) => {
 	// 	const db = drizzle(c.env.DB);

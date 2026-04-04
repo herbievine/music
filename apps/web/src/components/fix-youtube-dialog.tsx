@@ -50,10 +50,13 @@ export function FixYoutubeDialog({
 		setError(null);
 
 		try {
-			const res = await client.play[":spotifyId"].$patch(
-				{ param: { spotifyId } },
+			// Fetch audio with the provided YouTube video ID
+			const res = await client.play[":spotifyId"].$get(
 				{
-					json: { youtubeVideoId: videoId },
+					param: { spotifyId },
+					query: { youtubeVideoId: videoId },
+				},
+				{
 					headers: {
 						Authorization: `Bearer ${await session?.getToken()}`,
 					},
@@ -64,7 +67,7 @@ export function FixYoutubeDialog({
 				throw new Error("Failed to fix YouTube URL");
 			}
 
-			// Invalidate the play query so it re-fetches with the new YouTube video
+			// Invalidate the play query so it re-fetches
 			queryClient.invalidateQueries({ queryKey: ["play"] });
 
 			setUrl("");
