@@ -5,6 +5,36 @@ import { fetcher } from "../utils/fetcher.js";
 
 const app = new Hono();
 
+app.patch("/play/:spotifyId", async (c) => {
+	const oauthToken = getOAuthToken(c);
+	const spotifyId = c.req.param("spotifyId");
+	const { youtubeVideoId } = await c.req.json<{ youtubeVideoId: string }>();
+
+	if (!youtubeVideoId) {
+		return c.json({ error: "youtubeVideoId is required" }, 400);
+	}
+
+	try {
+		const res = await fetch(`${process.env.HAXEL_API_URL}/${spotifyId}`, {
+			method: "PATCH",
+			headers: {
+				Authorization: `Bearer ${oauthToken}`,
+				"Content-Type": "application/json",
+			},
+			body: JSON.stringify({ youtubeVideoId }),
+		});
+
+		if (!res.ok) {
+			throw new Error(`Haxel PATCH failed: ${res.status}`);
+		}
+
+		return c.json({ ok: true });
+	} catch (error) {
+		console.error("Error fixing YouTube URL:", error);
+		return c.json({ error: "Failed to fix YouTube URL" }, 500);
+	}
+});
+
 export default app.get("/play/:spotifyId", async (c) => {
 	const provider = getMusicProvider(c);
 	const oauthToken = getOAuthToken(c);

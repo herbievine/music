@@ -1,9 +1,10 @@
-import { Heart, HeartOff, Pause, Play, SkipBack, SkipForward, Volume2 } from "lucide-react";
+import { Heart, HeartOff, Pause, Play, SkipBack, SkipForward, Volume2, Wrench } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useAudioContext } from "../../contexts/audio-context";
 import { useQueueStore } from "../../store/queue";
 import { useIsLiked, useLikeMutation } from "../../hooks/use-likes";
 import { Slider } from "@/components/ui/slider";
+import { FixYoutubeDialog } from "../fix-youtube-dialog";
 import { cn } from "@/lib/utils";
 
 function formatTime(seconds: number): string {
@@ -15,6 +16,7 @@ function formatTime(seconds: number): string {
 
 export function PlayerBar() {
 	const [volume, setVolume] = useState(1);
+	const [fixYoutubeOpen, setFixYoutubeOpen] = useState(false);
 	const { songs, songIndex, isPlaying, play, pause, next, previous } =
 		useQueueStore();
 	const { audioRef, progressRef, progress, setProgress } = useAudioContext();
@@ -33,96 +35,113 @@ export function PlayerBar() {
 	const duration = currentSong.durationMs / 1000;
 
 	return (
-		<div className="h-[72px] flex-shrink-0 bg-background border-t border-border/50 px-4">
-			<div className="grid grid-cols-3 items-center h-full max-w-screen-2xl mx-auto gap-4">
+		<>
+			<div className="h-[72px] flex-shrink-0 bg-background border-t border-border/50 px-4">
+				<div className="grid grid-cols-3 items-center h-full max-w-screen-2xl mx-auto gap-4">
 
-				{/* Left: track info + like */}
-				<div className="flex items-center gap-3 min-w-0">
-					<img
-						src={currentSong.album.image}
-						alt={currentSong.album.name}
-						className="w-[52px] h-[52px] rounded-md object-cover flex-shrink-0"
-					/>
-					<div className="min-w-0 flex-1">
-						<p className="text-sm font-medium truncate leading-tight">
-							{currentSong.name}
-						</p>
-						<p className="text-xs text-muted-foreground truncate mt-0.5">
-							{currentSong.artists[0]?.name}
-						</p>
-					</div>
-					<LikeButton songId={currentSong.id} song={currentSong} />
-				</div>
-
-				{/* Center: controls + progress */}
-				<div className="flex flex-col items-center gap-1.5">
-					<div className="flex items-center gap-3">
-						<button
-							type="button"
-							onClick={previous}
-							className="text-muted-foreground hover:text-foreground transition-colors p-1"
-						>
-							<SkipBack className="w-4 h-4 fill-current" />
-						</button>
-
-						<button
-							type="button"
-							onClick={() => (isPlaying ? pause() : play())}
-							className="w-8 h-8 bg-white hover:scale-105 active:scale-100 rounded-full flex items-center justify-center transition-transform flex-shrink-0 shadow"
-						>
-							{isPlaying ? (
-								<Pause className="w-4 h-4 text-black fill-black" />
-							) : (
-								<Play className="w-4 h-4 text-black fill-black ml-0.5" />
-							)}
-						</button>
-
-						<button
-							type="button"
-							onClick={next}
-							className="text-muted-foreground hover:text-foreground transition-colors p-1"
-						>
-							<SkipForward className="w-4 h-4 fill-current" />
-						</button>
+					{/* Left: track info + like */}
+					<div className="flex items-center gap-3 min-w-0">
+						<img
+							src={currentSong.album.image}
+							alt={currentSong.album.name}
+							className="w-[52px] h-[52px] rounded-md object-cover flex-shrink-0"
+						/>
+						<div className="min-w-0 flex-1">
+							<p className="text-sm font-medium truncate leading-tight">
+								{currentSong.name}
+							</p>
+							<p className="text-xs text-muted-foreground truncate mt-0.5">
+								{currentSong.artists[0]?.name}
+							</p>
+						</div>
+						<LikeButton songId={currentSong.id} song={currentSong} />
 					</div>
 
-					{/* Progress */}
-					<div className="flex items-center gap-2 w-full max-w-md">
-						<span className="text-[10px] text-muted-foreground w-7 text-right tabular-nums">
-							{formatTime(progress)}
-						</span>
+					{/* Center: controls + progress */}
+					<div className="flex flex-col items-center gap-1.5">
+						<div className="flex items-center gap-3">
+							<button
+								type="button"
+								onClick={previous}
+								className="text-muted-foreground hover:text-foreground transition-colors p-1"
+							>
+								<SkipBack className="w-4 h-4 fill-current" />
+							</button>
+
+							<button
+								type="button"
+								onClick={() => (isPlaying ? pause() : play())}
+								className="w-8 h-8 bg-white hover:scale-105 active:scale-100 rounded-full flex items-center justify-center transition-transform flex-shrink-0 shadow"
+							>
+								{isPlaying ? (
+									<Pause className="w-4 h-4 text-black fill-black" />
+								) : (
+									<Play className="w-4 h-4 text-black fill-black ml-0.5" />
+								)}
+							</button>
+
+							<button
+								type="button"
+								onClick={next}
+								className="text-muted-foreground hover:text-foreground transition-colors p-1"
+							>
+								<SkipForward className="w-4 h-4 fill-current" />
+							</button>
+						</div>
+
+						{/* Progress */}
+						<div className="flex items-center gap-2 w-full max-w-md">
+							<span className="text-[10px] text-muted-foreground w-7 text-right tabular-nums">
+								{formatTime(progress)}
+							</span>
+							<Slider
+								min={0}
+								max={duration || 100}
+								step={0.1}
+								value={[progress]}
+								onValueChange={([val]) => {
+									setProgress(val);
+									if (audioRef.current) audioRef.current.currentTime = val;
+								}}
+								className="flex-1"
+							/>
+							<input ref={progressRef} type="range" className="hidden" readOnly />
+							<span className="text-[10px] text-muted-foreground w-7 tabular-nums">
+								{formatTime(duration)}
+							</span>
+						</div>
+					</div>
+
+					{/* Right: volume + fix youtube */}
+					<div className="flex items-center justify-end gap-3">
+						<button
+							type="button"
+							onClick={() => setFixYoutubeOpen(true)}
+							title="Fix YouTube URL"
+							className="text-muted-foreground hover:text-foreground transition-colors p-1"
+						>
+							<Wrench className="w-4 h-4" />
+						</button>
+						<Volume2 className="w-4 h-4 text-muted-foreground flex-shrink-0" />
 						<Slider
 							min={0}
-							max={duration || 100}
-							step={0.1}
-							value={[progress]}
-							onValueChange={([val]) => {
-								setProgress(val);
-								if (audioRef.current) audioRef.current.currentTime = val;
-							}}
-							className="flex-1"
+							max={1}
+							step={0.01}
+							value={[volume]}
+							onValueChange={([val]) => setVolume(val)}
+							className="w-24"
 						/>
-						<input ref={progressRef} type="range" className="hidden" readOnly />
-						<span className="text-[10px] text-muted-foreground w-7 tabular-nums">
-							{formatTime(duration)}
-						</span>
 					</div>
 				</div>
-
-				{/* Right: volume */}
-				<div className="flex items-center justify-end gap-2">
-					<Volume2 className="w-4 h-4 text-muted-foreground flex-shrink-0" />
-					<Slider
-						min={0}
-						max={1}
-						step={0.01}
-						value={[volume]}
-						onValueChange={([val]) => setVolume(val)}
-						className="w-24"
-					/>
-				</div>
 			</div>
-		</div>
+
+			<FixYoutubeDialog
+				open={fixYoutubeOpen}
+				onOpenChange={setFixYoutubeOpen}
+				spotifyId={currentSong.id}
+				songName={currentSong.name}
+			/>
+		</>
 	);
 }
 
