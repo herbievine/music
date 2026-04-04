@@ -1,4 +1,4 @@
-import { integer, jsonb, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
+import { boolean, integer, jsonb, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
 
 export const likes = pgTable("likes", {
 	id: uuid("id").defaultRandom().primaryKey(),
@@ -20,6 +20,7 @@ export const userPlaylists = pgTable("user_playlists", {
 	userId: text("user_id").notNull(),
 	name: text("name").notNull(),
 	description: text("description"),
+	isSystem: boolean("is_system").notNull().default(false),
 	createdAt: timestamp("created_at").defaultNow().notNull(),
 	updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });

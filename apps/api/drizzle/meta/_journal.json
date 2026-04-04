@@ -15,6 +15,13 @@
       "when": 1775200000000,
       "tag": "0001_user_playlists",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1775210000000,
+      "tag": "0002_add_is_system",
+      "breakpoints": true
     }
   ]
 }

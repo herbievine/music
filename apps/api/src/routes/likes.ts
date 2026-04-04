@@ -3,8 +3,9 @@ import { and, desc, eq } from "drizzle-orm";
 import { Hono } from "hono";
 import { z } from "zod";
 import { db } from "../db/index.js";
-import { likes } from "../db/schema.js";
+import { likes, userPlaylistTracks, userPlaylists } from "../db/schema.js";
 import { getUserId } from "../lib/middleware.js";
+import { getOrCreateFavoritesPlaylist } from "./user-playlists.js";
 
 const app = new Hono();
 
@@ -78,6 +79,47 @@ export default app
 				})
 				.returning();
 
+			// If track, add to Favorites playlist
+			if (body.itemType === "track") {
+				const favorites = await getOrCreateFavoritesPlaylist(userId);
+
+				// Check if track already in favorites (shouldn't happen but be safe)
+				const existing = await db
+					.select()
+					.from(userPlaylistTracks)
+					.where(
+						and(
+							eq(userPlaylistTracks.playlistId, favorites.id),
+							eq(userPlaylistTracks.trackId, body.itemId),
+						),
+					);
+
+				if (existing.length === 0) {
+					// Get next position
+					const last = await db
+						.select({ position: userPlaylistTracks.position })
+						.from(userPlaylistTracks)
+						.where(eq(userPlaylistTracks.playlistId, favorites.id))
+						.orderBy(desc(userPlaylistTracks.position))
+						.limit(1);
+
+					const position = last.length > 0 ? last[0].position + 1 : 0;
+
+					await db.insert(userPlaylistTracks).values({
+						playlistId: favorites.id,
+						trackId: body.itemId,
+						trackMetadata: {
+							name: body.metadata.name,
+							artists: [body.metadata.artist],
+							albumName: "",
+							albumImage: body.metadata.image,
+							durationMs: 0,
+						},
+						position,
+					});
+				}
+			}
+
 			return c.json(like, 201);
 		},
 	)
@@ -92,6 +134,20 @@ export default app
 
 		if (!deleted) {
 			return c.json({ message: "Not found" }, 404);
+		}
+
+		// If track, remove from Favorites playlist
+		if (deleted.itemType === "track") {
+			const favorites = await getOrCreateFavoritesPlaylist(userId);
+
+			await db
+				.delete(userPlaylistTracks)
+				.where(
+					and(
+						eq(userPlaylistTracks.playlistId, favorites.id),
+						eq(userPlaylistTracks.trackId, deleted.itemId),
+					),
+				);
 		}
 
 		return c.json({ ok: true });

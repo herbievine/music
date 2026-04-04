@@ -1,9 +1,8 @@
 import { useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Music2, Disc3, ListMusic, Play, Plus } from "lucide-react";
+import { Music2, Disc3, ListMusic, Plus } from "lucide-react";
 import { useLikes } from "@/api/likes";
 import { useUserPlaylists, useCreatePlaylist } from "@/api/user-playlists";
-import { useQueueStore } from "../store/queue";
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -15,15 +14,12 @@ export const Route = createFileRoute("/library")({
 function RouteComponent() {
 	const { data, isLoading } = useLikes();
 	const { data: myPlaylistsData, isLoading: myPlaylistsLoading } = useUserPlaylists();
-	const { play } = useQueueStore();
 
-	const likedTracks = data?.items.filter((l) => l.itemType === "track") ?? [];
 	const likedAlbums = data?.items.filter((l) => l.itemType === "album") ?? [];
 	const likedPlaylists = data?.items.filter((l) => l.itemType === "playlist") ?? [];
 	const myPlaylists = myPlaylistsData?.playlists ?? [];
 
 	const hasAnything =
-		likedTracks.length > 0 ||
 		likedAlbums.length > 0 ||
 		likedPlaylists.length > 0 ||
 		myPlaylists.length > 0;
@@ -48,57 +44,6 @@ function RouteComponent() {
 				<>
 					{/* My Playlists */}
 					<MyPlaylistsSection playlists={myPlaylists} />
-
-					{/* Liked Tracks */}
-					{likedTracks.length > 0 && (
-						<section className="flex flex-col gap-3">
-							<div className="flex items-center gap-2">
-								<Music2 className="w-4 h-4 text-muted-foreground" />
-								<h2 className="text-base font-semibold">Liked Songs</h2>
-								<span className="text-xs text-muted-foreground ml-1">
-									{likedTracks.length}
-								</span>
-							</div>
-							<div className="flex flex-col">
-								{likedTracks.map((like, i) => (
-									<button
-										key={like.id}
-										type="button"
-										onClick={() =>
-											play([
-												{
-													id: like.itemId,
-													name: like.metadata.name,
-													artists: [{ id: like.itemId, name: like.metadata.artist }],
-													album: {
-														id: like.itemId,
-														name: "",
-														image: like.metadata.image,
-													},
-													durationMs: 0,
-												},
-											])
-										}
-										className="flex items-center gap-3 px-3 py-2 -mx-3 rounded-lg hover:bg-white/5 transition-colors group text-left"
-									>
-										<span className="w-5 text-xs text-muted-foreground text-right flex-shrink-0 tabular-nums">
-											<span className="group-hover:hidden">{i + 1}</span>
-											<Play className="hidden group-hover:block w-3.5 h-3.5 fill-current" />
-										</span>
-										<img
-											src={like.metadata.image}
-											alt={like.metadata.name}
-											className="w-9 h-9 rounded-md object-cover flex-shrink-0"
-										/>
-										<div className="min-w-0">
-											<p className="text-sm font-medium truncate">{like.metadata.name}</p>
-											<p className="text-xs text-muted-foreground truncate">{like.metadata.artist}</p>
-										</div>
-									</button>
-								))}
-							</div>
-						</section>
-					)}
 
 					{/* Liked Albums */}
 					{likedAlbums.length > 0 && (

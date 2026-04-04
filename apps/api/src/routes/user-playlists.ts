@@ -6,6 +6,22 @@ import { db } from "../db/index.js";
 import { userPlaylistTracks, userPlaylists } from "../db/schema.js";
 import { getUserId } from "../lib/middleware.js";
 
+export async function getOrCreateFavoritesPlaylist(userId: string) {
+	let [favorites] = await db
+		.select()
+		.from(userPlaylists)
+		.where(and(eq(userPlaylists.userId, userId), eq(userPlaylists.isSystem, true)));
+
+	if (!favorites) {
+		[favorites] = await db
+			.insert(userPlaylists)
+			.values({ userId, name: "Favorites", isSystem: true })
+			.returning();
+	}
+
+	return favorites;
+}
+
 const app = new Hono();
 
 export default app
@@ -77,13 +93,20 @@ export default app
 			const id = c.req.param("id");
 			const body = c.req.valid("json");
 
+			const [playlist] = await db
+				.select()
+				.from(userPlaylists)
+				.where(and(eq(userPlaylists.id, id), eq(userPlaylists.userId, userId)));
+
+			if (!playlist) return c.json({ message: "Not found" }, 404);
+			if (playlist.isSystem) return c.json({ message: "Cannot modify system playlist" }, 403);
+
 			const [updated] = await db
 				.update(userPlaylists)
 				.set({ ...body, updatedAt: new Date() })
-				.where(and(eq(userPlaylists.id, id), eq(userPlaylists.userId, userId)))
+				.where(eq(userPlaylists.id, id))
 				.returning();
 
-			if (!updated) return c.json({ message: "Not found" }, 404);
 			return c.json(updated);
 		},
 	)
@@ -93,12 +116,19 @@ export default app
 		const userId = getUserId(c);
 		const id = c.req.param("id");
 
+		const [playlist] = await db
+			.select()
+			.from(userPlaylists)
+			.where(and(eq(userPlaylists.id, id), eq(userPlaylists.userId, userId)));
+
+		if (!playlist) return c.json({ message: "Not found" }, 404);
+		if (playlist.isSystem) return c.json({ message: "Cannot delete system playlist" }, 403);
+
 		const [deleted] = await db
 			.delete(userPlaylists)
-			.where(and(eq(userPlaylists.id, id), eq(userPlaylists.userId, userId)))
+			.where(eq(userPlaylists.id, id))
 			.returning();
 
-		if (!deleted) return c.json({ message: "Not found" }, 404);
 		return c.json({ ok: true });
 	})
 
