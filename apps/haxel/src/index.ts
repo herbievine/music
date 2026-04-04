@@ -52,9 +52,10 @@ const routes = app
 				throw new HTTPException(401, { message: "Not authorized" });
 			}
 
-			const token = header.split(" ")[1];
-			if (!token) {
-				throw new HTTPException(401, { message: "No token" });
+			const parts = header.split(" ");
+			const token = parts[1];
+			if (!token || !parts[0]?.toLowerCase().includes("bearer")) {
+				throw new HTTPException(401, { message: "Invalid authorization header" });
 			}
 
 			const { error, data: track } = await tryCatch(
@@ -87,10 +88,11 @@ const routes = app
 				throw new HTTPException(401, { message: "Not authorized" });
 			}
 
-			const token = header.split(" ")[1];
+			const parts = header.split(" ");
+			const token = parts[1];
 
-			if (!token) {
-				throw new HTTPException(401, { message: "No token" });
+			if (!token || !parts[0]?.toLowerCase().includes("bearer")) {
+				throw new HTTPException(401, { message: "Invalid authorization header" });
 			}
 
 			const client = new SpotifyAPI({
