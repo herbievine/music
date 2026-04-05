@@ -14,6 +14,7 @@ import { client } from "../../lib/hono-rpc";
 import { useQueueStore } from "../../store/queue";
 import { toSimpleTrack } from "../../utils/to-simple-track";
 import { cn } from "@/lib/utils";
+import type { SpotifyPlaylist } from "../../api/user-playlists";
 
 export const Route = createFileRoute("/playlist/$id")({
 	component: RouteComponent,
@@ -27,7 +28,7 @@ function RouteComponent() {
 	const { id } = useParams({ from: "/playlist/$id" });
 	const { data } = useQuery({
 		queryKey: ["playlist", id],
-		queryFn: async () => {
+		queryFn: async (): Promise<SpotifyPlaylist> => {
 			const res = await client.playlists[":id"].$get(
 				{ param: { id } },
 				{
@@ -37,7 +38,7 @@ function RouteComponent() {
 				},
 			);
 			if (!res.ok) throw new Error("Could not fetch playlist");
-			return res.json();
+			return (await res.json()) as SpotifyPlaylist;
 		},
 	});
 	const { play, pause, songs, songIndex, isPlaying } = useQueueStore();
@@ -45,7 +46,8 @@ function RouteComponent() {
 	const { like, unlike } = useLikeMutation();
 
 	const imageUrl = data?.images?.[0]?.url;
-	const totalMs = data?.tracks.items.reduce((acc, { track }) => acc + track.durationMs, 0) ?? 0;
+	const totalMs =
+		data?.tracks?.items?.reduce((acc: number, { track }) => acc + (track?.durationMs || 0), 0) ?? 0;
 	const totalMin = Math.floor(totalMs / 60000);
 	const currentSongId = songs[songIndex]?.id;
 
@@ -117,7 +119,9 @@ function RouteComponent() {
 					onClick={() => {
 						if (data) {
 							play(
-								data.tracks.items.map(({ track }) => toSimpleTrack(track, track.album)),
+								data.tracks.items.map(({ track }) =>
+									toSimpleTrack(track as any, track.album as any),
+								),
 								0,
 							);
 						}
@@ -171,7 +175,7 @@ function RouteComponent() {
 								<button
 									key={track.id}
 									type="button"
-									onClick={() => { if (isCurrentTrack && isPlaying) { pause(); } else { play([toSimpleTrack(track, track.album)]); } }}
+									onClick={() => { if (isCurrentTrack && isPlaying) { pause(); } else { play([toSimpleTrack(track as any, track.album as any)]); } }}
 									className={cn(
 										"w-full grid grid-cols-[2rem_1fr_auto] items-center py-2.5 rounded-md transition-colors group text-left",
 										"hover:bg-white/5",

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ListMusic, Plus } from "lucide-react";
 import { useUserPlaylists, useCreatePlaylist } from "@/api/user-playlists";
+import type { SpotifyPlaylist } from "@/api/user-playlists";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
@@ -82,7 +83,7 @@ function CreatePlaylistButton() {
 	);
 }
 
-function PlaylistsSection({ playlists }: { playlists: { id: string; name: string; description: string | null; images: { url: string }[] }[] }) {
+function PlaylistsSection({ playlists }: { playlists: SpotifyPlaylist[] }) {
 	return (
 		<div className="flex flex-col gap-6">
 			{/* Playlists grid */}
@@ -95,7 +96,7 @@ function PlaylistsSection({ playlists }: { playlists: { id: string; name: string
 						return (
 							<Link
 								key={pl.id}
-								to="/my-playlist/$id"
+								to="/playlist/$id"
 								params={{ id: pl.id }}
 								className="flex flex-col gap-2 group"
 							>

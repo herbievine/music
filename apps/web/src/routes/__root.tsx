@@ -1,7 +1,7 @@
 import { SignedIn, SignedOut, SignInButton } from "@clerk/clerk-react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { createRootRoute, Link, Outlet } from "@tanstack/react-router";
-import { HomeIcon, LibraryBigIcon, SearchIcon, UserIcon } from "lucide-react";
+import { HomeIcon, ListMusic, SearchIcon, UserIcon } from "lucide-react";
 import { NuqsAdapter } from "nuqs/adapters/react";
 import { useState } from "react";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -51,7 +51,7 @@ function RootComponent() {
 												<Link to="/search"><SearchIcon /></Link>
 											</li>
 											<li>
-												<Link to="/library"><LibraryBigIcon /></Link>
+												<Link to="/playlists"><ListMusic /></Link>
 											</li>
 											<li>
 												<Link to="/login"><UserIcon /></Link>

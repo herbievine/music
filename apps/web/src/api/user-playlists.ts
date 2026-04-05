@@ -4,12 +4,27 @@ import { client } from "@/lib/hono-rpc";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
+export type SpotifyTrack = {
+	id: string;
+	name: string;
+	durationMs: number;
+	artists: { id: string; name: string }[];
+	album: {
+		id: string;
+		name: string;
+		images: { url: string }[];
+	};
+};
+
 export type SpotifyPlaylist = {
 	id: string;
 	name: string;
 	description: string | null;
 	images: { url: string; height?: number; width?: number }[];
-	tracks: { total: number };
+	tracks: {
+		total: number;
+		items: { track: SpotifyTrack }[];
+	};
 	public: boolean;
 	collaborative: boolean;
 	owner: { display_name: string };
