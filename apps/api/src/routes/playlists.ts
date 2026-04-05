@@ -49,10 +49,7 @@ export default app
 			const token = getOAuthToken(c);
 			const body = c.req.valid("json");
 
-			// Get current user ID
-			const user = await spotifyFetch("/me", token);
-
-			const playlist = await spotifyFetch(`/users/${user.id}/playlists`, token, {
+			const playlist = await spotifyFetch("/me/playlists", token, {
 				method: "POST",
 				body: JSON.stringify({
 					name: body.name,
