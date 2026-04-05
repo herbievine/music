@@ -2,8 +2,19 @@ import { useClerk } from "@clerk/clerk-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { client } from "@/lib/hono-rpc";
 
+export type SavedAlbum = {
+	added_at: string;
+	album: {
+		id: string;
+		name: string;
+		artists: { id: string; name: string }[];
+		images: { url: string; height?: number; width?: number }[];
+	};
+};
+
 export const albumKeys = {
 	all: ["albums"] as const,
+	saved: () => ["albums", "saved"] as const,
 	contains: (ids: string[]) => ["albums", "contains", ids] as const,
 };
 
@@ -56,5 +67,26 @@ export function useCheckSavedAlbums(albumIds: string[]) {
 			return res.json() as Promise<boolean[]>;
 		},
 		enabled: albumIds.length > 0 && !!session,
+	});
+}
+
+export function useSavedAlbums() {
+	const { session } = useClerk();
+	return useQuery({
+		queryKey: albumKeys.saved(),
+		queryFn: async () => {
+			const res = await client.albums.saved.$get(
+				{},
+				{ headers: { Authorization: `Bearer ${await session?.getToken()}` } },
+			);
+			if (!res.ok) throw new Error("Failed to fetch saved albums");
+			return res.json() as Promise<{
+				items: SavedAlbum[];
+				total: number;
+				limit: number;
+				offset: number;
+			}>;
+		},
+		enabled: !!session,
 	});
 }

@@ -26,6 +26,11 @@ async function spotifyFetch(endpoint: string, token: string, options?: RequestIn
 }
 
 export default app
+	.get("/saved", async (c) => {
+		const token = getOAuthToken(c);
+		const albums = await spotifyFetch("/me/albums?limit=50", token);
+		return c.json(albums);
+	})
 	.get("/:id", async (c) => {
 		const provider = getMusicProvider(c);
 		const album = await provider.getAlbum(c.req.param("id"));
