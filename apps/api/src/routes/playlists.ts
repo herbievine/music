@@ -128,7 +128,7 @@ export default app
 			const id = c.req.param("id");
 			const body = c.req.valid("json");
 
-			await spotifyFetch(`/playlists/${id}/tracks`, token, {
+			await spotifyFetch(`/playlists/${id}/items`, token, {
 				method: "POST",
 				body: JSON.stringify({
 					uris: [`spotify:track:${body.trackId}`],
@@ -146,7 +146,7 @@ export default app
 		const id = c.req.param("id");
 		const trackId = c.req.param("trackId");
 
-		await spotifyFetch(`/playlists/${id}/tracks`, token, {
+		await spotifyFetch(`/playlists/${id}/items`, token, {
 			method: "DELETE",
 			body: JSON.stringify({
 				tracks: [{ uri: `spotify:track:${trackId}` }],
