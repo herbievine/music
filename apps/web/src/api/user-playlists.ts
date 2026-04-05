@@ -7,7 +7,7 @@ import { client } from "@/lib/hono-rpc";
 export type SpotifyTrack = {
 	id: string;
 	name: string;
-	durationMs: number;
+	duration_ms: number;
 	artists: { id: string; name: string }[];
 	album: {
 		id: string;
@@ -23,7 +23,9 @@ export type SpotifyPlaylist = {
 	images: { url: string; height?: number; width?: number }[];
 	tracks: {
 		total: number;
-		items: { track: SpotifyTrack }[];
+		items: {
+			track: SpotifyTrack;
+		}[];
 	};
 	public: boolean;
 	collaborative: boolean;

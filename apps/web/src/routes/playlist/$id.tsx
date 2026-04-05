@@ -47,7 +47,7 @@ function RouteComponent() {
 
 	const imageUrl = data?.images?.[0]?.url;
 	const totalMs =
-		data?.tracks?.items?.reduce((acc: number, { track }) => acc + (track?.durationMs || 0), 0) ?? 0;
+		data?.tracks?.items?.reduce((acc: number, { track }) => acc + (track?.duration_ms || 0), 0) ?? 0;
 	const totalMin = Math.floor(totalMs / 60000);
 	const currentSongId = songs[songIndex]?.id;
 
@@ -120,7 +120,10 @@ function RouteComponent() {
 						if (data) {
 							play(
 								data.tracks.items.map(({ track }) =>
-									toSimpleTrack(track as any, track.album as any),
+									toSimpleTrack(
+										{ ...track, durationMs: track.duration_ms } as any,
+										track.album as any,
+									),
 								),
 								0,
 							);
@@ -175,7 +178,7 @@ function RouteComponent() {
 								<button
 									key={track.id}
 									type="button"
-									onClick={() => { if (isCurrentTrack && isPlaying) { pause(); } else { play([toSimpleTrack(track as any, track.album as any)]); } }}
+									onClick={() => { if (isCurrentTrack && isPlaying) { pause(); } else { play([toSimpleTrack({ ...track, durationMs: track.duration_ms } as any, track.album as any)]); } }}
 									className={cn(
 										"w-full grid grid-cols-[2rem_1fr_auto] items-center py-2.5 rounded-md transition-colors group text-left",
 										"hover:bg-white/5",
@@ -209,7 +212,7 @@ function RouteComponent() {
 									</div>
 
 									<span className="text-xs text-muted-foreground tabular-nums">
-										{formatTime(track.durationMs)}
+										{formatTime(track.duration_ms)}
 									</span>
 								</button>
 							);

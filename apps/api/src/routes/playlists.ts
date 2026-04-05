@@ -70,10 +70,7 @@ export default app
 	.get("/:id", async (c) => {
 		const token = getOAuthToken(c);
 		const id = c.req.param("id");
-		const playlist = await spotifyFetch(
-			`/playlists/${id}?fields=id,name,description,images,tracks(total,items(track(id,name,durationMs,artists(id,name),album(id,name,images)))),public,collaborative,owner(display_name)`,
-			token,
-		);
+		const playlist = await spotifyFetch(`/playlists/${id}`, token);
 		return c.json(playlist);
 	})
 
