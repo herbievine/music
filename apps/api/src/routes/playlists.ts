@@ -28,7 +28,10 @@ export default app
 	// Get user's playlists
 	.get("/", async (c) => {
 		const token = getOAuthToken(c);
-		const data = await spotifyFetch("/me/playlists", token);
+		const data = await spotifyFetch(
+			"/me/playlists?fields=items(id,name,description,images,tracks(total),public,collaborative,owner(display_name))",
+			token,
+		);
 		return c.json({ playlists: data.items });
 	})
 
@@ -67,7 +70,10 @@ export default app
 	.get("/:id", async (c) => {
 		const token = getOAuthToken(c);
 		const id = c.req.param("id");
-		const playlist = await spotifyFetch(`/playlists/${id}`, token);
+		const playlist = await spotifyFetch(
+			`/playlists/${id}?fields=id,name,description,images,tracks(total,items(track(id,name,durationMs,artists(id,name),album(id,name,images)))),public,collaborative,owner(display_name)`,
+			token,
+		);
 		return c.json(playlist);
 	})
 
@@ -97,7 +103,10 @@ export default app
 				body: JSON.stringify(updateBody),
 			});
 
-			const updated = await spotifyFetch(`/playlists/${id}`, token);
+			const updated = await spotifyFetch(
+				`/playlists/${id}?fields=id,name,description,images,tracks(total,items(track(id,name,durationMs,artists(id,name),album(id,name,images)))),public,collaborative,owner(display_name)`,
+				token,
+			);
 			return c.json(updated);
 		},
 	)
