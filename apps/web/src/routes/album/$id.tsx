@@ -9,15 +9,15 @@ import {
 	useRouter,
 } from "@tanstack/react-router";
 import { ChevronLeft, Heart, HeartOff, ListPlus, Pause, Play } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { AddToPlaylistDialog } from "../../components/add-to-playlist-dialog";
 import { z } from "zod";
-import { useIsLiked, useLikeMutation } from "../../hooks/use-likes";
 import { formatTime } from "../../lib/format-time";
 import { client } from "../../lib/hono-rpc";
 import { useQueueStore } from "../../store/queue";
 import { toSimpleTrack } from "../../utils/to-simple-track";
 import { cn } from "@/lib/utils";
+import { useSaveAlbum, useRemoveAlbum, useCheckSavedAlbums } from "../../api/albums";
 
 export const Route = createFileRoute("/album/$id")({
 	component: RouteComponent,
@@ -48,8 +48,16 @@ function RouteComponent() {
 		},
 	});
 	const { play, pause, songs, songIndex, isPlaying } = useQueueStore();
-	const { isLiked, likeEntry } = useIsLiked(id, "album");
-	const { like, unlike } = useLikeMutation();
+	const saveAlbum = useSaveAlbum();
+	const removeAlbum = useRemoveAlbum();
+	const { data: savedStatus } = useCheckSavedAlbums(data ? [id] : []);
+	const [isSaved, setIsSaved] = useState(false);
+
+	useEffect(() => {
+		if (savedStatus && savedStatus.length > 0) {
+			setIsSaved(savedStatus[0]);
+		}
+	}, [savedStatus]);
 
 	const imageUrl = data?.images?.[0]?.url;
 	const totalMs = data?.tracks.items.reduce((acc, t) => acc + t.durationMs, 0) ?? 0;
@@ -161,28 +169,24 @@ function RouteComponent() {
 				<button
 					type="button"
 					onClick={() => {
-						if (isLiked && likeEntry) {
-							unlike.mutate(likeEntry.id);
-						} else if (data) {
-							like.mutate({
-								itemId: id,
-								itemType: "album",
-								metadata: {
-									name: data.name,
-									image: data.images[0]?.url ?? "",
-									artist: data.artists[0]?.name ?? "",
-								},
+						if (isSaved) {
+							removeAlbum.mutate(id, {
+								onSuccess: () => setIsSaved(false),
+							});
+						} else {
+							saveAlbum.mutate(id, {
+								onSuccess: () => setIsSaved(true),
 							});
 						}
 					}}
 					className={cn(
 						"w-8 h-8 flex items-center justify-center transition-colors",
-						isLiked
+						isSaved
 							? "text-emerald-400 hover:text-emerald-300"
 							: "text-muted-foreground hover:text-foreground",
 					)}
 				>
-					{isLiked ? <HeartOff className="w-5 h-5" /> : <Heart className="w-5 h-5" />}
+					{isSaved ? <HeartOff className="w-5 h-5" /> : <Heart className="w-5 h-5" />}
 				</button>
 			</div>
 

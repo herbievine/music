@@ -1,7 +1,29 @@
+import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
-import { getMusicProvider } from "../lib/middleware.js";
+import { z } from "zod";
+import { getMusicProvider, getOAuthToken } from "../lib/middleware.js";
 
 const app = new Hono();
+const SPOTIFY_API = "https://api.spotify.com/v1";
+
+async function spotifyFetch(endpoint: string, token: string, options?: RequestInit) {
+	const res = await fetch(`${SPOTIFY_API}${endpoint}`, {
+		...options,
+		headers: {
+			Authorization: `Bearer ${token}`,
+			"Content-Type": "application/json",
+			...options?.headers,
+		},
+	});
+
+	if (!res.ok) {
+		const errorBody = await res.text();
+		console.error(`Spotify API error: ${res.status} ${res.statusText}`, errorBody);
+		throw new Error(`Spotify API error: ${res.status} ${res.statusText} - ${errorBody}`);
+	}
+
+	return res.json();
+}
 
 export default app
 	.get("/:id", async (c) => {
@@ -13,4 +35,65 @@ export default app
 		const provider = getMusicProvider(c);
 		const albums = await provider.getUserAlbums({ limit: 10, offset: 0 });
 		return c.json(albums);
-	});
+	})
+	// Save album to library
+	.put(
+		"/",
+		zValidator(
+			"json",
+			z.object({
+				albumId: z.string(),
+			}),
+		),
+		async (c) => {
+			const token = getOAuthToken(c);
+			const body = c.req.valid("json");
+
+			await spotifyFetch(`/me/albums?ids=${body.albumId}`, token, {
+				method: "PUT",
+			});
+
+			return c.json({ ok: true });
+		},
+	)
+	// Remove album from library
+	.delete(
+		"/",
+		zValidator(
+			"json",
+			z.object({
+				albumId: z.string(),
+			}),
+		),
+		async (c) => {
+			const token = getOAuthToken(c);
+			const body = c.req.valid("json");
+
+			await spotifyFetch(`/me/albums?ids=${body.albumId}`, token, {
+				method: "DELETE",
+			});
+
+			return c.json({ ok: true });
+		},
+	)
+	// Check if albums are saved
+	.post(
+		"/contains",
+		zValidator(
+			"json",
+			z.object({
+				albumIds: z.array(z.string()),
+			}),
+		),
+		async (c) => {
+			const token = getOAuthToken(c);
+			const body = c.req.valid("json");
+
+			const result = await spotifyFetch(
+				`/me/albums/contains?ids=${body.albumIds.join(",")}`,
+				token,
+			);
+
+			return c.json(result);
+		},
+	);
