@@ -47,7 +47,7 @@ function RouteComponent() {
 
 	const imageUrl = data?.images?.[0]?.url;
 	const totalMs =
-		data?.tracks?.items?.reduce((acc: number, { track }) => acc + (track?.duration_ms || 0), 0) ?? 0;
+		data?.items?.items?.reduce((acc: number, { item }) => acc + (item?.duration_ms || 0), 0) ?? 0;
 	const totalMin = Math.floor(totalMs / 60000);
 	const currentSongId = songs[songIndex]?.id;
 
@@ -99,7 +99,7 @@ function RouteComponent() {
 						<div className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-sm text-white/70">
 							{data ? (
 								<>
-									<span>{data.tracks.total} songs</span>
+									<span>{data.items.total} songs</span>
 									{totalMin > 0 && (
 										<><span>•</span><span>about {totalMin} min</span></>
 									)}
@@ -119,10 +119,10 @@ function RouteComponent() {
 					onClick={() => {
 						if (data) {
 							play(
-								data.tracks.items.map(({ track }) =>
+								data.items.items.map(({ item }) =>
 									toSimpleTrack(
-										{ ...track, durationMs: track.duration_ms } as any,
-										track.album as any,
+										{ ...item, durationMs: item.duration_ms } as any,
+										item.album as any,
 									),
 								),
 								0,
@@ -171,14 +171,14 @@ function RouteComponent() {
 				</div>
 
 				{data
-					? data.tracks.total > 0 &&
-						data.tracks.items.map(({ track }, i) => {
-							const isCurrentTrack = track.id === currentSongId;
+					? data.items.total > 0 &&
+						data.items.items.map(({ item }, i) => {
+							const isCurrentTrack = item.id === currentSongId;
 							return (
 								<button
-									key={track.id}
+									key={item.id}
 									type="button"
-									onClick={() => { if (isCurrentTrack && isPlaying) { pause(); } else { play([toSimpleTrack({ ...track, durationMs: track.duration_ms } as any, track.album as any)]); } }}
+									onClick={() => { if (isCurrentTrack && isPlaying) { pause(); } else { play([toSimpleTrack({ ...item, durationMs: item.duration_ms } as any, item.album as any)]); } }}
 									className={cn(
 										"w-full grid grid-cols-[2rem_1fr_auto] items-center py-2.5 rounded-md transition-colors group text-left",
 										"hover:bg-white/5",
@@ -202,17 +202,17 @@ function RouteComponent() {
 											"text-sm font-medium truncate",
 											isCurrentTrack ? "text-primary" : "text-foreground",
 										)}>
-											{track.name}
+											{item.name}
 										</span>
 										<span className="text-xs text-muted-foreground truncate">
-											{track.artists.map((a) => a.name).join(", ")}
+											{item.artists.map((a) => a.name).join(", ")}
 											{" · "}
-											{track.album.name}
+											{item.album.name}
 										</span>
 									</div>
 
 									<span className="text-xs text-muted-foreground tabular-nums">
-										{formatTime(track.duration_ms)}
+										{formatTime(item.duration_ms)}
 									</span>
 								</button>
 							);

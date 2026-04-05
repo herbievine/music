@@ -12,8 +12,15 @@ export type SpotifyTrack = {
 	album: {
 		id: string;
 		name: string;
-		images: { url: string }[];
+		images: { url: string; height?: number; width?: number }[];
 	};
+};
+
+export type SpotifyPlaylistItem = {
+	added_at: string;
+	added_by: { id: string };
+	is_local: boolean;
+	item: SpotifyTrack;
 };
 
 export type SpotifyPlaylist = {
@@ -21,11 +28,9 @@ export type SpotifyPlaylist = {
 	name: string;
 	description: string | null;
 	images: { url: string; height?: number; width?: number }[];
-	tracks: {
+	items: {
 		total: number;
-		items: {
-			track: SpotifyTrack;
-		}[];
+		items: SpotifyPlaylistItem[];
 	};
 	public: boolean;
 	collaborative: boolean;
