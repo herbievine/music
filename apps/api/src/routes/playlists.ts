@@ -82,7 +82,7 @@ export default app
 
 		// Check if user follows the playlist
 		const followStatus = await spotifyFetch(
-			`/playlists/${id}/followers/contains?user_id=me`,
+			`/playlists/${id}/followers/contains?ids=me`,
 			token,
 		);
 		const isFollowing = Array.isArray(followStatus) && followStatus[0] === true;
