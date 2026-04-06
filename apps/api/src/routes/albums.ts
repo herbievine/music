@@ -54,9 +54,7 @@ export default app
 			const token = getOAuthToken(c);
 			const body = c.req.valid("json");
 
-			console.log("PUT album - token exists:", !!token, "albumId:", body.albumId);
-
-			await spotifyFetch(`/me/albums?ids=${body.albumId}`, token, {
+			await spotifyFetch(`/me/library?uris=spotify:album:${body.albumId}`, token, {
 				method: "PUT",
 			});
 
@@ -76,9 +74,7 @@ export default app
 			const token = getOAuthToken(c);
 			const body = c.req.valid("json");
 
-			console.log("DELETE album - token exists:", !!token, "albumId:", body.albumId);
-
-			await spotifyFetch(`/me/albums?ids=${body.albumId}`, token, {
+			await spotifyFetch(`/me/library?uris=spotify:album:${body.albumId}`, token, {
 				method: "DELETE",
 			});
 
@@ -98,8 +94,9 @@ export default app
 			const token = getOAuthToken(c);
 			const body = c.req.valid("json");
 
+			const uris = body.albumIds.map((id) => `spotify:album:${id}`).join(",");
 			const result = await spotifyFetch(
-				`/me/albums/contains?ids=${body.albumIds.join(",")}`,
+				`/me/library/contains?uris=${encodeURIComponent(uris)}`,
 				token,
 			);
 
