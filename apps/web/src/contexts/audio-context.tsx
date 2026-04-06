@@ -65,6 +65,51 @@ export function AudioProvider({ children }: { children: ReactNode }) {
 
 	useMediaSession({ audioRef });
 
+	// Keep screen on while playing
+	useEffect(() => {
+		let wakeLock: WakeLockSentinel | null = null;
+
+		const acquireWakeLock = async () => {
+			if (!isPlaying || songIndex === -1) return;
+			if (!("wakeLock" in navigator)) return;
+
+			try {
+				wakeLock = await navigator.wakeLock.request("screen");
+			} catch (err) {
+				console.log("Wake Lock request failed:", err);
+			}
+		};
+
+		const releaseWakeLock = () => {
+			if (wakeLock) {
+				wakeLock.release();
+				wakeLock = null;
+			}
+		};
+
+		if (isPlaying && songIndex !== -1) {
+			acquireWakeLock();
+		} else {
+			releaseWakeLock();
+		}
+
+		// Release lock if visibility changes
+		const handleVisibilityChange = () => {
+			if (document.hidden) {
+				releaseWakeLock();
+			} else if (isPlaying && songIndex !== -1) {
+				acquireWakeLock();
+			}
+		};
+
+		document.addEventListener("visibilitychange", handleVisibilityChange);
+
+		return () => {
+			document.removeEventListener("visibilitychange", handleVisibilityChange);
+			releaseWakeLock();
+		};
+	}, [isPlaying, songIndex]);
+
 	// Sync audio element with store state.
 	// Always require `data` before playing — without it, the audio element still
 	// has the previous song's src buffered and would briefly replay the old track.
