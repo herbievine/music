@@ -41,6 +41,7 @@ export default app
 	.get("/saved", async (c) => {
 		const token = getOAuthToken(c);
 		const albums = await spotifyFetch("/me/albums?limit=50", token);
+		console.log("Saved albums response:", JSON.stringify(albums).slice(0, 200));
 		return c.json(albums);
 	})
 	.get("/:id", async (c) => {

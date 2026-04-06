@@ -43,6 +43,7 @@ export default app
 	.get("/", async (c) => {
 		const token = getOAuthToken(c);
 		const data = await spotifyFetch("/me/playlists", token);
+		console.log("Playlists response:", JSON.stringify(data).slice(0, 200));
 		return c.json({ playlists: data.items });
 	})
 
