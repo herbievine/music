@@ -16,6 +16,8 @@ type PlaybackStore = {
 	songs: SimpleTrack[];
 	songIndex: number;
 	isPlaying: boolean;
+	isShuffle: boolean;
+	originalSongs: SimpleTrack[];
 	play: (songs?: SimpleTrack[], songIndex?: number) => void;
 	pause: () => void;
 	add: (songs: SimpleTrack[]) => void;
@@ -23,23 +25,47 @@ type PlaybackStore = {
 	next: () => void;
 	previous: () => void;
 	skipTo: (songId: string) => void;
+	toggleShuffle: () => void;
 };
 
 export const useQueueStore = create<PlaybackStore>()((set) => ({
 	songs: [],
 	songIndex: -1,
 	isPlaying: false,
+	isShuffle: false,
+	originalSongs: [],
 	play: (songsToPlay, songIndexToSet) => {
-		return set(({ songs, songIndex }) => ({
-			songs: songsToPlay ? songsToPlay : songs,
-			isPlaying: true,
-			songIndex:
+		return set(({ songs, songIndex, isShuffle }) => {
+			let newSongs = songsToPlay ?? songs;
+			let newIndex =
 				songIndexToSet !== undefined
 					? songIndexToSet
 					: songsToPlay || songIndex === -1
 						? 0
-						: songIndex,
-		}));
+						: songIndex;
+
+			// If shuffle is on and new songs are being loaded, shuffle them
+			if (isShuffle && songsToPlay) {
+				const shuffled = [...newSongs];
+				// Shuffle everything after the current track (will be index 0 for new queue)
+				for (let i = shuffled.length - 1; i > newIndex; i--) {
+					const j = Math.floor(Math.random() * (i + 1));
+					[shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+				}
+				return {
+					songs: shuffled,
+					isPlaying: true,
+					songIndex: newIndex,
+					originalSongs: songsToPlay,
+				};
+			}
+
+			return {
+				songs: newSongs,
+				isPlaying: true,
+				songIndex: newIndex,
+			};
+		});
 	},
 	pause: () => set({ isPlaying: false }),
 	add: (songsToAdd) =>
@@ -50,7 +76,7 @@ export const useQueueStore = create<PlaybackStore>()((set) => ({
 			isPlaying: true,
 		})),
 	remove: (songId) => {
-		set(({ songs }) => ({
+		return set(({ songs }) => ({
 			songs: songs.filter(({ id }) => id !== songId),
 		}));
 	},
@@ -76,6 +102,33 @@ export const useQueueStore = create<PlaybackStore>()((set) => ({
 		set((s) => ({
 			songIndex: s.songs.findIndex((song) => song.id === songId),
 		})),
+	toggleShuffle: () =>
+		set(({ isShuffle, songs, songIndex, originalSongs }) => {
+			if (!isShuffle) {
+				// Turn ON: shuffle songs after current position, keep history intact
+				const before = songs.slice(0, songIndex + 1);
+				const after = songs.slice(songIndex + 1);
+				// Fisher-Yates shuffle
+				for (let i = after.length - 1; i > 0; i--) {
+					const j = Math.floor(Math.random() * (i + 1));
+					[after[i], after[j]] = [after[j], after[i]];
+				}
+				return {
+					isShuffle: true,
+					originalSongs: songs,
+					songs: [...before, ...after],
+				};
+			}
+			// Turn OFF: restore original order, find current song's position in it
+			const currentId = songs[songIndex]?.id;
+			const restoredIndex = originalSongs.findIndex((s) => s.id === currentId);
+			return {
+				isShuffle: false,
+				originalSongs: [],
+				songs: originalSongs,
+				songIndex: restoredIndex >= 0 ? restoredIndex : songIndex,
+			};
+		}),
 }));
 
 // type QueueStore = {

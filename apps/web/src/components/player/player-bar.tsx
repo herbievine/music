@@ -1,4 +1,4 @@
-import { Heart, HeartOff, Pause, Play, SkipBack, SkipForward, Volume2, Wrench } from "lucide-react";
+import { Heart, HeartOff, Pause, Play, Shuffle, SkipBack, SkipForward, Volume2, Wrench } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { useAudioContext } from "../../contexts/audio-context";
@@ -19,7 +19,7 @@ export function PlayerBar() {
 	const [volume, setVolume] = useState(1);
 	const [fixYoutubeOpen, setFixYoutubeOpen] = useState(false);
 	const [duration, setDuration] = useState(0);
-	const { songs, songIndex, isPlaying, play, pause, next, previous } =
+	const { songs, songIndex, isPlaying, play, pause, next, previous, isShuffle, toggleShuffle } =
 		useQueueStore();
 	const { audioRef, progressRef, progress, setProgress } = useAudioContext();
 
@@ -77,6 +77,17 @@ export function PlayerBar() {
 					{/* Center: controls + progress */}
 					<div className="flex flex-col items-center gap-1.5">
 						<div className="flex items-center gap-3">
+							<button
+								type="button"
+								onClick={toggleShuffle}
+								className={cn(
+									"transition-colors p-1",
+									isShuffle ? "text-emerald-400 hover:text-emerald-300" : "text-muted-foreground hover:text-foreground",
+								)}
+							>
+								<Shuffle className="w-4 h-4" />
+							</button>
+
 							<button
 								type="button"
 								onClick={previous}

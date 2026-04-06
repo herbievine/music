@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { ListX, Pause, Play, SkipBackIcon, SkipForward } from "lucide-react";
+import { ListX, Pause, Play, Shuffle, SkipBackIcon, SkipForward } from "lucide-react";
 import type { RefObject } from "react";
 import { formatTime } from "../../lib/format-time";
 import { useQueueStore } from "../../store/queue";
@@ -17,7 +17,7 @@ export function PlayerExpandedView({
 	progressRef,
 	progress,
 }: Props) {
-	const { songs, songIndex, play, pause, next, previous, isPlaying, skipTo } =
+	const { songs, songIndex, play, pause, next, previous, isPlaying, skipTo, isShuffle, toggleShuffle } =
 		useQueueStore();
 
 	if (songIndex === -1) {
@@ -105,7 +105,19 @@ export function PlayerExpandedView({
 					</div>
 				</div>
 				<div className="w-full flex justify-evenly items-center">
-					<button
+<button
+				type="button"
+				onClick={(e) => {
+					e.preventDefault();
+					e.stopPropagation();
+					toggleShuffle();
+				}}
+				className={isShuffle ? "text-emerald-400" : "text-neutral-400"}
+			>
+				<Shuffle strokeWidth={2} size={24} />
+			</button>
+
+								<button
 						type="button"
 						onClick={async (e) => {
 							e.preventDefault();
