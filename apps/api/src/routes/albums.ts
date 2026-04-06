@@ -33,8 +33,18 @@ export default app
 	})
 	.get("/:id", async (c) => {
 		const provider = getMusicProvider(c);
-		const album = await provider.getAlbum(c.req.param("id"));
-		return c.json(album);
+		const token = getOAuthToken(c);
+		const albumId = c.req.param("id");
+		const album = await provider.getAlbum(albumId);
+
+		// Check if album is saved
+		const savedStatus = await spotifyFetch(
+			`/me/library/contains?uris=spotify:album:${albumId}`,
+			token,
+		);
+		const isSaved = Array.isArray(savedStatus) && savedStatus[0] === true;
+
+		return c.json({ ...album, isSaved });
 	})
 	.get("/", async (c) => {
 		const provider = getMusicProvider(c);

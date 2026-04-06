@@ -67,7 +67,15 @@ export default app
 		const token = getOAuthToken(c);
 		const id = c.req.param("id");
 		const playlist = await spotifyFetch(`/playlists/${id}`, token);
-		return c.json(playlist);
+
+		// Check if user follows the playlist
+		const followStatus = await spotifyFetch(
+			`/playlists/${id}/followers/contains?user_id=me`,
+			token,
+		);
+		const isFollowing = Array.isArray(followStatus) && followStatus[0] === true;
+
+		return c.json({ ...playlist, isFollowing });
 	})
 
 	// Update playlist

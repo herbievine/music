@@ -17,7 +17,7 @@ import { client } from "../../lib/hono-rpc";
 import { useQueueStore } from "../../store/queue";
 import { toSimpleTrack } from "../../utils/to-simple-track";
 import { cn } from "@/lib/utils";
-import { useSaveAlbum, useRemoveAlbum, useCheckSavedAlbums } from "../../api/albums";
+import { useSaveAlbum, useRemoveAlbum } from "../../api/albums";
 
 export const Route = createFileRoute("/album/$id")({
 	component: RouteComponent,
@@ -50,14 +50,13 @@ function RouteComponent() {
 	const { play, pause, songs, songIndex, isPlaying } = useQueueStore();
 	const saveAlbum = useSaveAlbum();
 	const removeAlbum = useRemoveAlbum();
-	const { data: savedStatus } = useCheckSavedAlbums(data ? [id] : []);
 	const [isSaved, setIsSaved] = useState(false);
 
 	useEffect(() => {
-		if (savedStatus && savedStatus.length > 0) {
-			setIsSaved(savedStatus[0]);
+		if (data && "isSaved" in data) {
+			setIsSaved(data.isSaved as boolean);
 		}
-	}, [savedStatus]);
+	}, [data]);
 
 	const imageUrl = data?.images?.[0]?.url;
 	const totalMs = data?.tracks.items.reduce((acc, t) => acc + t.durationMs, 0) ?? 0;
