@@ -23,12 +23,19 @@ async function spotifyFetch(endpoint: string, token: string, options?: RequestIn
 		throw new Error(`Spotify API error: ${res.status} ${res.statusText} - ${errorBody}`);
 	}
 
+	// For PUT/DELETE/POST requests, Spotify may return empty body
+	// For GET requests, always parse JSON
 	const contentLength = res.headers.get("content-length");
-	if (contentLength === "0" || !contentLength) {
+	if (contentLength === "0") {
 		return {};
 	}
 
-	return res.json();
+	const text = await res.text();
+	if (!text) {
+		return {};
+	}
+
+	return JSON.parse(text);
 }
 
 export default app
