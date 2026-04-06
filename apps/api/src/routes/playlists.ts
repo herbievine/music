@@ -23,6 +23,11 @@ async function spotifyFetch(endpoint: string, token: string, options?: RequestIn
 		throw new Error(`Spotify API error: ${res.status} ${res.statusText} - ${errorBody}`);
 	}
 
+	const contentLength = res.headers.get("content-length");
+	if (contentLength === "0" || !contentLength) {
+		return {};
+	}
+
 	return res.json();
 }
 
