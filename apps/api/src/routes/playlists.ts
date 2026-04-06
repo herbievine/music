@@ -80,12 +80,18 @@ export default app
 		const id = c.req.param("id");
 		const playlist = await spotifyFetch(`/playlists/${id}`, token);
 
-		// Check if user follows the playlist
-		const followStatus = await spotifyFetch(
-			`/playlists/${id}/followers/contains?ids=me`,
-			token,
-		);
-		const isFollowing = Array.isArray(followStatus) && followStatus[0] === true;
+		// Check if user follows the playlist (optional - don't fail if this errors)
+		let isFollowing = false;
+		try {
+			const followStatus = await spotifyFetch(
+				`/playlists/${id}/followers/contains?ids=me`,
+				token,
+			);
+			isFollowing = Array.isArray(followStatus) && followStatus[0] === true;
+		} catch (err) {
+			// Following status check failed, just return false
+			isFollowing = false;
+		}
 
 		return c.json({ ...playlist, isFollowing });
 	})
