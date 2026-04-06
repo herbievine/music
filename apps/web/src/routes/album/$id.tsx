@@ -96,19 +96,19 @@ function RouteComponent() {
 				</button>
 
 				{/* Header content */}
-				<div className="relative z-10 px-8 pt-6 pb-8 flex items-end gap-6">
+				<div className="relative z-10 px-4 sm:px-8 pt-6 pb-8 flex flex-col lg:flex-row lg:items-end gap-6">
 					{imageUrl ? (
 						<img
 							src={imageUrl}
 							alt={data?.name}
-							className="w-48 h-48 rounded-xl shadow-2xl flex-shrink-0 object-cover"
+							className="w-40 h-40 sm:w-48 sm:h-48 rounded-xl shadow-2xl flex-shrink-0 object-cover mx-auto lg:mx-0"
 							style={{ viewTransitionName: `key-${id}` }}
 						/>
 					) : (
-						<div className="w-48 h-48 rounded-xl bg-secondary flex-shrink-0 animate-pulse" />
+						<div className="w-40 h-40 sm:w-48 sm:h-48 rounded-xl bg-secondary flex-shrink-0 animate-pulse mx-auto lg:mx-0" />
 					)}
 
-					<div className="pb-1 min-w-0">
+					<div className="pb-1 min-w-0 text-center lg:text-left">
 						<p className="text-xs font-bold uppercase tracking-widest text-white/70 mb-2">
 							Album
 						</p>
