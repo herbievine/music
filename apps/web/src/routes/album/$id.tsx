@@ -8,7 +8,7 @@ import {
 	useParams,
 	useRouter,
 } from "@tanstack/react-router";
-import { ChevronLeft, Heart, HeartOff, ListPlus, Pause, Play } from "lucide-react";
+import { ChevronLeft, Heart, ListPlus, Pause, Play } from "lucide-react";
 import { useEffect, useState } from "react";
 import { AddToPlaylistDialog } from "../../components/add-to-playlist-dialog";
 import { z } from "zod";
@@ -186,7 +186,7 @@ function RouteComponent() {
 							: "text-muted-foreground hover:text-foreground",
 					)}
 				>
-					{isSaved ? <HeartOff className="w-5 h-5" /> : <Heart className="w-5 h-5" />}
+					<Heart className="w-5 h-5" fill={isSaved ? "currentColor" : "none"} />
 				</button>
 			</div>
 
