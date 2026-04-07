@@ -59,12 +59,12 @@ export function PlayerBar() {
 							<p className="text-sm font-medium truncate leading-tight">
 								{currentSong.name}
 							</p>
-							<p className="text-xs text-muted-foreground truncate mt-0.5">
+							<p className="text-xs text-foreground truncate mt-0.5">
 								{currentSong.artists[0] ? (
 								<Link
 									to="/artist/$id"
 									params={{ id: currentSong.artists[0].id }}
-									className="hover:text-foreground transition-colors"
+									className="hover:text-white transition-colors"
 								>
 									{currentSong.artists[0].name}
 								</Link>

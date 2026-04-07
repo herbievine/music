@@ -51,7 +51,7 @@ function RootComponent() {
 												<Link to="/search"><SearchIcon /></Link>
 											</li>
 											<li>
-												<Link to="/playlists"><ListMusic /></Link>
+												<Link to="/discography"><ListMusic /></Link>
 											</li>
 											<li>
 												<Link to="/login"><UserIcon /></Link>

@@ -126,7 +126,7 @@ function RouteComponent() {
 	);
 
 	return (
-		<div className="flex flex-col gap-4 px-8 py-6">
+		<div className="flex flex-col gap-4 px-4 sm:px-8 py-6">
 			{/* Mobile header */}
 			<div className="lg:hidden flex items-center" style={{ height: isFiltered ? 80 : 56 }}>
 				<header className="w-full fixed top-0 left-0 right-0 z-10 backdrop-blur-md bg-background/70 px-4 pt-3 pb-2 flex flex-col gap-2">

@@ -63,7 +63,7 @@ function RouteComponent() {
 					<ChevronLeft className="w-5 h-5" strokeWidth={2.5} />
 				</button>
 
-				<div className="relative z-10 px-8 pt-6 pb-8 flex items-end gap-6">
+				<div className="relative z-10 px-4 sm:px-8 pt-6 pb-8 flex flex-col sm:flex-row sm:items-end gap-6">
 					{imageUrl ? (
 						<img
 							src={imageUrl}
@@ -96,7 +96,7 @@ function RouteComponent() {
 			</div>
 
 			{/* Albums grid */}
-			<div className="px-8 pb-8">
+			<div className="px-4 sm:px-8 pb-8">
 				{data ? (
 					data.albums.length > 0 ? (
 						<div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
