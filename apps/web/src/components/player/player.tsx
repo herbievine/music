@@ -19,7 +19,7 @@ export function Player() {
 	return (
 		<div
 			className={cn(
-				"w-full max-w-lg mx-auto fixed bottom-16",
+				"w-full max-w-lg mx-auto fixed bottom-16 z-50",
 				!isExpanded && "p-2",
 			)}
 		>
