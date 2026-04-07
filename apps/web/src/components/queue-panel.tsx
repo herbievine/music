@@ -1,12 +1,18 @@
 import { Link } from "@tanstack/react-router";
 import { Heart, HeartOff, ListX, Music2 } from "lucide-react";
+import { useState } from "react";
+import { useAudioContext } from "../contexts/audio-context";
 import { useIsLiked, useLikeMutation } from "../hooks/use-likes";
+import { useLyrics } from "../api/lyrics";
+import { LyricsView } from "./lyrics-view";
 import { useQueueStore } from "../store/queue";
 import { cn } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
 export default function QueuePanel() {
 	const { songs, songIndex, skipTo } = useQueueStore();
+	const { progress } = useAudioContext();
+	const [tab, setTab] = useState<"lyrics" | "queue">("queue");
 
 	if (songIndex === -1 || !songs[songIndex]) {
 		return (
@@ -19,6 +25,12 @@ export default function QueuePanel() {
 
 	const currentSong = songs[songIndex];
 	const upcoming = songs.slice(songIndex + 1);
+	const { data: lyricsData, isLoading: lyricsLoading } = useLyrics(
+		currentSong.id,
+		currentSong.name,
+		currentSong.artists[0].name,
+		currentSong.durationMs,
+	);
 
 	return (
 		<div className="w-72 flex-shrink-0 rounded-xl bg-card flex flex-col overflow-hidden">
@@ -57,45 +69,83 @@ export default function QueuePanel() {
 				<LikeButton songId={currentSong.id} song={currentSong} />
 			</div>
 
-			{/* Next up */}
-			<div className="border-t border-border/50 mx-4" />
-			<p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/50 px-4 pt-3 pb-1">
-				Next up
-			</p>
+			{/* Tab selector */}
+			<div className="border-t border-border/50" />
+			<div className="flex gap-2 px-4 pt-2 border-b border-border/50">
+				<button
+					onClick={() => setTab("lyrics")}
+					className={`flex-1 py-2 text-xs font-medium transition-colors ${
+						tab === "lyrics"
+							? "text-foreground border-b-2 border-foreground -mb-[2px]"
+							: "text-muted-foreground/50"
+					}`}
+				>
+					Lyrics
+				</button>
+				<button
+					onClick={() => setTab("queue")}
+					className={`flex-1 py-2 text-xs font-medium transition-colors ${
+						tab === "queue"
+							? "text-foreground border-b-2 border-foreground -mb-[2px]"
+							: "text-muted-foreground/50"
+					}`}
+				>
+					Queue
+				</button>
+			</div>
 
-			<ScrollArea className="flex-1 pb-3">
-				{upcoming.length === 0 ? (
-					<div className="flex flex-col items-center justify-center py-6 gap-2">
-						<ListX className="w-7 h-7 text-muted-foreground/30" strokeWidth={1.5} />
-						<span className="text-xs text-muted-foreground/50">Queue empty</span>
+			{tab === "lyrics" ? (
+				<ScrollArea className="flex-1">
+					<div className="px-4 py-3">
+						<LyricsView
+							plain={lyricsData?.plain ?? null}
+							synced={lyricsData?.synced ?? null}
+							progress={progress}
+							isLoading={lyricsLoading}
+						/>
 					</div>
-				) : (
-					<div className="px-2 pb-2">
-						{upcoming.map((track) => (
-							<button
-								key={track.id}
-								type="button"
-								onClick={() => skipTo(track.id)}
-								className="w-full flex items-center gap-3 px-2 py-2 rounded-lg hover:bg-secondary/50 transition-colors text-left group"
-							>
-								<img
-									src={track.album.image}
-									alt={track.album.name}
-									className="w-9 h-9 rounded-md object-cover flex-shrink-0"
-								/>
-								<div className="min-w-0">
-									<p className="text-xs font-medium truncate group-hover:text-foreground transition-colors">
-										{track.name}
-									</p>
-									<p className="text-xs text-muted-foreground truncate">
-										{track.artists[0]?.name}
-									</p>
-								</div>
-							</button>
-						))}
-					</div>
-				)}
-			</ScrollArea>
+				</ScrollArea>
+			) : (
+				<>
+					<p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/50 px-4 pt-3 pb-1">
+						Next up
+					</p>
+
+					<ScrollArea className="flex-1 pb-3">
+						{upcoming.length === 0 ? (
+							<div className="flex flex-col items-center justify-center py-6 gap-2">
+								<ListX className="w-7 h-7 text-muted-foreground/30" strokeWidth={1.5} />
+								<span className="text-xs text-muted-foreground/50">Queue empty</span>
+							</div>
+						) : (
+							<div className="px-2 pb-2">
+								{upcoming.map((track) => (
+									<button
+										key={track.id}
+										type="button"
+										onClick={() => skipTo(track.id)}
+										className="w-full flex items-center gap-3 px-2 py-2 rounded-lg hover:bg-secondary/50 transition-colors text-left group"
+									>
+										<img
+											src={track.album.image}
+											alt={track.album.name}
+											className="w-9 h-9 rounded-md object-cover flex-shrink-0"
+										/>
+										<div className="min-w-0">
+											<p className="text-xs font-medium truncate group-hover:text-foreground transition-colors">
+												{track.name}
+											</p>
+											<p className="text-xs text-muted-foreground truncate">
+												{track.artists[0]?.name}
+											</p>
+										</div>
+									</button>
+								))}
+							</div>
+						)}
+					</ScrollArea>
+				</>
+			)}
 		</div>
 	);
 }

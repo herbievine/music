@@ -9,6 +9,7 @@ import { getMusicProvider, providerMiddleware } from "./lib/middleware.js";
 import albumRoutes from "./routes/albums.js";
 import artistRoutes from "./routes/artists.js";
 import likesRoutes from "./routes/likes.js";
+import lyricsRoutes from "./routes/lyrics.js";
 import playerRoutes from "./routes/player.js";
 import playlistRoutes from "./routes/playlists.js";
 
@@ -40,6 +41,7 @@ const routes = app
 	.route("/artists", artistRoutes)
 	.route("/playlists", playlistRoutes)
 	.route("/likes", likesRoutes)
+	.route("/lyrics", lyricsRoutes)
 	.get(
 		"/search",
 		zValidator(
