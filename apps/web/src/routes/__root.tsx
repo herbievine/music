@@ -1,7 +1,7 @@
 import { SignedIn, SignedOut, SignInButton } from "@clerk/clerk-react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { createRootRoute, Link, Outlet } from "@tanstack/react-router";
-import { HomeIcon, ListMusic, SearchIcon, UserIcon } from "lucide-react";
+import { Disc3, HomeIcon, ListMusic, SearchIcon } from "lucide-react";
 import { NuqsAdapter } from "nuqs/adapters/react";
 import { useState } from "react";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -33,7 +33,7 @@ function RootComponent() {
 								<main className="flex-1 h-[calc(100vh_-_16rem)] w-full max-w-lg mx-auto flex flex-col relative">
 									<div
 										className={cn(
-											"px-4 py-2 overflow-auto",
+											"overflow-auto",
 											store.isPlaying ? "pb-36" : "pb-24",
 										)}
 									>
@@ -51,10 +51,10 @@ function RootComponent() {
 												<Link to="/search"><SearchIcon /></Link>
 											</li>
 											<li>
-												<Link to="/discography"><ListMusic /></Link>
+												<Link to="/discography"><Disc3 /></Link>
 											</li>
 											<li>
-												<Link to="/login"><UserIcon /></Link>
+												<Link to="/playlists"><ListMusic /></Link>
 											</li>
 										</ul>
 									</nav>

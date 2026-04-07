@@ -12,7 +12,7 @@ function RouteComponent() {
 	const savedAlbums = data?.items ?? [];
 
 	return (
-		<div className="flex flex-col gap-8 px-4 sm:px-8 py-6">
+		<div className="flex flex-col gap-8 px-4 sm:px-8 py-2 sm:py-6">
 			{/* Mobile header */}
 			<div className="lg:hidden h-16 flex items-center">
 				<header className="w-full h-16 fixed top-0 left-1/2 -translate-x-1/2 z-10 backdrop-blur-md bg-background/70">
