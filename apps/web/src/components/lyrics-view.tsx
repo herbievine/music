@@ -82,7 +82,7 @@ export function LyricsView({
 		return (
 			<div
 				ref={containerRef}
-				className="flex flex-col gap-3 overflow-y-auto h-full"
+				className="flex flex-col gap-3 overflow-y-auto h-full pt-6 pb-6"
 				style={{ scrollbarWidth: "none" }}
 			>
 				{lyricsLines.map((line, idx) => (
@@ -106,7 +106,7 @@ export function LyricsView({
 	// Plain lyrics fallback
 	return (
 		<div
-			className="flex flex-col gap-2 overflow-y-auto h-full whitespace-pre-wrap text-sm text-neutral-400"
+			className="flex flex-col gap-2 overflow-y-auto h-full whitespace-pre-wrap text-sm text-neutral-400 pt-6 pb-6"
 			style={{ scrollbarWidth: "none" }}
 		>
 			{plain}
