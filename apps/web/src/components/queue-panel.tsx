@@ -25,6 +25,7 @@ export default function QueuePanel() {
 
 	const currentSong = songs[songIndex];
 	const upcoming = songs.slice(songIndex + 1);
+
 	const { data: lyricsData, isLoading: lyricsLoading } = useLyrics(
 		currentSong.id,
 		currentSong.name,

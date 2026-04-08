@@ -24,6 +24,10 @@ export function PlayerExpandedView({
 		useQueueStore();
 	const [tab, setTab] = useState<"lyrics" | "queue">("lyrics");
 
+	if (songIndex === -1) {
+		return null;
+	}
+
 	const currentSong = songs[songIndex];
 	const { data: lyricsData, isLoading: lyricsLoading } = useLyrics(
 		currentSong.id,
@@ -31,10 +35,6 @@ export function PlayerExpandedView({
 		currentSong.artists[0].name,
 		currentSong.durationMs,
 	);
-
-	if (songIndex === -1) {
-		return null;
-	}
 
 	return (
 		<div
