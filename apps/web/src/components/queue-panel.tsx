@@ -95,7 +95,8 @@ export default function QueuePanel() {
 			</div>
 
 			{tab === "lyrics" ? (
-				<ScrollArea className="flex-1">
+				<div className="flex-1 min-h-0">
+				<ScrollArea className="h-full">
 					<div className="px-4 py-3">
 						<LyricsView
 							plain={lyricsData?.plain ?? null}
@@ -105,8 +106,9 @@ export default function QueuePanel() {
 						/>
 					</div>
 				</ScrollArea>
-			) : (
-				<>
+			</div>
+		) : (
+			<>
 					<p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/50 px-4 pt-3 pb-1">
 						Next up
 					</p>
