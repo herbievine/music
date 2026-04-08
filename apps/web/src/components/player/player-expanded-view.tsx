@@ -24,17 +24,17 @@ export function PlayerExpandedView({
 		useQueueStore();
 	const [tab, setTab] = useState<"lyrics" | "queue">("lyrics");
 
+	const currentSong = songs[songIndex];
+	const { data: lyricsData, isLoading: lyricsLoading } = useLyrics(
+		currentSong?.id ?? "",
+		currentSong?.name ?? "",
+		currentSong?.artists?.[0]?.name ?? "",
+		currentSong?.durationMs ?? 0,
+	);
+
 	if (songIndex === -1) {
 		return null;
 	}
-
-	const currentSong = songs[songIndex];
-	const { data: lyricsData, isLoading: lyricsLoading } = useLyrics(
-		currentSong.id,
-		currentSong.name,
-		currentSong.artists[0].name,
-		currentSong.durationMs,
-	);
 
 	return (
 		<div

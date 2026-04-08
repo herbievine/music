@@ -14,6 +14,14 @@ export default function QueuePanel() {
 	const { progress } = useAudioContext();
 	const [tab, setTab] = useState<"lyrics" | "queue">("queue");
 
+	const currentSong = songs[songIndex];
+	const { data: lyricsData, isLoading: lyricsLoading } = useLyrics(
+		currentSong?.id ?? "",
+		currentSong?.name ?? "",
+		currentSong?.artists?.[0]?.name ?? "",
+		currentSong?.durationMs ?? 0,
+	);
+
 	if (songIndex === -1 || !songs[songIndex]) {
 		return (
 			<div className="w-72 flex-shrink-0 rounded-xl bg-card flex flex-col items-center justify-center gap-3">
@@ -23,15 +31,7 @@ export default function QueuePanel() {
 		);
 	}
 
-	const currentSong = songs[songIndex];
 	const upcoming = songs.slice(songIndex + 1);
-
-	const { data: lyricsData, isLoading: lyricsLoading } = useLyrics(
-		currentSong.id,
-		currentSong.name,
-		currentSong.artists[0].name,
-		currentSong.durationMs,
-	);
 
 	return (
 		<div className="w-72 flex-shrink-0 rounded-xl bg-card flex flex-col overflow-hidden">
