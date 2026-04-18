@@ -27,6 +27,14 @@ export default function QueuePanel() {
 		currentSong?.artists?.[0]?.name ?? "",
 		currentSong?.durationMs ?? 0,
 	);
+	const albumColor = useAlbumColor(currentSong?.album.image);
+	const gradientStyle = useMemo(() => {
+		if (!albumColor) return undefined;
+		const [r, g, b] = albumColor;
+		return {
+			background: `linear-gradient(to bottom, rgba(${r},${g},${b},0.3) 0%, var(--card) 100%)`,
+		} as React.CSSProperties;
+	}, [albumColor]);
 
 	if (songIndex === -1 || !songs[songIndex]) {
 		return (
@@ -38,14 +46,6 @@ export default function QueuePanel() {
 	}
 
 	const upcoming = songs.slice(songIndex + 1);
-	const albumColor = useAlbumColor(currentSong.album.image);
-	const gradientStyle = useMemo(() => {
-		if (!albumColor) return undefined;
-		const [r, g, b] = albumColor;
-		return {
-			background: `linear-gradient(to bottom, rgba(${r},${g},${b},0.3) 0%, var(--card) 100%)`,
-		} as React.CSSProperties;
-	}, [albumColor]);
 
 	return (
 		<div className="w-72 flex-shrink-0 rounded-xl bg-card flex flex-col overflow-hidden transition-colors duration-700">

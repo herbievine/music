@@ -39,8 +39,6 @@ export function PlayerBar() {
 		return () => audio.removeEventListener("loadedmetadata", updateDuration);
 	}, [audioRef]);
 
-	if (songs.length === 0) return null;
-
 	const currentSong = songs[songIndex];
 	const albumColor = useAlbumColor(currentSong?.album.image);
 	const barStyle = useMemo(() => {
@@ -51,7 +49,7 @@ export function PlayerBar() {
 		} as React.CSSProperties;
 	}, [albumColor]);
 
-	if (!currentSong) return null;
+	if (songs.length === 0 || !currentSong) return null;
 
 	return (
 		<>
