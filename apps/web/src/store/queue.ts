@@ -25,6 +25,7 @@ type PlaybackStore = {
 	next: () => void;
 	previous: () => void;
 	skipTo: (songId: string) => void;
+	reorder: (fromIndex: number, toIndex: number) => void;
 	toggleShuffle: () => void;
 };
 
@@ -102,6 +103,22 @@ export const useQueueStore = create<PlaybackStore>()((set) => ({
 		set((s) => ({
 			songIndex: s.songs.findIndex((song) => song.id === songId),
 		})),
+	reorder: (fromIndex, toIndex) =>
+		set(({ songs, songIndex }) => {
+			const newSongs = [...songs];
+			const [moved] = newSongs.splice(fromIndex, 1);
+			newSongs.splice(toIndex, 0, moved);
+			// Recalculate songIndex if current track moved
+			let newSongIndex = songIndex;
+			if (fromIndex === songIndex) {
+				newSongIndex = toIndex;
+			} else if (fromIndex < songIndex && toIndex >= songIndex) {
+				newSongIndex = songIndex - 1;
+			} else if (fromIndex > songIndex && toIndex <= songIndex) {
+				newSongIndex = songIndex + 1;
+			}
+			return { songs: newSongs, songIndex: newSongIndex };
+		}),
 	toggleShuffle: () =>
 		set(({ isShuffle, songs, songIndex, originalSongs }) => {
 			if (!isShuffle) {

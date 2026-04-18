@@ -1,16 +1,21 @@
 import { Link } from "@tanstack/react-router";
-import { Heart, HeartOff, ListX, Music2 } from "lucide-react";
+import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
+import type { DragEndEvent } from "@dnd-kit/core";
+import { SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+import { GripVertical, Heart, HeartOff, ListX, Music2 } from "lucide-react";
 import { useState } from "react";
 import { useAudioContext } from "../contexts/audio-context";
 import { useIsLiked, useLikeMutation } from "../hooks/use-likes";
 import { useLyrics } from "../api/lyrics";
 import { LyricsView } from "./lyrics-view";
 import { useQueueStore } from "../store/queue";
+import type { SimpleTrack } from "../store/queue";
 import { cn } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
 export default function QueuePanel() {
-	const { songs, songIndex, skipTo } = useQueueStore();
+	const { songs, songIndex, skipTo, reorder } = useQueueStore();
 	const { progress } = useAudioContext();
 	const [tab, setTab] = useState<"lyrics" | "queue">("queue");
 
@@ -109,46 +114,120 @@ export default function QueuePanel() {
 				</ScrollArea>
 			</div>
 		) : (
-			<>
-					<p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/50 px-4 pt-3 pb-1">
-						Next up
-					</p>
+				<QueueList upcoming={upcoming} songIndex={songIndex} skipTo={skipTo} reorder={reorder} />
+			)}
+		</div>
+	);
+}
 
-					<ScrollArea className="flex-1 pb-3">
-						{upcoming.length === 0 ? (
-							<div className="flex flex-col items-center justify-center py-6 gap-2">
-								<ListX className="w-7 h-7 text-muted-foreground/30" strokeWidth={1.5} />
-								<span className="text-xs text-muted-foreground/50">Queue empty</span>
-							</div>
-						) : (
+function QueueList({
+	upcoming,
+	songIndex,
+	skipTo,
+	reorder,
+}: {
+	upcoming: SimpleTrack[];
+	songIndex: number;
+	skipTo: (songId: string) => void;
+	reorder: (fromIndex: number, toIndex: number) => void;
+}) {
+	const sensors = useSensors(
+		useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+		useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+	);
+
+	function handleDragEnd(event: DragEndEvent) {
+		const { active, over } = event;
+		if (!over || active.id === over.id) return;
+
+		// Convert from upcoming-relative indices to absolute queue indices
+		const fromUpcoming = upcoming.findIndex((t) => t.id === active.id);
+		const toUpcoming = upcoming.findIndex((t) => t.id === over.id);
+		if (fromUpcoming === -1 || toUpcoming === -1) return;
+
+		const fromAbsolute = songIndex + 1 + fromUpcoming;
+		const toAbsolute = songIndex + 1 + toUpcoming;
+		reorder(fromAbsolute, toAbsolute);
+	}
+
+	return (
+		<>
+			<p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/50 px-4 pt-3 pb-1">
+				Next up
+			</p>
+
+			<ScrollArea className="flex-1 pb-3">
+				{upcoming.length === 0 ? (
+					<div className="flex flex-col items-center justify-center py-6 gap-2">
+						<ListX className="w-7 h-7 text-muted-foreground/30" strokeWidth={1.5} />
+						<span className="text-xs text-muted-foreground/50">Queue empty</span>
+					</div>
+				) : (
+					<DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+						<SortableContext items={upcoming.map((t) => t.id)} strategy={verticalListSortingStrategy}>
 							<div className="px-2 pb-2">
 								{upcoming.map((track) => (
-									<button
-										key={track.id}
-										type="button"
-										onClick={() => skipTo(track.id)}
-										className="w-full flex items-center gap-3 px-2 py-2 rounded-lg hover:bg-secondary/50 transition-colors text-left group"
-									>
-										<img
-											src={track.album.image}
-											alt={track.album.name}
-											className="w-9 h-9 rounded-md object-cover flex-shrink-0"
-										/>
-										<div className="min-w-0">
-											<p className="text-xs font-medium truncate group-hover:text-foreground transition-colors">
-												{track.name}
-											</p>
-											<p className="text-xs text-muted-foreground truncate">
-												{track.artists[0]?.name}
-											</p>
-										</div>
-									</button>
+									<SortableTrackItem key={track.id} track={track} skipTo={skipTo} />
 								))}
 							</div>
-						)}
-					</ScrollArea>
-				</>
+						</SortableContext>
+					</DndContext>
+				)}
+			</ScrollArea>
+		</>
+	);
+}
+
+function SortableTrackItem({
+	track,
+	skipTo,
+}: {
+	track: SimpleTrack;
+	skipTo: (songId: string) => void;
+}) {
+	const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: track.id });
+
+	const style = {
+		transform: CSS.Transform.toString(transform),
+		transition,
+	};
+
+	return (
+		<div
+			ref={setNodeRef}
+			style={style}
+			className={cn(
+				"w-full flex items-center gap-1 px-1 py-2 rounded-lg hover:bg-secondary/50 transition-colors text-left group",
+				isDragging && "opacity-50 bg-secondary/50",
 			)}
+		>
+			<button
+				type="button"
+				className="flex-shrink-0 p-1 cursor-grab active:cursor-grabbing text-muted-foreground/30 hover:text-muted-foreground transition-colors touch-none"
+				{...attributes}
+				{...listeners}
+			>
+				<GripVertical className="w-3.5 h-3.5" />
+			</button>
+			<button
+				type="button"
+				onClick={() => skipTo(track.id)}
+				className="flex items-center gap-3 min-w-0 flex-1"
+			>
+				<img
+					src={track.album.image}
+					alt={track.album.name}
+					className="w-9 h-9 rounded-md object-cover flex-shrink-0"
+				/>
+				<div className="min-w-0">
+					<p className="text-xs font-medium truncate group-hover:text-foreground transition-colors">
+						{track.name}
+					</p>
+					<p className="text-xs text-muted-foreground truncate">
+						{track.artists[0]?.name}
+					</p>
+				</div>
+			</button>
 		</div>
 	);
 }
