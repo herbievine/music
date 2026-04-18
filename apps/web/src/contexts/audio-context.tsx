@@ -8,6 +8,7 @@ import {
 	useState,
 } from "react";
 import type { ReactNode, RefObject } from "react";
+import { useKeyboardShortcuts } from "../hooks/use-keyboard-shortcuts";
 import { useMediaSession } from "../hooks/use-media-session";
 import { client } from "../lib/hono-rpc";
 import { useQueueStore } from "../store/queue";
@@ -64,6 +65,7 @@ export function AudioProvider({ children }: { children: ReactNode }) {
 	});
 
 	useMediaSession({ audioRef });
+	useKeyboardShortcuts({ audioRef });
 
 	// Keep screen on while playing
 	useEffect(() => {
