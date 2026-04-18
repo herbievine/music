@@ -4,8 +4,9 @@ import type { DragEndEvent } from "@dnd-kit/core";
 import { SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { GripVertical, Heart, HeartOff, ListX, Music2 } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useAudioContext } from "../contexts/audio-context";
+import { useAlbumColor } from "../hooks/use-album-color";
 import { useIsLiked, useLikeMutation } from "../hooks/use-likes";
 import { useLyrics } from "../api/lyrics";
 import { LyricsView } from "./lyrics-view";
@@ -37,9 +38,17 @@ export default function QueuePanel() {
 	}
 
 	const upcoming = songs.slice(songIndex + 1);
+	const albumColor = useAlbumColor(currentSong.album.image);
+	const gradientStyle = useMemo(() => {
+		if (!albumColor) return undefined;
+		const [r, g, b] = albumColor;
+		return {
+			background: `linear-gradient(to bottom, rgba(${r},${g},${b},0.3) 0%, var(--card) 100%)`,
+		} as React.CSSProperties;
+	}, [albumColor]);
 
 	return (
-		<div className="w-72 flex-shrink-0 rounded-xl bg-card flex flex-col overflow-hidden">
+		<div className="w-72 flex-shrink-0 rounded-xl bg-card flex flex-col overflow-hidden transition-colors duration-700">
 			{/* Album art — square */}
 			<div className="w-full aspect-square flex-shrink-0 overflow-hidden rounded-t-xl relative">
 				<img
@@ -47,10 +56,19 @@ export default function QueuePanel() {
 					alt={currentSong.album.name}
 					className="w-full h-full object-cover"
 				/>
+				{/* Color gradient overlay at bottom of art */}
+				{albumColor && (
+					<div
+						className="absolute inset-x-0 bottom-0 h-16 pointer-events-none"
+						style={{
+							background: `linear-gradient(to top, rgba(${albumColor[0]},${albumColor[1]},${albumColor[2]},0.6), transparent)`,
+						}}
+					/>
+				)}
 			</div>
 
 			{/* Track info + like */}
-			<div className="px-4 pt-3 pb-2 flex items-start justify-between gap-2">
+			<div className="px-4 pt-3 pb-2 flex items-start justify-between gap-2 transition-all duration-700" style={gradientStyle}>
 				<div className="min-w-0 flex-1">
 					<p className="font-semibold text-sm truncate leading-tight">
 						{currentSong.name}

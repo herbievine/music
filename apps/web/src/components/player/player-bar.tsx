@@ -1,7 +1,8 @@
 import { Heart, HeartOff, Pause, Play, Shuffle, SkipBack, SkipForward, Volume2, Wrench } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { useAudioContext } from "../../contexts/audio-context";
+import { useAlbumColor } from "../../hooks/use-album-color";
 import { useQueueStore } from "../../store/queue";
 import { useIsLiked, useLikeMutation } from "../../hooks/use-likes";
 import { Slider } from "@/components/ui/slider";
@@ -41,11 +42,20 @@ export function PlayerBar() {
 	if (songs.length === 0) return null;
 
 	const currentSong = songs[songIndex];
+	const albumColor = useAlbumColor(currentSong?.album.image);
+	const barStyle = useMemo(() => {
+		if (!albumColor) return undefined;
+		const [r, g, b] = albumColor;
+		return {
+			background: `linear-gradient(to right, rgba(${r},${g},${b},0.15), rgba(${r},${g},${b},0.05) 50%, rgba(${r},${g},${b},0.15))`,
+		} as React.CSSProperties;
+	}, [albumColor]);
+
 	if (!currentSong) return null;
 
 	return (
 		<>
-			<div className="h-[72px] flex-shrink-0 bg-background border-t border-border/50 px-4">
+			<div className="h-[72px] flex-shrink-0 bg-background border-t border-border/50 px-4 transition-all duration-700" style={barStyle}>
 				<div className="grid grid-cols-3 items-center h-full max-w-screen-2xl mx-auto gap-4">
 
 					{/* Left: track info + like */}
