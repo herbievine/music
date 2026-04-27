@@ -62,9 +62,9 @@ function RootComponent() {
 							</div>
 
 							{/* ── DESKTOP ── */}
-							<div className="hidden lg:flex h-screen overflow-hidden flex-col bg-background pb-[72px]">
+							<div className="hidden lg:flex h-screen overflow-hidden flex-col bg-background">
 								<SidebarProvider
-									className="flex-1 overflow-hidden"
+									className="flex-1 overflow-hidden min-h-0"
 									style={{ "--sidebar-width": "220px" } as React.CSSProperties}
 								>
 									<AppSidebar />
@@ -78,9 +78,7 @@ function RootComponent() {
 									</div>
 								</SidebarProvider>
 
-								<div className="fixed bottom-0 left-0 right-0 z-50">
-									<PlayerBar />
-								</div>
+								<PlayerBar />
 							</div>
 						</AudioProvider>
 					</SignedIn>

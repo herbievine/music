@@ -45,7 +45,7 @@ export function PlayerBar() {
 		if (!albumColor) return undefined;
 		const [r, g, b] = albumColor;
 		return {
-			background: `linear-gradient(to right, rgba(${r},${g},${b},0.15), rgba(${r},${g},${b},0.05) 50%, rgba(${r},${g},${b},0.15))`,
+			backgroundImage: `linear-gradient(to right, rgba(${r},${g},${b},0.15), rgba(${r},${g},${b},0.05) 50%, rgba(${r},${g},${b},0.15))`,
 		} as React.CSSProperties;
 	}, [albumColor]);
 
