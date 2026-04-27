@@ -7,7 +7,7 @@ import {
 	useParams,
 	useRouter,
 } from "@tanstack/react-router";
-import { ChevronLeft, Heart, HeartOff, Pause, Play } from "lucide-react";
+import { ChevronLeft, Heart, HeartOff, Pause, Play, Shuffle } from "lucide-react";
 import { useIsLiked, useLikeMutation } from "../../hooks/use-likes";
 import { formatTime } from "../../lib/format-time";
 import { client } from "../../lib/hono-rpc";
@@ -15,6 +15,7 @@ import { useQueueStore } from "../../store/queue";
 import { toSimpleTrack } from "../../utils/to-simple-track";
 import { cn } from "@/lib/utils";
 import type { SpotifyPlaylist } from "../../api/user-playlists";
+import { shuffleTracks, useShufflePreference } from "../../hooks/use-shuffle-preference";
 
 export const Route = createFileRoute("/playlist/$id")({
 	component: RouteComponent,
@@ -44,6 +45,7 @@ function RouteComponent() {
 	const { play, pause, songs, songIndex, isPlaying } = useQueueStore();
 	const { isLiked, likeEntry } = useIsLiked(id, "playlist");
 	const { like, unlike } = useLikeMutation();
+	const { shuffleOnPlay, toggle: toggleShuffleOnPlay } = useShufflePreference();
 
 	const imageUrl = data?.images?.[0]?.url;
 	const totalMs =
@@ -117,17 +119,14 @@ function RouteComponent() {
 				<button
 					type="button"
 					onClick={() => {
-						if (data) {
-							play(
-								data.items.items.map(({ item }) =>
-									toSimpleTrack(
-										{ ...item, durationMs: item.duration_ms } as any,
-										item.album as any,
-									),
-								),
-								0,
-							);
-						}
+						if (!data) return;
+						const tracks = data.items.items.map(({ item }) =>
+							toSimpleTrack(
+								{ ...item, durationMs: item.duration_ms } as any,
+								item.album as any,
+							),
+						);
+						play(shuffleOnPlay ? shuffleTracks(tracks) : tracks, 0);
 					}}
 					className="w-14 h-14 bg-emerald-500 hover:bg-emerald-400 hover:scale-105 active:scale-100 rounded-full flex items-center justify-center shadow-lg transition-all flex-shrink-0"
 				>
@@ -159,6 +158,20 @@ function RouteComponent() {
 					)}
 				>
 					{isLiked ? <HeartOff className="w-5 h-5" /> : <Heart className="w-5 h-5" />}
+				</button>
+
+				<button
+					type="button"
+					onClick={toggleShuffleOnPlay}
+					title={shuffleOnPlay ? "Shuffle on play: on" : "Shuffle on play: off"}
+					className={cn(
+						"w-8 h-8 flex items-center justify-center transition-colors",
+						shuffleOnPlay
+							? "text-emerald-400 hover:text-emerald-300"
+							: "text-muted-foreground hover:text-foreground",
+					)}
+				>
+					<Shuffle className="w-5 h-5" />
 				</button>
 			</div>
 

@@ -8,7 +8,7 @@ import {
 	useParams,
 	useRouter,
 } from "@tanstack/react-router";
-import { ChevronLeft, Heart, ListPlus, Pause, Play } from "lucide-react";
+import { ChevronLeft, Heart, ListPlus, Pause, Play, Shuffle } from "lucide-react";
 import { useEffect, useState } from "react";
 import { AddToPlaylistDialog } from "../../components/add-to-playlist-dialog";
 import { z } from "zod";
@@ -18,6 +18,7 @@ import { useQueueStore } from "../../store/queue";
 import { toSimpleTrack } from "../../utils/to-simple-track";
 import { cn } from "@/lib/utils";
 import { useSaveAlbum, useRemoveAlbum } from "../../api/albums";
+import { shuffleTracks, useShufflePreference } from "../../hooks/use-shuffle-preference";
 
 export const Route = createFileRoute("/album/$id")({
 	component: RouteComponent,
@@ -51,6 +52,7 @@ function RouteComponent() {
 	const saveAlbum = useSaveAlbum();
 	const removeAlbum = useRemoveAlbum();
 	const [isSaved, setIsSaved] = useState(false);
+	const { shuffleOnPlay, toggle: toggleShuffleOnPlay } = useShufflePreference();
 
 	useEffect(() => {
 		if (data && "isSaved" in data) {
@@ -156,9 +158,9 @@ function RouteComponent() {
 				<button
 					type="button"
 					onClick={() => {
-						if (data) {
-							play(data.tracks.items.map((t) => toSimpleTrack(t, data)), 0);
-						}
+						if (!data) return;
+						const tracks = data.tracks.items.map((t) => toSimpleTrack(t, data));
+						play(shuffleOnPlay ? shuffleTracks(tracks) : tracks, 0);
 					}}
 					className="w-14 h-14 bg-emerald-500 hover:bg-emerald-400 hover:scale-105 active:scale-100 rounded-full flex items-center justify-center shadow-lg transition-all flex-shrink-0"
 				>
@@ -186,6 +188,20 @@ function RouteComponent() {
 					)}
 				>
 					<Heart className="w-5 h-5" fill={isSaved ? "currentColor" : "none"} />
+				</button>
+
+				<button
+					type="button"
+					onClick={toggleShuffleOnPlay}
+					title={shuffleOnPlay ? "Shuffle on play: on" : "Shuffle on play: off"}
+					className={cn(
+						"w-8 h-8 flex items-center justify-center transition-colors",
+						shuffleOnPlay
+							? "text-emerald-400 hover:text-emerald-300"
+							: "text-muted-foreground hover:text-foreground",
+					)}
+				>
+					<Shuffle className="w-5 h-5" />
 				</button>
 			</div>
 
