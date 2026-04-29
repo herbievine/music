@@ -21,6 +21,7 @@ export const Route = createRootRoute({
 function RootComponent() {
 	const [queryClient] = useState(() => new QueryClient());
 	const store = useQueueStore();
+	const showQueuePanel = useQueueStore((s) => s.showQueuePanel);
 
 	return (
 		<QueryClientProvider client={queryClient}>
@@ -74,7 +75,7 @@ function RootComponent() {
 										<main className="flex-1 overflow-y-auto overflow-x-hidden rounded-xl bg-card pb-6 min-w-0">
 											<Outlet />
 										</main>
-										<QueuePanel />
+										{showQueuePanel && <QueuePanel />}
 									</div>
 								</SidebarProvider>
 

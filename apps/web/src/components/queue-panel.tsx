@@ -4,7 +4,7 @@ import type { DragEndEvent } from "@dnd-kit/core";
 import { SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { GripVertical, Heart, HeartOff, ListX, Music2 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { useAudioContext } from "../contexts/audio-context";
 import { useAlbumColor } from "../hooks/use-album-color";
 import { useIsLiked, useLikeMutation } from "../hooks/use-likes";
@@ -16,9 +16,8 @@ import { cn } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
 export default function QueuePanel() {
-	const { songs, songIndex, skipTo, reorder } = useQueueStore();
+	const { songs, songIndex, skipTo, reorder, queueTab: tab, setQueueTab: setTab } = useQueueStore();
 	const { progress } = useAudioContext();
-	const [tab, setTab] = useState<"lyrics" | "queue">("queue");
 
 	const currentSong = songs[songIndex];
 	const { data: lyricsData, isLoading: lyricsLoading } = useLyrics(

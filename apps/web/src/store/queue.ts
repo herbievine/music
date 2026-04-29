@@ -18,6 +18,8 @@ type PlaybackStore = {
 	isPlaying: boolean;
 	isShuffle: boolean;
 	originalSongs: SimpleTrack[];
+	showQueuePanel: boolean;
+	queueTab: "queue" | "lyrics";
 	play: (songs?: SimpleTrack[], songIndex?: number) => void;
 	pause: () => void;
 	add: (songs: SimpleTrack[]) => void;
@@ -27,6 +29,8 @@ type PlaybackStore = {
 	skipTo: (songId: string) => void;
 	reorder: (fromIndex: number, toIndex: number) => void;
 	toggleShuffle: () => void;
+	toggleQueuePanel: () => void;
+	setQueueTab: (tab: "queue" | "lyrics") => void;
 };
 
 export const useQueueStore = create<PlaybackStore>()((set) => ({
@@ -35,6 +39,8 @@ export const useQueueStore = create<PlaybackStore>()((set) => ({
 	isPlaying: false,
 	isShuffle: false,
 	originalSongs: [],
+	showQueuePanel: true,
+	queueTab: "queue",
 	play: (songsToPlay, songIndexToSet) => {
 		return set(({ songs, songIndex, isShuffle }) => {
 			let newSongs = songsToPlay ?? songs;
@@ -119,6 +125,8 @@ export const useQueueStore = create<PlaybackStore>()((set) => ({
 			}
 			return { songs: newSongs, songIndex: newSongIndex };
 		}),
+	toggleQueuePanel: () => set(({ showQueuePanel }) => ({ showQueuePanel: !showQueuePanel })),
+	setQueueTab: (tab) => set({ queueTab: tab }),
 	toggleShuffle: () =>
 		set(({ isShuffle, songs, songIndex, originalSongs }) => {
 			if (!isShuffle) {
