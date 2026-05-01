@@ -76,12 +76,11 @@ export const useQueueStore = create<PlaybackStore>()((set) => ({
 	},
 	pause: () => set({ isPlaying: false }),
 	add: (songsToAdd) =>
-		set(({ songs }) => ({
-			songs: [...songs, ...songsToAdd].filter(
-				(id, index, self) => self.indexOf(id) === index,
-			),
-			isPlaying: true,
-		})),
+		set(({ songs }) => {
+			const existingIds = new Set(songs.map((s) => s.id));
+			const unique = songsToAdd.filter((s) => !existingIds.has(s.id));
+			return { songs: [...songs, ...unique] };
+		}),
 	remove: (songId) => {
 		return set(({ songs }) => ({
 			songs: songs.filter(({ id }) => id !== songId),

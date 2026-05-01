@@ -3,7 +3,7 @@ import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, us
 import type { DragEndEvent } from "@dnd-kit/core";
 import { SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { GripVertical, Heart, HeartOff, ListX, Music2 } from "lucide-react";
+import { GripVertical, Heart, HeartOff, ListX, Music2, X } from "lucide-react";
 import { useMemo } from "react";
 import { useAudioContext } from "../contexts/audio-context";
 import { useAlbumColor } from "../hooks/use-album-color";
@@ -16,7 +16,7 @@ import { cn } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
 export default function QueuePanel() {
-	const { songs, songIndex, skipTo, reorder, queueTab: tab, setQueueTab: setTab } = useQueueStore();
+	const { songs, songIndex, skipTo, reorder, remove, queueTab: tab, setQueueTab: setTab } = useQueueStore();
 	const { progress } = useAudioContext();
 
 	const currentSong = songs[songIndex];
@@ -131,7 +131,7 @@ export default function QueuePanel() {
 				</ScrollArea>
 			</div>
 		) : (
-				<QueueList upcoming={upcoming} songIndex={songIndex} skipTo={skipTo} reorder={reorder} />
+				<QueueList upcoming={upcoming} songIndex={songIndex} skipTo={skipTo} reorder={reorder} remove={remove} />
 			)}
 		</div>
 	);
@@ -142,11 +142,13 @@ function QueueList({
 	songIndex,
 	skipTo,
 	reorder,
+	remove,
 }: {
 	upcoming: SimpleTrack[];
 	songIndex: number;
 	skipTo: (songId: string) => void;
 	reorder: (fromIndex: number, toIndex: number) => void;
+	remove: (songId: string) => void;
 }) {
 	const sensors = useSensors(
 		useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -184,7 +186,7 @@ function QueueList({
 						<SortableContext items={upcoming.map((t) => t.id)} strategy={verticalListSortingStrategy}>
 							<div className="px-2 pb-2">
 								{upcoming.map((track) => (
-									<SortableTrackItem key={track.id} track={track} skipTo={skipTo} />
+									<SortableTrackItem key={track.id} track={track} skipTo={skipTo} remove={remove} />
 								))}
 							</div>
 						</SortableContext>
@@ -198,9 +200,11 @@ function QueueList({
 function SortableTrackItem({
 	track,
 	skipTo,
+	remove,
 }: {
 	track: SimpleTrack;
 	skipTo: (songId: string) => void;
+	remove: (songId: string) => void;
 }) {
 	const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: track.id });
 
@@ -244,6 +248,13 @@ function SortableTrackItem({
 						{track.artists[0]?.name}
 					</p>
 				</div>
+			</button>
+			<button
+				type="button"
+				onClick={() => remove(track.id)}
+				className="flex-shrink-0 p-1 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground/30 hover:text-muted-foreground"
+			>
+				<X className="w-3.5 h-3.5" />
 			</button>
 		</div>
 	);

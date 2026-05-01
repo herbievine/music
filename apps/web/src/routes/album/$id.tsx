@@ -8,7 +8,7 @@ import {
 	useParams,
 	useRouter,
 } from "@tanstack/react-router";
-import { ChevronLeft, Heart, ListPlus, Pause, Play, Shuffle } from "lucide-react";
+import { ChevronLeft, Heart, ListEnd, ListPlus, Pause, Play, Shuffle } from "lucide-react";
 import { useEffect, useState } from "react";
 import { AddToPlaylistDialog } from "../../components/add-to-playlist-dialog";
 import { z } from "zod";
@@ -48,7 +48,7 @@ function RouteComponent() {
 			return res.json();
 		},
 	});
-	const { play, pause, songs, songIndex, isPlaying } = useQueueStore();
+	const { play, pause, add, songs, songIndex, isPlaying } = useQueueStore();
 	const saveAlbum = useSaveAlbum();
 	const removeAlbum = useRemoveAlbum();
 	const [isSaved, setIsSaved] = useState(false);
@@ -203,15 +203,28 @@ function RouteComponent() {
 				>
 					<Shuffle className="w-5 h-5" />
 				</button>
+
+				<button
+					type="button"
+					title="Add album to queue"
+					onClick={() => {
+						if (!data) return;
+						add(data.tracks.items.map((t) => toSimpleTrack(t, data)));
+					}}
+					className="w-8 h-8 flex items-center justify-center transition-colors text-muted-foreground hover:text-foreground"
+				>
+					<ListEnd className="w-5 h-5" />
+				</button>
 			</div>
 
 			{/* Track list */}
 			<div className="px-8 pb-8">
 				{/* Column headers */}
-				<div className="grid grid-cols-[2rem_1fr_auto_1.75rem] items-center border-b border-border/50 pb-2 mb-1 text-xs uppercase tracking-wider text-muted-foreground select-none">
+				<div className="grid grid-cols-[2rem_1fr_auto_1.75rem_1.75rem] items-center border-b border-border/50 pb-2 mb-1 text-xs uppercase tracking-wider text-muted-foreground select-none">
 					<span className="text-center">#</span>
 					<span className="pl-3">Title</span>
 					<span>Duration</span>
+					<span />
 					<span />
 				</div>
 
@@ -223,7 +236,7 @@ function RouteComponent() {
 								<div
 									key={track.id}
 									className={cn(
-										"grid grid-cols-[2rem_1fr_auto_1.75rem] items-center px-0 py-2.5 rounded-md transition-colors group",
+										"grid grid-cols-[2rem_1fr_auto_1.75rem_1.75rem] items-center px-0 py-2.5 rounded-md transition-colors group",
 										"hover:bg-white/5",
 										isCurrentTrack && "text-primary",
 									)}
@@ -279,6 +292,16 @@ function RouteComponent() {
 										className="flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground/50 hover:text-foreground"
 									>
 										<ListPlus className="w-3.5 h-3.5" />
+									</button>
+
+									{/* Add to queue */}
+									<button
+										type="button"
+										title="Add to queue"
+										onClick={() => add([toSimpleTrack(track, data)])}
+										className="flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground/50 hover:text-foreground"
+									>
+										<ListEnd className="w-3.5 h-3.5" />
 									</button>
 								</div>
 							);

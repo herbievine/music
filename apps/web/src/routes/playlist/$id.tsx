@@ -7,7 +7,7 @@ import {
 	useParams,
 	useRouter,
 } from "@tanstack/react-router";
-import { ChevronLeft, Heart, HeartOff, Pause, Play, Shuffle } from "lucide-react";
+import { ChevronLeft, Heart, HeartOff, ListEnd, Pause, Play, Shuffle } from "lucide-react";
 import { useIsLiked, useLikeMutation } from "../../hooks/use-likes";
 import { formatTime } from "../../lib/format-time";
 import { client } from "../../lib/hono-rpc";
@@ -42,7 +42,7 @@ function RouteComponent() {
 			return (await res.json()) as SpotifyPlaylist;
 		},
 	});
-	const { play, pause, songs, songIndex, isPlaying } = useQueueStore();
+	const { play, pause, add, songs, songIndex, isPlaying } = useQueueStore();
 	const { isLiked, likeEntry } = useIsLiked(id, "playlist");
 	const { like, unlike } = useLikeMutation();
 	const { shuffleOnPlay, toggle: toggleShuffleOnPlay } = useShufflePreference();
@@ -173,31 +173,54 @@ function RouteComponent() {
 				>
 					<Shuffle className="w-5 h-5" />
 				</button>
+
+				<button
+					type="button"
+					title="Add playlist to queue"
+					onClick={() => {
+						if (!data) return;
+						add(data.items.items.map(({ item }) =>
+							toSimpleTrack(
+								{ ...item, durationMs: item.duration_ms } as any,
+								item.album as any,
+							),
+						));
+					}}
+					className="w-8 h-8 flex items-center justify-center transition-colors text-muted-foreground hover:text-foreground"
+				>
+					<ListEnd className="w-5 h-5" />
+				</button>
 			</div>
 
 			{/* Track list */}
 			<div className="px-8 pb-8">
-				<div className="grid grid-cols-[2rem_1fr_auto] items-center border-b border-border/50 pb-2 mb-1 text-xs uppercase tracking-wider text-muted-foreground select-none">
+				<div className="grid grid-cols-[2rem_1fr_auto_1.75rem] items-center border-b border-border/50 pb-2 mb-1 text-xs uppercase tracking-wider text-muted-foreground select-none">
 					<span className="text-center">#</span>
 					<span className="pl-3">Title</span>
 					<span>Duration</span>
+					<span />
 				</div>
 
 				{data
 					? data.items.total > 0 &&
 						data.items.items.map(({ item }, i) => {
 							const isCurrentTrack = item.id === currentSongId;
+							const playTrack = () => {
+								if (isCurrentTrack && isPlaying) { pause(); } else { play([toSimpleTrack({ ...item, durationMs: item.duration_ms } as any, item.album as any)]); }
+							};
 							return (
-								<button
+								<div
 									key={item.id}
-									type="button"
-									onClick={() => { if (isCurrentTrack && isPlaying) { pause(); } else { play([toSimpleTrack({ ...item, durationMs: item.duration_ms } as any, item.album as any)]); } }}
 									className={cn(
-										"w-full grid grid-cols-[2rem_1fr_auto] items-center py-2.5 rounded-md transition-colors group text-left",
+										"grid grid-cols-[2rem_1fr_auto_1.75rem] items-center py-2.5 rounded-md transition-colors group",
 										"hover:bg-white/5",
 									)}
 								>
-									<span className="text-sm text-center flex items-center justify-center">
+									<button
+										type="button"
+										onClick={playTrack}
+										className="text-sm text-center flex items-center justify-center"
+									>
 										{isCurrentTrack && isPlaying ? (
 											<Pause className="w-3.5 h-3.5 fill-current text-primary" />
 										) : (
@@ -208,9 +231,13 @@ function RouteComponent() {
 												<Play className="hidden group-hover:block w-3.5 h-3.5 fill-current" />
 											</>
 										)}
-									</span>
+									</button>
 
-									<div className="pl-3 min-w-0 flex flex-col">
+									<button
+										type="button"
+										onClick={playTrack}
+										className="pl-3 min-w-0 flex flex-col text-left"
+									>
 										<span className={cn(
 											"text-sm font-medium truncate",
 											isCurrentTrack ? "text-primary" : "text-foreground",
@@ -222,12 +249,22 @@ function RouteComponent() {
 											{" · "}
 											{item.album.name}
 										</span>
-									</div>
+									</button>
 
 									<span className="text-xs text-muted-foreground tabular-nums">
 										{formatTime(item.duration_ms)}
 									</span>
-								</button>
+
+									{/* Add to queue */}
+									<button
+										type="button"
+										title="Add to queue"
+										onClick={() => add([toSimpleTrack({ ...item, durationMs: item.duration_ms } as any, item.album as any)])}
+										className="flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground/50 hover:text-foreground"
+									>
+										<ListEnd className="w-3.5 h-3.5" />
+									</button>
+								</div>
 							);
 						})
 					: [...Array(12)].map((_, i) => (
