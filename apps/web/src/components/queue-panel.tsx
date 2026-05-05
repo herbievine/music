@@ -131,8 +131,10 @@ export default function QueuePanel() {
 				</ScrollArea>
 			</div>
 		) : (
+			<div className="flex-1 min-h-0 flex flex-col">
 				<QueueList upcoming={upcoming} songIndex={songIndex} skipTo={skipTo} reorder={reorder} remove={remove} />
-			)}
+			</div>
+		)}
 		</div>
 	);
 }
@@ -175,7 +177,7 @@ function QueueList({
 				Next up
 			</p>
 
-			<ScrollArea className="flex-1 pb-3">
+			<ScrollArea className="h-full pb-3">
 				{upcoming.length === 0 ? (
 					<div className="flex flex-col items-center justify-center py-6 gap-2">
 						<ListX className="w-7 h-7 text-muted-foreground/30" strokeWidth={1.5} />
