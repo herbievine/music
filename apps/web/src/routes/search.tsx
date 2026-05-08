@@ -1,6 +1,7 @@
 import { useClerk } from "@clerk/clerk-react";
 import { useQueries, useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useEffect, useRef } from "react";
 import { useDebounce } from "@uidotdev/usehooks";
 import dayjs from "dayjs";
 import {
@@ -409,10 +410,15 @@ function SearchInput({
 	query: string;
 	setQuery: (q: string) => void;
 }) {
+	const ref = useRef<HTMLInputElement>(null);
+
+	useEffect(() => {
+		ref.current?.focus();
+	}, []);
+
 	return (
 		<input
-			// biome-ignore lint/a11y/noAutofocus: intentional — navigating here via Cmd/Ctrl+K implies intent to search
-			autoFocus
+			ref={ref}
 			type="text"
 			placeholder="Search..."
 			className="w-full px-4 py-2.5 rounded-xl text-foreground bg-secondary/70 outline-none border border-border focus:border-ring transition-colors placeholder:text-muted-foreground"
