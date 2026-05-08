@@ -58,11 +58,11 @@ function HomeComponent() {
 	});
 
 	return (
-		<div className="flex flex-col gap-6 px-8 py-6">
+		<div className="flex flex-col gap-6 px-4 sm:px-8 py-2 sm:py-6">
 			{/* Mobile header */}
 			<div className="lg:hidden h-16 flex items-center">
 				<header className="w-full h-16 fixed top-0 left-1/2 -translate-x-1/2 z-10 backdrop-blur-md bg-background/70">
-					<div className="w-full h-16 px-8 max-w-lg mx-auto flex items-center justify-between">
+					<div className="w-full h-16 px-4 max-w-lg mx-auto flex items-center justify-between">
 						<h1 className="text-2xl font-bold">Hi {user?.firstName} :)</h1>
 						<UserButton />
 					</div>
