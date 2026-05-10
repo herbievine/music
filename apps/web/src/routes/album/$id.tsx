@@ -154,7 +154,7 @@ function RouteComponent() {
 			</div>
 
 			{/* Actions bar */}
-			<div className="px-8 py-4 flex items-center gap-5">
+			<div className="px-4 sm:px-8 py-4 flex items-center gap-5">
 				<button
 					type="button"
 					onClick={() => {
@@ -218,7 +218,7 @@ function RouteComponent() {
 			</div>
 
 			{/* Track list */}
-			<div className="px-8 pb-8">
+			<div className="px-4 sm:px-8 pb-8">
 				{/* Column headers */}
 				<div className="grid grid-cols-[2rem_1fr_auto_1.75rem_1.75rem] items-center border-b border-border/50 pb-2 mb-1 text-xs uppercase tracking-wider text-muted-foreground select-none">
 					<span className="text-center">#</span>
@@ -289,7 +289,7 @@ function RouteComponent() {
 											albumImage: data.images[0]?.url ?? "",
 											durationMs: track.durationMs,
 										})}
-										className="flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground/50 hover:text-foreground"
+										className="flex items-center justify-center sm:opacity-0 sm:group-hover:opacity-100 transition-opacity text-muted-foreground/50 hover:text-foreground"
 									>
 										<ListPlus className="w-3.5 h-3.5" />
 									</button>
@@ -299,7 +299,7 @@ function RouteComponent() {
 										type="button"
 										title="Add to queue"
 										onClick={() => add([toSimpleTrack(track, data)])}
-										className="flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground/50 hover:text-foreground"
+										className="flex items-center justify-center sm:opacity-0 sm:group-hover:opacity-100 transition-opacity text-muted-foreground/50 hover:text-foreground"
 									>
 										<ListEnd className="w-3.5 h-3.5" />
 									</button>
