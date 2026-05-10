@@ -75,19 +75,19 @@ function RouteComponent() {
 					<ChevronLeft className="w-5 h-5" strokeWidth={2.5} />
 				</button>
 
-				<div className="relative z-10 px-8 pt-6 pb-8 flex items-end gap-6">
+				<div className="relative z-10 px-4 sm:px-8 pt-6 pb-8 flex flex-col lg:flex-row lg:items-end gap-6">
 					{imageUrl ? (
 						<img
 							src={imageUrl}
 							alt={data?.name}
-							className="w-48 h-48 rounded-xl shadow-2xl flex-shrink-0 object-cover"
+							className="w-40 h-40 sm:w-48 sm:h-48 rounded-xl shadow-2xl flex-shrink-0 object-cover mx-auto lg:mx-0"
 							style={{ viewTransitionName: `key-${id}` }}
 						/>
 					) : (
-						<div className="w-48 h-48 rounded-xl bg-secondary flex-shrink-0 animate-pulse" />
+						<div className="w-40 h-40 sm:w-48 sm:h-48 rounded-xl bg-secondary flex-shrink-0 animate-pulse mx-auto lg:mx-0" />
 					)}
 
-					<div className="pb-1 min-w-0">
+					<div className="pb-1 min-w-0 text-center lg:text-left">
 						<p className="text-xs font-bold uppercase tracking-widest text-white/70 mb-2">
 							Playlist
 						</p>
@@ -98,7 +98,7 @@ function RouteComponent() {
 						) : (
 							<div className="h-12 w-64 bg-white/20 rounded-lg animate-pulse mb-4" />
 						)}
-						<div className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-sm text-white/70">
+						<div className="flex flex-wrap justify-center lg:justify-start items-center gap-x-1.5 gap-y-0.5 text-sm text-white/70">
 							{data ? (
 								<>
 									<span>{data.items.total} songs</span>
@@ -115,7 +115,7 @@ function RouteComponent() {
 			</div>
 
 			{/* Actions bar */}
-			<div className="px-8 py-4 flex items-center gap-5">
+			<div className="px-4 sm:px-8 py-4 flex items-center gap-5">
 				<button
 					type="button"
 					onClick={() => {
@@ -193,7 +193,7 @@ function RouteComponent() {
 			</div>
 
 			{/* Track list */}
-			<div className="px-8 pb-8">
+			<div className="px-4 sm:px-8 pb-8">
 				<div className="grid grid-cols-[2rem_1fr_auto_1.75rem] items-center border-b border-border/50 pb-2 mb-1 text-xs uppercase tracking-wider text-muted-foreground select-none">
 					<span className="text-center">#</span>
 					<span className="pl-3">Title</span>
@@ -260,7 +260,7 @@ function RouteComponent() {
 										type="button"
 										title="Add to queue"
 										onClick={() => add([toSimpleTrack({ ...item, durationMs: item.duration_ms } as any, item.album as any)])}
-										className="flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground/50 hover:text-foreground"
+										className="flex items-center justify-center sm:opacity-0 sm:group-hover:opacity-100 transition-opacity text-muted-foreground/50 hover:text-foreground"
 									>
 										<ListEnd className="w-3.5 h-3.5" />
 									</button>
