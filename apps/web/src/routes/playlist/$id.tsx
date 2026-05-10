@@ -70,7 +70,7 @@ function RouteComponent() {
 				<button
 					type="button"
 					onClick={() => canGoBack ? router.history.back() : navigate({ to: "/" })}
-					className="relative z-10 m-6 mb-0 inline-flex items-center justify-center w-8 h-8 rounded-full bg-black/40 text-white/80 hover:text-white hover:bg-black/60 transition-colors"
+					className="relative z-10 m-4 sm:m-6 mb-0 sm:mb-0 inline-flex items-center justify-center w-10 h-10 sm:w-8 sm:h-8 rounded-full bg-black/40 text-white/80 hover:text-white hover:bg-black/60 transition-colors"
 				>
 					<ChevronLeft className="w-5 h-5" strokeWidth={2.5} />
 				</button>
@@ -128,7 +128,7 @@ function RouteComponent() {
 						);
 						play(shuffleOnPlay ? shuffleTracks(tracks) : tracks, 0);
 					}}
-					className="w-14 h-14 bg-emerald-500 hover:bg-emerald-400 hover:scale-105 active:scale-100 rounded-full flex items-center justify-center shadow-lg transition-all flex-shrink-0"
+					className="w-12 h-12 sm:w-14 sm:h-14 bg-emerald-500 hover:bg-emerald-400 hover:scale-105 active:scale-100 rounded-full flex items-center justify-center shadow-lg transition-all flex-shrink-0"
 				>
 					<Play className="w-6 h-6 text-black fill-black ml-0.5" />
 				</button>
@@ -151,7 +151,7 @@ function RouteComponent() {
 						}
 					}}
 					className={cn(
-						"w-8 h-8 flex items-center justify-center transition-colors",
+						"w-10 h-10 sm:w-8 sm:h-8 flex items-center justify-center transition-colors",
 						isLiked
 							? "text-emerald-400 hover:text-emerald-300"
 							: "text-muted-foreground hover:text-foreground",
@@ -165,7 +165,7 @@ function RouteComponent() {
 					onClick={toggleShuffleOnPlay}
 					title={shuffleOnPlay ? "Shuffle on play: on" : "Shuffle on play: off"}
 					className={cn(
-						"w-8 h-8 flex items-center justify-center transition-colors",
+						"w-10 h-10 sm:w-8 sm:h-8 flex items-center justify-center transition-colors",
 						shuffleOnPlay
 							? "text-emerald-400 hover:text-emerald-300"
 							: "text-muted-foreground hover:text-foreground",
@@ -186,7 +186,7 @@ function RouteComponent() {
 							),
 						));
 					}}
-					className="w-8 h-8 flex items-center justify-center transition-colors text-muted-foreground hover:text-foreground"
+					className="w-10 h-10 sm:w-8 sm:h-8 flex items-center justify-center transition-colors text-muted-foreground hover:text-foreground"
 				>
 					<ListEnd className="w-5 h-5" />
 				</button>
@@ -211,16 +211,16 @@ function RouteComponent() {
 							return (
 								<div
 									key={item.id}
+									role="button"
+									tabIndex={0}
+									onClick={playTrack}
+									onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); playTrack(); } }}
 									className={cn(
-										"grid grid-cols-[2rem_1fr_auto] sm:grid-cols-[2rem_1fr_auto_1.75rem] items-center py-2.5 rounded-md transition-colors group",
-										"hover:bg-white/5",
+										"grid grid-cols-[2rem_1fr_auto] sm:grid-cols-[2rem_1fr_auto_1.75rem] items-center py-2.5 rounded-md transition-colors group cursor-pointer select-none",
+										"hover:bg-white/5 focus-visible:bg-white/10 focus-visible:outline-none",
 									)}
 								>
-									<button
-										type="button"
-										onClick={playTrack}
-										className="text-sm text-center flex items-center justify-center"
-									>
+									<span className="text-sm text-center flex items-center justify-center">
 										{isCurrentTrack && isPlaying ? (
 											<Pause className="w-3.5 h-3.5 fill-current text-primary" />
 										) : (
@@ -231,13 +231,9 @@ function RouteComponent() {
 												<Play className="hidden group-hover:block w-3.5 h-3.5 fill-current" />
 											</>
 										)}
-									</button>
+									</span>
 
-									<button
-										type="button"
-										onClick={playTrack}
-										className="pl-3 min-w-0 flex flex-col text-left"
-									>
+									<span className="pl-3 min-w-0 flex flex-col text-left">
 										<span className={cn(
 											"text-sm font-medium truncate",
 											isCurrentTrack ? "text-primary" : "text-foreground",
@@ -249,7 +245,7 @@ function RouteComponent() {
 											{" · "}
 											{item.album.name}
 										</span>
-									</button>
+									</span>
 
 									<span className="text-xs text-muted-foreground tabular-nums">
 										{formatTime(item.duration_ms)}
@@ -259,7 +255,7 @@ function RouteComponent() {
 									<button
 										type="button"
 										title="Add to queue"
-										onClick={() => add([toSimpleTrack({ ...item, durationMs: item.duration_ms } as any, item.album as any)])}
+										onClick={(e) => { e.stopPropagation(); add([toSimpleTrack({ ...item, durationMs: item.duration_ms } as any, item.album as any)]); }}
 										className="hidden sm:flex items-center justify-center sm:opacity-0 sm:group-hover:opacity-100 transition-opacity text-muted-foreground/50 hover:text-foreground"
 									>
 										<ListEnd className="w-3.5 h-3.5" />
