@@ -92,7 +92,7 @@ function RouteComponent() {
 							Playlist
 						</p>
 						{data ? (
-							<h1 className="text-4xl lg:text-5xl font-black text-white leading-none mb-4 truncate">
+							<h1 className="text-3xl sm:text-4xl lg:text-5xl font-black text-white leading-tight mb-4 line-clamp-2">
 								{data.name}
 							</h1>
 						) : (
@@ -194,11 +194,11 @@ function RouteComponent() {
 
 			{/* Track list */}
 			<div className="px-4 sm:px-8 pb-8">
-				<div className="grid grid-cols-[2rem_1fr_auto_1.75rem] items-center border-b border-border/50 pb-2 mb-1 text-xs uppercase tracking-wider text-muted-foreground select-none">
+				<div className="grid grid-cols-[2rem_1fr_auto] sm:grid-cols-[2rem_1fr_auto_1.75rem] items-center border-b border-border/50 pb-2 mb-1 text-xs uppercase tracking-wider text-muted-foreground select-none">
 					<span className="text-center">#</span>
 					<span className="pl-3">Title</span>
 					<span>Duration</span>
-					<span />
+					<span className="hidden sm:block" />
 				</div>
 
 				{data
@@ -212,7 +212,7 @@ function RouteComponent() {
 								<div
 									key={item.id}
 									className={cn(
-										"grid grid-cols-[2rem_1fr_auto_1.75rem] items-center py-2.5 rounded-md transition-colors group",
+										"grid grid-cols-[2rem_1fr_auto] sm:grid-cols-[2rem_1fr_auto_1.75rem] items-center py-2.5 rounded-md transition-colors group",
 										"hover:bg-white/5",
 									)}
 								>
@@ -260,7 +260,7 @@ function RouteComponent() {
 										type="button"
 										title="Add to queue"
 										onClick={() => add([toSimpleTrack({ ...item, durationMs: item.duration_ms } as any, item.album as any)])}
-										className="flex items-center justify-center sm:opacity-0 sm:group-hover:opacity-100 transition-opacity text-muted-foreground/50 hover:text-foreground"
+										className="hidden sm:flex items-center justify-center sm:opacity-0 sm:group-hover:opacity-100 transition-opacity text-muted-foreground/50 hover:text-foreground"
 									>
 										<ListEnd className="w-3.5 h-3.5" />
 									</button>
