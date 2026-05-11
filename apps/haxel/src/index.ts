@@ -39,7 +39,10 @@ const routes = app
 		// If youtubeVideoId param provided and song exists with cached audio, use the param
 		if (youtubeVideoIdParam && song?.bucketId) {
 			console.log("Using provided YouTube video ID:", youtubeVideoIdParam);
-			const link = await converter(youtubeVideoIdParam, c.env.CONVERTER_API_KEY);
+			const link = await converter(
+				youtubeVideoIdParam,
+				c.env.CONVERTER_API_KEY,
+			);
 			const arrayBuffer = await getArrayBuffer(link, {
 				headers: {
 					"content-type": "audio/mpeg",
@@ -56,7 +59,9 @@ const routes = app
 			const parts = header.split(" ");
 			const token = parts[1];
 			if (!token || !parts[0]?.toLowerCase().includes("bearer")) {
-				throw new HTTPException(401, { message: "Invalid authorization header" });
+				throw new HTTPException(401, {
+					message: "Invalid authorization header",
+				});
 			}
 
 			const { error, data: track } = await tryCatch(
@@ -110,7 +115,9 @@ const routes = app
 			const token = parts[1];
 
 			if (!token || !parts[0]?.toLowerCase().includes("bearer")) {
-				throw new HTTPException(401, { message: "Invalid authorization header" });
+				throw new HTTPException(401, {
+					message: "Invalid authorization header",
+				});
 			}
 
 			const client = new SpotifyAPI({
@@ -136,14 +143,19 @@ const routes = app
 
 			let videoId = youtubeVideoIdParam;
 
-			// If no videoId param provided, search YouTube
 			if (!videoId) {
+				const durationSeconds = durationParam
+					? Number.parseInt(durationParam, 10)
+					: Math.round(track.duration_ms / 1000);
 				const {
 					items: [video],
 				} = await youtube(
-					`${track.artists[0].name} ${track.name} audio`,
+					{
+						artist: track.artists[0].name,
+						title: track.name,
+						durationSeconds,
+					},
 					c.env.YOUTUBE_API_KEY,
-					durationParam ? parseInt(durationParam) : undefined,
 				);
 				videoId = video.id.videoId;
 			}

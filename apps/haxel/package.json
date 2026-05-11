@@ -6,7 +6,9 @@
 	},
 	"scripts": {
 		"dev": "wrangler dev src/index.ts",
-		"deploy": "wrangler deploy --keep-vars --minify"
+		"deploy": "wrangler deploy --keep-vars --minify",
+		"test": "bun test",
+		"test:watch": "bun test --watch"
 	},
 	"dependencies": {
 		"@hono/clerk-auth": "^3.0.3",

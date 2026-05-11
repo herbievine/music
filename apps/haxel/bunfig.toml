@@ -1,0 +1,4 @@
+[test]
+preload = ["./test/setup.ts"]
+# YouTube searches are network-bound; give each track room to breathe.
+timeout = 30000
