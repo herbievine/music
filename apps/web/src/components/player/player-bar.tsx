@@ -19,6 +19,7 @@ function formatTime(seconds: number): string {
 export function PlayerBar() {
 	const [volume, setVolume] = useState(1);
 	const [fixYoutubeOpen, setFixYoutubeOpen] = useState(false);
+	const [duration, setDuration] = useState(0);
 	const { songs, songIndex, isPlaying, play, pause, next, previous, isShuffle, toggleShuffle } =
 		useQueueStore();
 	const { audioRef, progressRef, progress, setProgress } = useAudioContext();
@@ -29,8 +30,16 @@ export function PlayerBar() {
 		}
 	}, [volume, audioRef]);
 
+	useEffect(() => {
+		const audio = audioRef.current;
+		if (!audio) return;
+
+		const updateDuration = () => setDuration(audio.duration || 0);
+		audio.addEventListener("loadedmetadata", updateDuration);
+		return () => audio.removeEventListener("loadedmetadata", updateDuration);
+	}, [audioRef]);
+
 	const currentSong = songs[songIndex];
-	const duration = currentSong ? currentSong.durationMs / 1000 : 0;
 	const albumColor = useAlbumColor(currentSong?.album.image);
 	const barStyle = useMemo(() => {
 		if (!albumColor) return undefined;
