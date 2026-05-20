@@ -177,7 +177,7 @@ function QueueList({
 				Next up
 			</p>
 
-			<ScrollArea className="h-full pb-3">
+			<ScrollArea className="flex-1 min-h-0">
 				{upcoming.length === 0 ? (
 					<div className="flex flex-col items-center justify-center py-6 gap-2">
 						<ListX className="w-7 h-7 text-muted-foreground/30" strokeWidth={1.5} />
@@ -186,7 +186,7 @@ function QueueList({
 				) : (
 					<DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
 						<SortableContext items={upcoming.map((t) => t.id)} strategy={verticalListSortingStrategy}>
-							<div className="px-2 pb-2">
+							<div className="px-2 pb-4">
 								{upcoming.map((track) => (
 									<SortableTrackItem key={track.id} track={track} skipTo={skipTo} remove={remove} />
 								))}
@@ -235,14 +235,14 @@ function SortableTrackItem({
 			<button
 				type="button"
 				onClick={() => skipTo(track.id)}
-				className="flex items-center gap-3 min-w-0 flex-1"
+				className="flex items-center gap-3 min-w-0 flex-1 text-left"
 			>
 				<img
 					src={track.album.image}
 					alt={track.album.name}
 					className="w-9 h-9 rounded-md object-cover flex-shrink-0"
 				/>
-				<div className="min-w-0">
+				<div className="min-w-0 flex-1">
 					<p className="text-xs font-medium truncate group-hover:text-foreground transition-colors">
 						{track.name}
 					</p>
