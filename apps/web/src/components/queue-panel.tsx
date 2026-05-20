@@ -242,7 +242,7 @@ function SortableTrackItem({
 					alt={track.album.name}
 					className="w-9 h-9 rounded-md object-cover flex-shrink-0"
 				/>
-				<div className="min-w-0 flex-1">
+				<div className="min-w-0">
 					<p className="text-xs font-medium truncate group-hover:text-foreground transition-colors">
 						{track.name}
 					</p>
