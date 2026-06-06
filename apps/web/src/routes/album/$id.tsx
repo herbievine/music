@@ -10,6 +10,7 @@ import {
 } from "@tanstack/react-router";
 import { ChevronLeft, Heart, ListEnd, ListPlus, Pause, Play, Shuffle } from "lucide-react";
 import { useEffect, useState } from "react";
+import toast from "react-hot-toast";
 import { AddToPlaylistDialog } from "../../components/add-to-playlist-dialog";
 import { z } from "zod";
 import { formatTime } from "../../lib/format-time";
@@ -210,6 +211,7 @@ function RouteComponent() {
 					onClick={() => {
 						if (!data) return;
 						add(data.tracks.items.map((t) => toSimpleTrack(t, data)));
+						toast.success(`Added ${data.tracks.items.length} tracks to queue`);
 					}}
 					className="w-10 h-10 sm:w-8 sm:h-8 flex items-center justify-center transition-colors text-muted-foreground hover:text-foreground"
 				>
@@ -298,7 +300,7 @@ function RouteComponent() {
 									<button
 										type="button"
 										title="Add to queue"
-										onClick={(e) => { e.stopPropagation(); add([toSimpleTrack(track, data)]); }}
+										onClick={(e) => { e.stopPropagation(); add([toSimpleTrack(track, data)]); toast.success("Added to queue"); }}
 										className="hidden sm:flex items-center justify-center sm:opacity-0 sm:group-hover:opacity-100 transition-opacity text-muted-foreground/50 hover:text-foreground"
 									>
 										<ListEnd className="w-3.5 h-3.5" />

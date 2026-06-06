@@ -3,6 +3,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { createRootRoute, Link, Outlet } from "@tanstack/react-router";
 import { Disc3, HomeIcon, ListMusic, SearchIcon } from "lucide-react";
 import { NuqsAdapter } from "nuqs/adapters/react";
+import { Toaster } from "react-hot-toast";
 import { useState } from "react";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { SidebarProvider } from "@/components/ui/sidebar";
@@ -26,6 +27,17 @@ function RootComponent() {
 	return (
 		<QueryClientProvider client={queryClient}>
 			<NuqsAdapter>
+				<Toaster
+					position="bottom-center"
+					toastOptions={{
+						style: {
+							background: "var(--card)",
+							color: "var(--card-foreground)",
+							border: "1px solid var(--border)",
+							fontSize: "0.875rem",
+						},
+					}}
+				/>
 				<TooltipProvider>
 					<SignedIn>
 						<AudioProvider>

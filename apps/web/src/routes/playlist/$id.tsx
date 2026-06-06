@@ -8,6 +8,7 @@ import {
 	useRouter,
 } from "@tanstack/react-router";
 import { ChevronLeft, Heart, HeartOff, ListEnd, Pause, Play, Shuffle } from "lucide-react";
+import toast from "react-hot-toast";
 import { useIsLiked, useLikeMutation } from "../../hooks/use-likes";
 import { formatTime } from "../../lib/format-time";
 import { client } from "../../lib/hono-rpc";
@@ -185,6 +186,7 @@ function RouteComponent() {
 								item.album as any,
 							),
 						));
+						toast.success(`Added ${data.items.total} tracks to queue`);
 					}}
 					className="w-10 h-10 sm:w-8 sm:h-8 flex items-center justify-center transition-colors text-muted-foreground hover:text-foreground"
 				>
@@ -255,7 +257,7 @@ function RouteComponent() {
 									<button
 										type="button"
 										title="Add to queue"
-										onClick={(e) => { e.stopPropagation(); add([toSimpleTrack({ ...item, durationMs: item.duration_ms } as any, item.album as any)]); }}
+										onClick={(e) => { e.stopPropagation(); add([toSimpleTrack({ ...item, durationMs: item.duration_ms } as any, item.album as any)]); toast.success("Added to queue"); }}
 										className="hidden sm:flex items-center justify-center sm:opacity-0 sm:group-hover:opacity-100 transition-opacity text-muted-foreground/50 hover:text-foreground"
 									>
 										<ListEnd className="w-3.5 h-3.5" />
