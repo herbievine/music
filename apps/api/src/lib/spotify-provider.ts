@@ -138,7 +138,7 @@ export class SpotifyProvider implements MusicProvider {
 				headers: { Authorization: `Bearer ${this.token}` },
 			}),
 			fetch(
-				`https://api.spotify.com/v1/artists/${encodeURIComponent(id)}/albums`,
+				`https://api.spotify.com/v1/artists/${encodeURIComponent(id)}/albums?limit=50&include_groups=album,single,compilation`,
 				{ headers: { Authorization: `Bearer ${this.token}` } },
 			),
 		]);
@@ -247,6 +247,7 @@ export class SpotifyProvider implements MusicProvider {
 		const url = new URL("/v1/search", "https://api.spotify.com");
 		url.searchParams.append("q", query);
 		url.searchParams.append("type", type);
+		url.searchParams.append("limit", "20");
 
 		const res = await fetch(url, {
 			headers: { Authorization: `Bearer ${this.token}` },

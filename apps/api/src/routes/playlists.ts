@@ -93,7 +93,25 @@ export default app
 			isFollowing = false;
 		}
 
-		return c.json({ ...playlist, isFollowing });
+		// Spotify returns tracks.items[].track — map to items.items[].item for frontend
+		const tracks = playlist.tracks ?? {};
+		return c.json({
+			...playlist,
+			items: {
+				total: tracks.total ?? 0,
+				items: (tracks.items ?? [])
+					// eslint-disable-next-line @typescript-eslint/no-explicit-any
+					.filter((i: any) => i.track != null)
+					// eslint-disable-next-line @typescript-eslint/no-explicit-any
+					.map((i: any) => ({
+						added_at: i.added_at,
+						added_by: i.added_by,
+						is_local: i.is_local,
+						item: i.track,
+					})),
+			},
+			isFollowing,
+		});
 	})
 
 	// Update playlist
