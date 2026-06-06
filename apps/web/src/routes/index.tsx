@@ -11,48 +11,57 @@ export const Route = createFileRoute("/")({
 function HomeComponent() {
 	const { session } = useClerk();
 	const { user } = useUser();
+
+	const getToken = async () =>
+		({ Authorization: `Bearer ${await session?.getToken()}` }) as Record<
+			string,
+			string
+		>;
+
 	const { data: recents } = useQuery({
 		queryKey: ["recents"],
 		queryFn: async () => {
 			const res = await client.recents.$get(
-				{ query: {} },
-				{
-					headers: {
-						Authorization: `Bearer ${await session?.getToken()}`,
-					},
-				},
+				{ query: { limit: "8" } },
+				{ headers: await getToken() },
 			);
 			if (!res.ok) throw new Error("Could not fetch recents");
 			return res.json();
 		},
 	});
+
 	const { data: jumpBackIn } = useQuery({
 		queryKey: ["jump-back-in"],
 		queryFn: async () => {
-			const res = await client.recents.$get(
-				{ query: { range: "long_term" } },
-				{
-					headers: {
-						Authorization: `Bearer ${await session?.getToken()}`,
-					},
-				},
+			const res = await client["jump-back-in"].$get(
+				{},
+				{ headers: await getToken() },
 			);
 			if (!res.ok) throw new Error("Could not fetch jump back in");
 			return res.json();
 		},
 	});
-	const { data: newReleases } = useQuery({
-		queryKey: ["new-releases"],
+
+	const { data: recentArtists } = useQuery({
+		queryKey: ["recents", "artist"],
 		queryFn: async () => {
-			const res = await client["new-releases"].$get(
-				{},
-				{
-					headers: {
-						Authorization: `Bearer ${await session?.getToken()}`,
-					},
-				},
+			const res = await client.recents.$get(
+				{ query: { type: "artist", limit: "10" } },
+				{ headers: await getToken() },
 			);
-			if (!res.ok) throw new Error("Could not fetch new releases");
+			if (!res.ok) throw new Error("Could not fetch recent artists");
+			return res.json();
+		},
+	});
+
+	const { data: frequentlyPlayed } = useQuery({
+		queryKey: ["frequently-played"],
+		queryFn: async () => {
+			const res = await client["frequently-played"].$get(
+				{ query: { limit: "8" } },
+				{ headers: await getToken() },
+			);
+			if (!res.ok) throw new Error("Could not fetch frequently played");
 			return res.json();
 		},
 	});
@@ -81,7 +90,7 @@ function HomeComponent() {
 				<section className="flex flex-col gap-2">
 					<h2 className="text-lg font-semibold hidden lg:block">Quick picks</h2>
 					<div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2">
-						{recents.items.slice(0, 8).map((item) => (
+						{(recents.items as Track[]).slice(0, 8).map((item) => (
 							<Link
 								key={item.id}
 								to="/album/$id"
@@ -103,40 +112,56 @@ function HomeComponent() {
 				</section>
 			)}
 
-			{/* Top pick */}
-			{recents && recents.items.length === 9 && (
-				<section className="flex flex-col gap-2">
-					<h2 className="text-lg font-semibold">Top pick for you</h2>
-					<Link
-						to="/album/$id"
-						params={{ id: recents.items[8].album.id }}
-						className="flex items-start gap-4 bg-secondary/50 hover:bg-secondary rounded-xl overflow-hidden transition-colors w-full max-w-xs h-32"
+			{/* Jump back in */}
+			{jumpBackIn && jumpBackIn.items.length > 0 && (
+				<AlbumRows
+					title="Jump back in"
+					albumOrPlaylists={jumpBackIn.items as Album[]}
+				/>
+			)}
+
+			{/* Recently played artists */}
+			{recentArtists && recentArtists.items.length > 0 && (
+				<section className="flex flex-col space-y-2">
+					<h2 className="text-xl font-bold">Your artists</h2>
+					<div
+						className="w-full flex gap-4 overflow-x-auto pb-1"
+						style={{ scrollbarWidth: "none" }}
 					>
-						<img
-							src={recents.items[8].album.images[0].url}
-							alt={`${recents.items[8].album.name} cover`}
-							className="w-32 h-32 flex-shrink-0 object-cover"
-							style={{ viewTransitionName: `key-${recents.items[8].id}` }}
-						/>
-						<div className="py-3 flex flex-col gap-1">
-							<span className="font-medium">{recents.items[8].name}</span>
-							<span className="text-sm text-muted-foreground">
-								{recents.items[8].artists[0].name}
-							</span>
-						</div>
-					</Link>
+						{(recentArtists.items as Artist[]).map((artist) => (
+							<Link
+								key={artist.id}
+								to="/artist/$id"
+								params={{ id: artist.id }}
+								className="w-32 flex-none flex flex-col gap-2 items-center"
+							>
+								{artist.images[0] ? (
+									<img
+										src={artist.images[0].url}
+										alt={artist.name}
+										className="w-32 h-32 rounded-full object-cover"
+									/>
+								) : (
+									<div className="w-32 h-32 rounded-full bg-secondary" />
+								)}
+								<span className="text-sm font-medium text-center line-clamp-1">
+									{artist.name}
+								</span>
+							</Link>
+						))}
+					</div>
 				</section>
 			)}
 
-			{/* Jump back in */}
-			{jumpBackIn && jumpBackIn.items.length > 0 && (
-				<section className="flex flex-col gap-2">
-					<h2 className="text-lg font-semibold">Jump back in</h2>
+			{/* Frequently played */}
+			{frequentlyPlayed && frequentlyPlayed.items.length > 0 && (
+				<section className="flex flex-col space-y-2">
+					<h2 className="text-xl font-bold">Frequently played</h2>
 					<div
-						className="flex gap-4 overflow-x-auto pb-1"
+						className="w-full flex gap-4 overflow-x-auto pb-1"
 						style={{ scrollbarWidth: "none" }}
 					>
-						{jumpBackIn.items.map((item) => (
+						{(frequentlyPlayed.items as Track[]).map((item) => (
 							<Link
 								key={item.id}
 								to="/album/$id"
@@ -162,14 +187,39 @@ function HomeComponent() {
 					</div>
 				</section>
 			)}
-
-			{/* New releases */}
-			{newReleases?.items && (
-				<AlbumRows title="New releases" albumOrPlaylists={newReleases.items} />
-			)}
 		</div>
 	);
 }
+
+type Track = {
+	id: string;
+	name: string;
+	artists: { id: string; name: string }[];
+	album: {
+		id: string;
+		name: string;
+		images: { url: string }[];
+		releaseDate: string;
+	};
+	durationMs: number;
+	type: "track";
+};
+
+type Album = {
+	id: string;
+	name: string;
+	artists: { id: string; name: string }[];
+	images: { url: string }[];
+	releaseDate: string;
+	type: "album";
+};
+
+type Artist = {
+	id: string;
+	name: string;
+	images: { url: string }[];
+	type: "artist";
+};
 
 function getTimeOfDay() {
 	const h = new Date().getHours();

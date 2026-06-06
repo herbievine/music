@@ -1,5 +1,25 @@
 import { boolean, integer, jsonb, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
 
+export const playHistory = pgTable("play_history", {
+	id: uuid("id").defaultRandom().primaryKey(),
+	userId: text("user_id").notNull(),
+	trackId: text("track_id").notNull(),
+	metadata: jsonb("metadata")
+		.$type<{
+			name: string;
+			artists: { id: string; name: string }[];
+			album: {
+				id: string;
+				name: string;
+				images: { url: string; width?: number; height?: number }[];
+				releaseDate: string;
+			};
+			durationMs: number;
+		}>()
+		.notNull(),
+	playedAt: timestamp("played_at").defaultNow().notNull(),
+});
+
 export const likes = pgTable("likes", {
 	id: uuid("id").defaultRandom().primaryKey(),
 	userId: text("user_id").notNull(),

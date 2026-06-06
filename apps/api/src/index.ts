@@ -5,9 +5,16 @@ import { config } from "dotenv";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { z } from "zod";
-import { getMusicProvider, providerMiddleware } from "./lib/middleware.js";
+import { getMusicProvider, getOAuthToken, getUserId, providerMiddleware } from "./lib/middleware.js";
 import albumRoutes from "./routes/albums.js";
 import artistRoutes from "./routes/artists.js";
+import {
+	getFrequentlyPlayed,
+	getJumpBackIn,
+	getRecentAlbums,
+	getRecentArtists,
+	getRecentTracks,
+} from "./routes/home.js";
 import likesRoutes from "./routes/likes.js";
 import lyricsRoutes from "./routes/lyrics.js";
 import playerRoutes from "./routes/player.js";
@@ -58,30 +65,38 @@ const routes = app
 			return c.json(result);
 		},
 	)
-	.get("/new-releases", async (c) => {
-		const provider = getMusicProvider(c);
-		const result = await provider.getNewReleases({ limit: 10 });
-		return c.json(result);
-	})
 	.get(
 		"/recents",
 		zValidator(
 			"query",
 			z.object({
-				range: z
-					.enum(["short_term", "medium_term", "long_term"])
-					.default("medium_term"),
-				limit: z.number().default(20),
+				limit: z.coerce.number().default(8),
+				type: z.enum(["track", "album", "artist"]).optional(),
 			}),
 		),
 		async (c) => {
-			const provider = getMusicProvider(c);
-			const query = c.req.valid("query");
-			const result = await provider.getTopTracks({
-				timeRange: query.range,
-				limit: query.limit,
-			});
-			return c.json(result);
+			const userId = getUserId(c);
+			const { limit, type } = c.req.valid("query");
+			const result =
+				type === "album"
+					? await getRecentAlbums(userId, limit)
+					: type === "artist"
+						? await getRecentArtists(userId, limit, getOAuthToken(c))
+						: await getRecentTracks(userId, limit);
+			return c.json(result as { items: unknown[]; total: number });
+		},
+	)
+	.get("/jump-back-in", async (c) => {
+		const userId = getUserId(c);
+		return c.json(await getJumpBackIn(userId));
+	})
+	.get(
+		"/frequently-played",
+		zValidator("query", z.object({ limit: z.coerce.number().default(8) })),
+		async (c) => {
+			const userId = getUserId(c);
+			const { limit } = c.req.valid("query");
+			return c.json(await getFrequentlyPlayed(userId, limit));
 		},
 	);
 

@@ -1,6 +1,8 @@
 import { Hono } from "hono";
 import z from "zod";
-import { getMusicProvider, getOAuthToken } from "../lib/middleware.js";
+import { db } from "../db/index.js";
+import { playHistory } from "../db/schema.js";
+import { getMusicProvider, getOAuthToken, getUserId } from "../lib/middleware.js";
 import { fetcher } from "../utils/fetcher.js";
 
 const app = new Hono();
@@ -42,6 +44,20 @@ export default app.get("/play/:spotifyId", async (c) => {
 	}
 
 	const [{ url }, track] = await Promise.all([audioPromise, trackPromise]);
+
+	const userId = getUserId(c);
+	db.insert(playHistory)
+		.values({
+			userId,
+			trackId: spotifyId,
+			metadata: {
+				name: track.name,
+				artists: track.artists,
+				album: track.album,
+				durationMs: track.durationMs,
+			},
+		})
+		.catch((err) => console.error("Failed to record play history:", err));
 
 	return c.json({ url, track });
 });
