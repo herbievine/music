@@ -43,6 +43,13 @@
       "when": 1780814509662,
       "tag": "0005_abandoned_the_watchers",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1780820160445,
+      "tag": "0006_add_artist_genres",
+      "breakpoints": true
     }
   ]
 }

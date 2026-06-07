@@ -8,6 +8,7 @@ export type MusicArtist = {
 	id: string;
 	name: string;
 	images: MusicImage[];
+	genres?: string[];
 	type: "artist";
 };
 
@@ -70,5 +71,23 @@ export type MusicSearchResult =
 	| MusicAlbumSummary
 	| MusicPlaylistSummary
 	| MusicArtist;
+
+// --- Home feed ---
+// The server decides which sections to show and in what order; the client renders
+// them generically per `layout` and links each item per its `type`.
+export type HomeItem =
+	| MusicTrack
+	| MusicAlbumSummary
+	| MusicArtist
+	| MusicPlaylistSummary;
+
+export type HomeSection = {
+	id: string; // stable key, e.g. "quick-picks" or "genre:indie rock"
+	title: string | null; // null = render untitled (quick picks)
+	layout: "grid" | "row" | "circle-row";
+	items: HomeItem[];
+};
+
+export type HomeResponse = { sections: HomeSection[] };
 
 export type { AppType } from "./index.js";

@@ -8,13 +8,7 @@ import { z } from "zod";
 import { getMusicProvider, getOAuthToken, getUserId, providerMiddleware } from "./lib/middleware.js";
 import albumRoutes from "./routes/albums.js";
 import artistRoutes from "./routes/artists.js";
-import {
-	getFrequentlyPlayed,
-	getJumpBackIn,
-	getRecentAlbums,
-	getRecentArtists,
-	getRecentTracks,
-} from "./routes/home.js";
+import { buildHome } from "./routes/home.js";
 import likesRoutes from "./routes/likes.js";
 import lyricsRoutes from "./routes/lyrics.js";
 import playerRoutes from "./routes/player.js";
@@ -65,40 +59,12 @@ const routes = app
 			return c.json(result);
 		},
 	)
-	.get(
-		"/recents",
-		zValidator(
-			"query",
-			z.object({
-				limit: z.coerce.number().default(8),
-				type: z.enum(["track", "album", "artist"]).optional(),
-			}),
-		),
-		async (c) => {
-			const userId = getUserId(c);
-			const { limit, type } = c.req.valid("query");
-			const result =
-				type === "album"
-					? await getRecentAlbums(userId, limit)
-					: type === "artist"
-						? await getRecentArtists(userId, limit, getOAuthToken(c))
-						: await getRecentTracks(userId, limit);
-			return c.json(result as { items: unknown[]; total: number });
-		},
-	)
-	.get("/jump-back-in", async (c) => {
+	.get("/home", async (c) => {
 		const userId = getUserId(c);
-		return c.json(await getJumpBackIn(userId));
-	})
-	.get(
-		"/frequently-played",
-		zValidator("query", z.object({ limit: z.coerce.number().default(8) })),
-		async (c) => {
-			const userId = getUserId(c);
-			const { limit } = c.req.valid("query");
-			return c.json(await getFrequentlyPlayed(userId, limit));
-		},
-	);
+		const provider = getMusicProvider(c);
+		const oauthToken = getOAuthToken(c);
+		return c.json(await buildHome(userId, provider, oauthToken));
+	});
 
 export type AppType = typeof routes;
 

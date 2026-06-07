@@ -196,7 +196,11 @@ export async function upsertArtist(artist: MusicArtistDetail): Promise<void> {
 		// Mark the artist complete: this is a full artist-detail fetch, not a stub.
 		await tx
 			.update(artists)
-			.set({ complete: true, updatedAt: sql`now()` })
+			.set({
+				complete: true,
+				genres: artist.genres ?? [],
+				updatedAt: sql`now()`,
+			})
 			.where(eq(artists.id, artist.id));
 
 		await tx.delete(artistImages).where(eq(artistImages.artistId, artist.id));
@@ -397,6 +401,7 @@ export async function getArtistFromDb(
 		id: artist.id,
 		name: artist.name,
 		images: imgs.map(mapImageRow),
+		genres: artist.genres,
 		type: "artist",
 		albums: albumSummaries,
 	};

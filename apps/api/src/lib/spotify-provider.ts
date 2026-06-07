@@ -103,6 +103,7 @@ function mapArtist(artist: Artist): MusicArtist {
 		id: artist.id,
 		name: artist.name,
 		images: (artist.images ?? []).map(mapImage),
+		genres: artist.genres ?? [],
 		type: "artist" as const,
 	};
 }
@@ -179,6 +180,7 @@ export class SpotifyProvider implements MusicProvider {
 			id: artist.id,
 			name: artist.name,
 			images: (artist.images ?? []).map(mapImage),
+			genres: artist.genres ?? [],
 			type: "artist" as const,
 			albums: allAlbums.filter(Boolean).map(mapAlbumSummary),
 		};
