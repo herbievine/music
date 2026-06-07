@@ -1,6 +1,7 @@
 import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
 import { z } from "zod";
+import { getAlbumFromDb, upsertAlbum } from "../lib/ingest.js";
 import { getMusicProvider, getOAuthToken } from "../lib/middleware.js";
 
 const app = new Hono();
@@ -47,16 +48,32 @@ export default app
 		const provider = getMusicProvider(c);
 		const token = getOAuthToken(c);
 		const albumId = c.req.param("id");
-		const album = await provider.getAlbum(albumId);
+		const refresh = c.req.query("refresh") === "true";
 
-		// Check if album is saved
-		const savedStatus = await spotifyFetch(
+		// isSaved is user-specific — always fetched live from Spotify, never replicated.
+		const savedPromise = spotifyFetch(
 			`/me/library/contains?uris=spotify:album:${albumId}`,
 			token,
-		);
-		const isSaved = Array.isArray(savedStatus) && savedStatus[0] === true;
+		).then((status) => Array.isArray(status) && status[0] === true);
 
-		return c.json({ ...album, isSaved });
+		// Serve from the replica when available; refresh it in the background.
+		if (!refresh) {
+			const cached = await getAlbumFromDb(albumId);
+			if (cached) {
+				provider
+					.getAlbum(albumId)
+					.then(upsertAlbum)
+					.catch((err) => console.error("Album replica update failed:", err));
+
+				return c.json({ ...cached, isSaved: await savedPromise });
+			}
+		}
+
+		// Miss (or forced refresh): fetch live, replicate, return.
+		const album = await provider.getAlbum(albumId);
+		await upsertAlbum(album);
+
+		return c.json({ ...album, isSaved: await savedPromise });
 	})
 	.get("/", async (c) => {
 		const provider = getMusicProvider(c);

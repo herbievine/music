@@ -1,4 +1,13 @@
-import { boolean, integer, jsonb, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
+import {
+	boolean,
+	integer,
+	jsonb,
+	pgTable,
+	primaryKey,
+	text,
+	timestamp,
+	uuid,
+} from "drizzle-orm/pg-core";
 
 export const playHistory = pgTable("play_history", {
 	id: uuid("id").defaultRandom().primaryKey(),
@@ -63,3 +72,84 @@ export const userPlaylistTracks = pgTable("user_playlist_tracks", {
 	position: integer("position").notNull().default(0),
 	addedAt: timestamp("added_at").defaultNow().notNull(),
 });
+
+// --- Spotify data replication ---
+// Local replica of Spotify entities, populated when users visit them.
+// Spotify IDs are the primary keys. `updatedAt` is our ingestion timestamp.
+
+export const artists = pgTable("artists", {
+	id: text("id").primaryKey(),
+	name: text("name").notNull(),
+	updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const artistImages = pgTable("artist_images", {
+	id: uuid("id").defaultRandom().primaryKey(),
+	artistId: text("artist_id")
+		.notNull()
+		.references(() => artists.id, { onDelete: "cascade" }),
+	url: text("url").notNull(),
+	width: integer("width"),
+	height: integer("height"),
+});
+
+export const albums = pgTable("albums", {
+	id: text("id").primaryKey(),
+	name: text("name").notNull(),
+	releaseDate: text("release_date").notNull(),
+	totalTracks: integer("total_tracks").notNull(),
+	updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const albumImages = pgTable("album_images", {
+	id: uuid("id").defaultRandom().primaryKey(),
+	albumId: text("album_id")
+		.notNull()
+		.references(() => albums.id, { onDelete: "cascade" }),
+	url: text("url").notNull(),
+	width: integer("width"),
+	height: integer("height"),
+});
+
+export const albumArtists = pgTable(
+	"album_artists",
+	{
+		albumId: text("album_id")
+			.notNull()
+			.references(() => albums.id, { onDelete: "cascade" }),
+		artistId: text("artist_id")
+			.notNull()
+			.references(() => artists.id, { onDelete: "cascade" }),
+		position: integer("position").notNull().default(0),
+	},
+	(table) => ({
+		pk: primaryKey({ columns: [table.albumId, table.artistId] }),
+	}),
+);
+
+export const tracks = pgTable("tracks", {
+	id: text("id").primaryKey(),
+	name: text("name").notNull(),
+	durationMs: integer("duration_ms").notNull(),
+	trackNumber: integer("track_number").notNull(),
+	albumId: text("album_id")
+		.notNull()
+		.references(() => albums.id, { onDelete: "cascade" }),
+	updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const trackArtists = pgTable(
+	"track_artists",
+	{
+		trackId: text("track_id")
+			.notNull()
+			.references(() => tracks.id, { onDelete: "cascade" }),
+		artistId: text("artist_id")
+			.notNull()
+			.references(() => artists.id, { onDelete: "cascade" }),
+		position: integer("position").notNull().default(0),
+	},
+	(table) => ({
+		pk: primaryKey({ columns: [table.trackId, table.artistId] }),
+	}),
+);
