@@ -6,8 +6,6 @@ import {
 	albums,
 	artists,
 	playHistory,
-	userPlaylistTracks,
-	userPlaylists,
 } from "../db/schema.js";
 import type { MusicProvider } from "../lib/music-provider.js";
 import type {
@@ -228,17 +226,6 @@ async function getJumpBackInItems(userId: string): Promise<HomeItem[]> {
 		)
 		.limit(10);
 
-	const playlistRows = await db
-		.select()
-		.from(userPlaylists)
-		.where(
-			and(
-				eq(userPlaylists.userId, userId),
-				gte(userPlaylists.updatedAt, thirtyDaysAgo),
-				lte(userPlaylists.updatedAt, sevenDaysAgo),
-			),
-		);
-
 	const entries: { item: HomeItem; at: number }[] = albumRows.map((row) => ({
 		at: row.playedAt.getTime(),
 		item: {
@@ -251,32 +238,7 @@ async function getJumpBackInItems(userId: string): Promise<HomeItem[]> {
 		},
 	}));
 
-	for (const pl of playlistRows) {
-		const cover = await playlistCover(pl.id);
-		entries.push({
-			at: pl.updatedAt.getTime(),
-			item: {
-				id: pl.id,
-				name: pl.name,
-				description: pl.description ?? "",
-				images: cover ? [{ url: cover }] : [],
-				type: "playlist" as const,
-			},
-		});
-	}
-
 	return entries.sort((a, b) => b.at - a.at).map((e) => e.item);
-}
-
-// First track's album art, used as a cover for user playlists (which store none).
-async function playlistCover(playlistId: string): Promise<string | null> {
-	const [first] = await db
-		.select({ metadata: userPlaylistTracks.trackMetadata })
-		.from(userPlaylistTracks)
-		.where(eq(userPlaylistTracks.playlistId, playlistId))
-		.orderBy(asc(userPlaylistTracks.position))
-		.limit(1);
-	return first?.metadata.albumImage || null;
 }
 
 // Section 2 — Top artists by play count (details fetched live from Spotify).
@@ -420,38 +382,30 @@ async function getMoreLikeArtist(
 	};
 }
 
-// Section 6 — From your library: the user's playlists + saved Spotify albums.
+// Section 6 — From your library: the user's Spotify playlists + saved albums.
+// Sourced from Spotify (real ids + cover art) so cards link to working routes —
+// the local user_playlists table isn't viewable over HTTP.
 async function getLibraryShortcuts(
-	userId: string,
 	provider: MusicProvider,
 ): Promise<HomeItem[]> {
-	const playlists = await db
-		.select()
-		.from(userPlaylists)
-		.where(eq(userPlaylists.userId, userId))
-		.orderBy(desc(userPlaylists.updatedAt));
+	const [playlists, savedAlbums] = await Promise.all([
+		provider
+			.getUserPlaylists()
+			.then((r) => r.items)
+			.catch((err) => {
+				console.error("User playlists fetch failed:", err);
+				return [] as MusicPlaylistSummary[];
+			}),
+		provider
+			.getUserAlbums({ limit: 12 })
+			.then((r) => r.items.map((i) => i.album))
+			.catch((err) => {
+				console.error("Saved albums fetch failed:", err);
+				return [] as MusicAlbumSummary[];
+			}),
+	]);
 
-	const playlistItems: MusicPlaylistSummary[] = [];
-	for (const pl of playlists) {
-		const cover = await playlistCover(pl.id);
-		playlistItems.push({
-			id: pl.id,
-			name: pl.name,
-			description: pl.description ?? "",
-			images: cover ? [{ url: cover }] : [],
-			type: "playlist" as const,
-		});
-	}
-
-	let savedAlbums: MusicAlbumSummary[] = [];
-	try {
-		const res = await provider.getUserAlbums({ limit: 8 });
-		savedAlbums = res.items.map((i) => i.album);
-	} catch (err) {
-		console.error("Saved albums fetch failed:", err);
-	}
-
-	return [...playlistItems, ...savedAlbums].slice(0, 8);
+	return [...playlists.slice(0, 8), ...savedAlbums].slice(0, 16);
 }
 
 /**
@@ -464,25 +418,15 @@ export async function buildHome(
 	provider: MusicProvider,
 	oauthToken: string,
 ): Promise<{ sections: HomeSection[] }> {
-	const [
-		quickPicks,
-		jumpBackIn,
-		topArtists,
-		onRepeat,
-		genreRows,
-		moreLike,
-		library,
-	] = await Promise.all([
-		getQuickPicks(userId).catch(() => [] as MusicTrack[]),
-		getJumpBackInItems(userId).catch(() => [] as HomeItem[]),
-		getTopArtists(userId, oauthToken).catch(() => [] as MusicArtist[]),
-		getFrequentlyPlayed(userId, 12)
-			.then((r) => r.items)
-			.catch(() => [] as MusicTrack[]),
-		getGenreRows(userId, provider).catch(() => [] as HomeSection[]),
-		getMoreLikeArtist(userId, provider, oauthToken).catch(() => null),
-		getLibraryShortcuts(userId, provider).catch(() => [] as HomeItem[]),
-	]);
+	const [quickPicks, jumpBackIn, topArtists, genreRows, moreLike, library] =
+		await Promise.all([
+			getQuickPicks(userId).catch(() => [] as MusicTrack[]),
+			getJumpBackInItems(userId).catch(() => [] as HomeItem[]),
+			getTopArtists(userId, oauthToken).catch(() => [] as MusicArtist[]),
+			getGenreRows(userId, provider).catch(() => [] as HomeSection[]),
+			getMoreLikeArtist(userId, provider, oauthToken).catch(() => null),
+			getLibraryShortcuts(provider).catch(() => [] as HomeItem[]),
+		]);
 
 	const sections: HomeSection[] = [];
 
@@ -513,18 +457,6 @@ export async function buildHome(
 		});
 	}
 
-	// Drop tracks already surfaced in Quick picks to avoid duplicate cards.
-	const quickPickIds = new Set(quickPicks.map((t) => t.id));
-	const onRepeatItems = onRepeat.filter((t) => !quickPickIds.has(t.id));
-	if (onRepeatItems.length >= 4) {
-		sections.push({
-			id: "on-repeat",
-			title: "On repeat",
-			layout: "row",
-			items: onRepeatItems,
-		});
-	}
-
 	sections.push(...genreRows);
 	if (moreLike) sections.push(moreLike);
 
@@ -532,61 +464,10 @@ export async function buildHome(
 		sections.push({
 			id: "library",
 			title: "From your library",
-			layout: "grid",
+			layout: "row",
 			items: library,
 		});
 	}
 
 	return { sections };
-}
-
-async function getFrequentlyPlayed(
-	userId: string,
-	limit: number,
-): Promise<{ items: (MusicTrack & { playCount: number })[]; total: number }> {
-	const result = await db.execute(sql`
-		WITH ranked AS (
-			SELECT
-				track_id,
-				metadata,
-				count(*) OVER (PARTITION BY track_id)::int AS play_count,
-				row_number() OVER (PARTITION BY track_id ORDER BY played_at DESC) AS rn
-			FROM play_history
-			WHERE user_id = ${userId}
-		)
-		SELECT track_id, metadata, play_count
-		FROM ranked
-		WHERE rn = 1
-		ORDER BY play_count DESC
-		LIMIT ${limit}
-	`);
-
-	const items = (
-		result.rows as Array<{
-			track_id: string;
-			metadata: {
-				name: string;
-				artists: { id: string; name: string }[];
-				album: {
-					id: string;
-					name: string;
-					images: { url: string; width?: number; height?: number }[];
-					releaseDate: string;
-				};
-				durationMs: number;
-			};
-			play_count: number;
-		}>
-	).map((row) => ({
-		id: row.track_id,
-		name: row.metadata.name,
-		artists: row.metadata.artists,
-		durationMs: row.metadata.durationMs,
-		trackNumber: 0,
-		type: "track" as const,
-		album: row.metadata.album,
-		playCount: row.play_count,
-	}));
-
-	return { items, total: items.length };
 }
