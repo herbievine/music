@@ -36,6 +36,13 @@
       "when": 1780811444994,
       "tag": "0004_demonic_moonstone",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1780814509662,
+      "tag": "0005_abandoned_the_watchers",
+      "breakpoints": true
     }
   ]
 }

@@ -49,8 +49,9 @@ async function upsertArtistRows(tx: Tx, refs: ArtistRef[]) {
 		});
 }
 
-// Upsert an album row + its images. `totalTracks` is only overwritten when known,
-// so album stubs (from artist/track payloads) never clobber a fully-ingested count.
+// Upsert an album row + its images. `totalTracks` is only overwritten when known and
+// `complete` is only set when ingesting a full album, so stubs (from artist/track payloads)
+// never clobber a fully-ingested album's count or completeness.
 async function upsertAlbumRow(
 	tx: Tx,
 	album: {
@@ -60,6 +61,7 @@ async function upsertAlbumRow(
 		totalTracks?: number;
 		images: ImageRef[];
 	},
+	opts?: { complete?: boolean },
 ) {
 	const set: Record<string, unknown> = {
 		name: sql`excluded.name`,
@@ -69,6 +71,9 @@ async function upsertAlbumRow(
 	if (album.totalTracks !== undefined) {
 		set.totalTracks = sql`excluded.total_tracks`;
 	}
+	if (opts?.complete) {
+		set.complete = sql`excluded.complete`;
+	}
 
 	await tx
 		.insert(albums)
@@ -77,6 +82,7 @@ async function upsertAlbumRow(
 			name: album.name,
 			releaseDate: album.releaseDate,
 			totalTracks: album.totalTracks ?? 0,
+			complete: opts?.complete ?? false,
 		})
 		.onConflictDoUpdate({ target: albums.id, set });
 
@@ -127,13 +133,17 @@ export async function upsertAlbum(album: MusicAlbum): Promise<void> {
 	await db.transaction(async (tx) => {
 		await upsertArtistRows(tx, allArtists);
 
-		await upsertAlbumRow(tx, {
-			id: album.id,
-			name: album.name,
-			releaseDate: album.releaseDate,
-			totalTracks: album.totalTracks,
-			images: album.images,
-		});
+		await upsertAlbumRow(
+			tx,
+			{
+				id: album.id,
+				name: album.name,
+				releaseDate: album.releaseDate,
+				totalTracks: album.totalTracks,
+				images: album.images,
+			},
+			{ complete: true },
+		);
 		await setAlbumArtists(tx, album.id, album.artists);
 
 		const seen = new Set<string>();
@@ -182,6 +192,12 @@ export async function upsertArtist(artist: MusicArtistDetail): Promise<void> {
 			{ id: artist.id, name: artist.name },
 			...albumArtistRefs,
 		]);
+
+		// Mark the artist complete: this is a full artist-detail fetch, not a stub.
+		await tx
+			.update(artists)
+			.set({ complete: true, updatedAt: sql`now()` })
+			.where(eq(artists.id, artist.id));
 
 		await tx.delete(artistImages).where(eq(artistImages.artistId, artist.id));
 		if (artist.images.length > 0) {
@@ -251,7 +267,8 @@ export async function upsertTrack(track: MusicTrack): Promise<void> {
 /** Reassemble a full album (artists, images, tracks) from the replica, or null. */
 export async function getAlbumFromDb(id: string): Promise<MusicAlbum | null> {
 	const [album] = await db.select().from(albums).where(eq(albums.id, id));
-	if (!album) return null;
+	// Stub rows (created while ingesting an artist/track) are treated as a miss.
+	if (!album || !album.complete) return null;
 
 	const [imgs, albumArtistRows, trackRows] = await Promise.all([
 		db.select().from(albumImages).where(eq(albumImages.albumId, id)),
@@ -316,7 +333,8 @@ export async function getArtistFromDb(
 	id: string,
 ): Promise<MusicArtistDetail | null> {
 	const [artist] = await db.select().from(artists).where(eq(artists.id, id));
-	if (!artist) return null;
+	// Stub rows (created while ingesting an album/track) are treated as a miss.
+	if (!artist || !artist.complete) return null;
 
 	const [imgs, albumLinks] = await Promise.all([
 		db.select().from(artistImages).where(eq(artistImages.artistId, id)),

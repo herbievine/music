@@ -80,6 +80,8 @@ export const userPlaylistTracks = pgTable("user_playlist_tracks", {
 export const artists = pgTable("artists", {
 	id: text("id").primaryKey(),
 	name: text("name").notNull(),
+	// true once written from a full artist-detail fetch, false for side-effect stubs.
+	complete: boolean("complete").notNull().default(false),
 	updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
@@ -98,6 +100,8 @@ export const albums = pgTable("albums", {
 	name: text("name").notNull(),
 	releaseDate: text("release_date").notNull(),
 	totalTracks: integer("total_tracks").notNull(),
+	// true once written from a full album fetch (with tracks), false for side-effect stubs.
+	complete: boolean("complete").notNull().default(false),
 	updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
