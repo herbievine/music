@@ -38,7 +38,7 @@ export function AudioProvider({ children }: { children: ReactNode }) {
 	const { songs, songIndex, isPlaying } = useQueueStore();
 
 	const { data } = useQuery({
-		queryKey: ["play", songs[songIndex]],
+		queryKey: ["play", songs[songIndex]?.id, songs[songIndex + 1]?.id],
 		queryFn: async () => {
 			const res = await client.play[":spotifyId"].$get(
 				{
@@ -62,6 +62,7 @@ export function AudioProvider({ children }: { children: ReactNode }) {
 			return res.json();
 		},
 		enabled: songIndex !== -1,
+		staleTime: Infinity,
 	});
 
 	useMediaSession({ audioRef });
