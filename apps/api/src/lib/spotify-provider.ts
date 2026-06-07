@@ -133,12 +133,13 @@ export class SpotifyProvider implements MusicProvider {
 	}
 
 	async getArtist(id: string): Promise<MusicArtistDetail> {
-		const [artistRes, albumsRes] = await Promise.all([
+		const [artistRes, firstAlbumsRes] = await Promise.all([
 			fetch(`https://api.spotify.com/v1/artists/${encodeURIComponent(id)}`, {
 				headers: { Authorization: `Bearer ${this.token}` },
 			}),
+			// limit=10 is the effective max for this app's API access level
 			fetch(
-				`https://api.spotify.com/v1/artists/${encodeURIComponent(id)}/albums?limit=50&include_groups=album,single,compilation`,
+				`https://api.spotify.com/v1/artists/${encodeURIComponent(id)}/albums?limit=10&include_groups=album,single,compilation`,
 				{ headers: { Authorization: `Bearer ${this.token}` } },
 			),
 		]);
@@ -148,23 +149,38 @@ export class SpotifyProvider implements MusicProvider {
 			console.error("Spotify artist error", artistRes.status, JSON.stringify(body));
 			throw new Error(`Could not fetch artist: ${artistRes.status} ${JSON.stringify(body)}`);
 		}
-		if (!albumsRes.ok) {
-			const body = await albumsRes.json().catch(() => null);
-			console.error("Spotify artist albums error", albumsRes.status, JSON.stringify(body));
-			throw new Error(`Could not fetch artist albums: ${albumsRes.status} ${JSON.stringify(body)}`);
+		if (!firstAlbumsRes.ok) {
+			const body = await firstAlbumsRes.json().catch(() => null);
+			console.error("Spotify artist albums error", firstAlbumsRes.status, JSON.stringify(body));
+			throw new Error(`Could not fetch artist albums: ${firstAlbumsRes.status} ${JSON.stringify(body)}`);
 		}
 
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		const artist = (await artistRes.json()) as any;
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		const { items } = (await albumsRes.json()) as { items: any[] };
+		const firstPage = (await firstAlbumsRes.json()) as { items: any[]; next: string | null };
+
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		const allAlbums: any[] = [...firstPage.items];
+		let nextUrl = firstPage.next;
+		let pages = 1;
+
+		while (nextUrl && pages < 5) {
+			const res = await fetch(nextUrl, { headers: { Authorization: `Bearer ${this.token}` } });
+			if (!res.ok) break;
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			const data = (await res.json()) as { items: any[]; next: string | null };
+			allAlbums.push(...data.items);
+			nextUrl = data.next;
+			pages++;
+		}
 
 		return {
 			id: artist.id,
 			name: artist.name,
 			images: (artist.images ?? []).map(mapImage),
 			type: "artist" as const,
-			albums: items.filter(Boolean).map(mapAlbumSummary),
+			albums: allAlbums.filter(Boolean).map(mapAlbumSummary),
 		};
 	}
 
