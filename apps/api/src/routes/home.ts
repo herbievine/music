@@ -253,7 +253,7 @@ async function getTopArtists(
 			WHERE user_id = ${userId}
 			GROUP BY a->>'id'
 			ORDER BY cnt DESC
-			LIMIT 12
+			LIMIT 10
 		`)
 	).rows as { artist_id: string; cnt: number }[];
 	const ids = rows.map((r) => r.artist_id).filter(Boolean);
@@ -397,7 +397,7 @@ async function getLibraryShortcuts(
 				return [] as MusicPlaylistSummary[];
 			}),
 		provider
-			.getUserAlbums({ limit: 12 })
+			.getUserAlbums({ limit: 10 })
 			.then((r) => r.items.map((i) => i.album))
 			.catch((err) => {
 				console.error("Saved albums fetch failed:", err);

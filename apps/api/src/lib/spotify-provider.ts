@@ -265,7 +265,8 @@ export class SpotifyProvider implements MusicProvider {
 		const url = new URL("/v1/search", "https://api.spotify.com");
 		url.searchParams.append("q", query);
 		url.searchParams.append("type", type);
-		url.searchParams.append("limit", "20");
+		// limit=10 is the effective max for this app's API access level (>10 → 400 Invalid limit).
+		url.searchParams.append("limit", "10");
 
 		const res = await fetch(url, {
 			headers: { Authorization: `Bearer ${this.token}` },
