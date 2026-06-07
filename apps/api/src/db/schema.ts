@@ -1,3 +1,4 @@
+import { sql } from "drizzle-orm";
 import {
 	boolean,
 	integer,
@@ -80,6 +81,11 @@ export const userPlaylistTracks = pgTable("user_playlist_tracks", {
 export const artists = pgTable("artists", {
 	id: text("id").primaryKey(),
 	name: text("name").notNull(),
+	// Spotify puts genres on the artist (not the album); populated from full fetches.
+	genres: text("genres")
+		.array()
+		.notNull()
+		.default(sql`'{}'::text[]`),
 	// true once written from a full artist-detail fetch, false for side-effect stubs.
 	complete: boolean("complete").notNull().default(false),
 	updatedAt: timestamp("updated_at").defaultNow().notNull(),
