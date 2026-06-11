@@ -7,8 +7,14 @@ import {
 	useParams,
 	useRouter,
 } from "@tanstack/react-router";
-import { ChevronLeft, Heart, HeartOff, ListEnd, Pause, Play, Shuffle } from "lucide-react";
+import { ChevronLeft, Heart, HeartOff, ListEnd, MoreHorizontal, Pause, Play, Shuffle } from "lucide-react";
 import toast from "react-hot-toast";
+import {
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuTrigger,
+} from "../../components/ui/dropdown-menu";
 import { useIsLiked, useLikeMutation } from "../../hooks/use-likes";
 import { formatTime } from "../../lib/format-time";
 import { client } from "../../lib/hono-rpc";
@@ -175,23 +181,32 @@ function RouteComponent() {
 					<Shuffle className="w-5 h-5" />
 				</button>
 
-				<button
-					type="button"
-					title="Add playlist to queue"
-					onClick={() => {
-						if (!data) return;
-						add(data.items.items.map(({ item }) =>
-							toSimpleTrack(
-								{ ...item, durationMs: item.duration_ms } as any,
-								item.album as any,
-							),
-						));
-						toast.success(`Added ${data.items.total} tracks to queue`);
-					}}
-					className="w-10 h-10 sm:w-8 sm:h-8 flex items-center justify-center transition-colors text-muted-foreground hover:text-foreground"
-				>
-					<ListEnd className="w-5 h-5" />
-				</button>
+				<DropdownMenu>
+					<DropdownMenuTrigger
+						title="More options"
+						className="w-10 h-10 sm:w-8 sm:h-8 flex items-center justify-center transition-colors text-muted-foreground hover:text-foreground focus:outline-none"
+					>
+						<MoreHorizontal className="w-5 h-5" />
+					</DropdownMenuTrigger>
+					<DropdownMenuContent align="start">
+						<DropdownMenuItem
+							onSelect={() => {
+								if (!data) return;
+								const tracks = data.items.items.map(({ item }) =>
+									toSimpleTrack(
+										{ ...item, durationMs: item.duration_ms } as any,
+										item.album as any,
+									),
+								);
+								add(shuffleOnPlay ? shuffleTracks(tracks) : tracks);
+								toast.success(`Added ${data.items.total} tracks to queue`);
+							}}
+						>
+							<ListEnd className="w-4 h-4" />
+							Add to queue
+						</DropdownMenuItem>
+					</DropdownMenuContent>
+				</DropdownMenu>
 			</div>
 
 			{/* Track list */}
