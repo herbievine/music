@@ -8,10 +8,16 @@ import {
 	useParams,
 	useRouter,
 } from "@tanstack/react-router";
-import { ChevronLeft, Heart, ListEnd, ListPlus, Pause, Play, Shuffle } from "lucide-react";
+import { ChevronLeft, Heart, ListEnd, ListPlus, MoreHorizontal, Pause, Play, Shuffle } from "lucide-react";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { AddToPlaylistDialog } from "../../components/add-to-playlist-dialog";
+import {
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuTrigger,
+} from "../../components/ui/dropdown-menu";
 import { z } from "zod";
 import { formatTime } from "../../lib/format-time";
 import { client } from "../../lib/hono-rpc";
@@ -205,18 +211,27 @@ function RouteComponent() {
 					<Shuffle className="w-5 h-5" />
 				</button>
 
-				<button
-					type="button"
-					title="Add album to queue"
-					onClick={() => {
-						if (!data) return;
-						add(data.tracks.items.map((t) => toSimpleTrack(t, data)));
-						toast.success(`Added ${data.tracks.items.length} tracks to queue`);
-					}}
-					className="w-10 h-10 sm:w-8 sm:h-8 flex items-center justify-center transition-colors text-muted-foreground hover:text-foreground"
-				>
-					<ListEnd className="w-5 h-5" />
-				</button>
+				<DropdownMenu>
+					<DropdownMenuTrigger
+						title="More options"
+						className="w-10 h-10 sm:w-8 sm:h-8 flex items-center justify-center transition-colors text-muted-foreground hover:text-foreground focus:outline-none"
+					>
+						<MoreHorizontal className="w-5 h-5" />
+					</DropdownMenuTrigger>
+					<DropdownMenuContent align="start">
+						<DropdownMenuItem
+							onSelect={() => {
+								if (!data) return;
+								const tracks = data.tracks.items.map((t) => toSimpleTrack(t, data));
+								add(shuffleOnPlay ? shuffleTracks(tracks) : tracks);
+								toast.success(`Added ${data.tracks.items.length} tracks to queue`);
+							}}
+						>
+							<ListEnd className="w-4 h-4" />
+							Add to queue
+						</DropdownMenuItem>
+					</DropdownMenuContent>
+				</DropdownMenu>
 			</div>
 
 			{/* Track list */}
