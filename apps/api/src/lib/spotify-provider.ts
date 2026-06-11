@@ -81,7 +81,7 @@ function mapPlaylistSummary(
 		id: playlist.id,
 		name: playlist.name,
 		description: playlist.description ?? "",
-		images: playlist.images.map(mapImage),
+		images: (playlist.images ?? []).map(mapImage),
 		type: "playlist" as const,
 	};
 }

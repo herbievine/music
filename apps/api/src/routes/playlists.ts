@@ -2,6 +2,7 @@ import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
 import { z } from "zod";
 import { getOAuthToken } from "../lib/middleware.js";
+import { fetchInternalPlaylist, PlaylistNotFoundError } from "../lib/spotify-internal.js";
 
 const app = new Hono();
 
@@ -78,7 +79,61 @@ export default app
 	.get("/:id", async (c) => {
 		const token = getOAuthToken(c);
 		const id = c.req.param("id");
-		const playlist = await spotifyFetch(`/playlists/${id}`, token);
+
+		let playlist: Record<string, any>;
+		try {
+			playlist = await spotifyFetch(`/playlists/${id}`, token);
+		} catch (err) {
+			// Spotify-owned editorial/algorithmic playlists 404 on the official API
+			// for this app's access level. Fall back to the internal pathfinder API,
+			// which resolves every playlist type. Only catch 404s — other failures
+			// (auth, rate limit) should propagate.
+			if (!(err instanceof Error) || !err.message.includes("404")) throw err;
+
+			try {
+				// First 100 tracks only — covers the editorial/algorithmic target
+				// (Daily Mix 50, editorial ~60). Large user playlists truncate here.
+				const internal = await fetchInternalPlaylist(id, { limit: 100 });
+				return c.json({
+					...internal,
+					items: {
+						total: internal.tracks.total,
+						items: internal.tracks.items.map((i) => ({
+							added_at: null,
+							added_by: null,
+							is_local: false,
+							item: i.track,
+						})),
+					},
+					isFollowing: false,
+				});
+			} catch (internalErr) {
+				if (internalErr instanceof PlaylistNotFoundError) {
+					return c.json({ message: "Playlist not found" }, 404);
+				}
+				throw internalErr;
+			}
+		}
+
+		// Spotify's /playlists/{id} no longer embeds the tracks payload, so fetch
+		// them from the dedicated /tracks endpoint, paginating until exhausted.
+		// limit=10 is the effective max for this app's API access level (>10 → 400).
+		const limit = 10;
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		const rawTracks: any[] = [];
+		let total = 0;
+		let offset = 0;
+		while (true) {
+			const page = await spotifyFetch(
+				`/playlists/${id}/tracks?limit=${limit}&offset=${offset}`,
+				token,
+			);
+			const pageItems = page.items ?? [];
+			total = page.total ?? total;
+			rawTracks.push(...pageItems);
+			offset += pageItems.length;
+			if (pageItems.length < limit || offset >= total) break;
+		}
 
 		// Check if user follows the playlist (optional - don't fail if this errors)
 		let isFollowing = false;
@@ -94,12 +149,11 @@ export default app
 		}
 
 		// Spotify returns tracks.items[].track — map to items.items[].item for frontend
-		const tracks = playlist.tracks ?? {};
 		return c.json({
 			...playlist,
 			items: {
-				total: tracks.total ?? 0,
-				items: (tracks.items ?? [])
+				total,
+				items: rawTracks
 					// eslint-disable-next-line @typescript-eslint/no-explicit-any
 					.filter((i: any) => i.track != null)
 					// eslint-disable-next-line @typescript-eslint/no-explicit-any
