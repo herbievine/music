@@ -3,10 +3,25 @@ import { Hono } from "hono";
 import { z } from "zod";
 import { getOAuthToken } from "../lib/middleware.js";
 import { fetchInternalPlaylist, PlaylistNotFoundError } from "../lib/spotify-internal.js";
+import type { MusicPlaylist } from "../types.js";
 
 const app = new Hono();
 
 const SPOTIFY_API = "https://api.spotify.com/v1";
+
+// Map a pathfinder MusicPlaylist's tracks into the { item } shape the frontend
+// expects. Pathfinder tracks are already normalized and carry no added_at/by.
+function pathfinderItems(internal: MusicPlaylist) {
+	return {
+		total: internal.tracks.total,
+		items: internal.tracks.items.map((i) => ({
+			added_at: null,
+			added_by: null,
+			is_local: false,
+			item: i.track,
+		})),
+	};
+}
 
 async function spotifyFetch(endpoint: string, token: string, options?: RequestInit) {
 	const res = await fetch(`${SPOTIFY_API}${endpoint}`, {
@@ -96,15 +111,7 @@ export default app
 				const internal = await fetchInternalPlaylist(id, { limit: 100 });
 				return c.json({
 					...internal,
-					items: {
-						total: internal.tracks.total,
-						items: internal.tracks.items.map((i) => ({
-							added_at: null,
-							added_by: null,
-							is_local: false,
-							item: i.track,
-						})),
-					},
+					items: pathfinderItems(internal),
 					isFollowing: false,
 				});
 			} catch (internalErr) {
@@ -115,24 +122,16 @@ export default app
 			}
 		}
 
-		// Spotify's /playlists/{id} no longer embeds the tracks payload, so fetch
-		// them from the dedicated /tracks endpoint, paginating until exhausted.
-		// limit=10 is the effective max for this app's API access level (>10 → 400).
-		const limit = 10;
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		const rawTracks: any[] = [];
-		let total = 0;
-		let offset = 0;
-		while (true) {
-			const page = await spotifyFetch(
-				`/playlists/${id}/tracks?limit=${limit}&offset=${offset}`,
-				token,
-			);
-			const pageItems = page.items ?? [];
-			total = page.total ?? total;
-			rawTracks.push(...pageItems);
-			offset += pageItems.length;
-			if (pageItems.length < limit || offset >= total) break;
+		// The official API gives no tracks at this app's access level: /playlists/{id}
+		// omits the tracks payload and /playlists/{id}/tracks returns 403. Load them
+		// via the internal pathfinder, degrading to an empty list (still 200) rather
+		// than failing the page if it can't resolve. (First 100 tracks only.)
+		let items: ReturnType<typeof pathfinderItems> = { total: 0, items: [] };
+		try {
+			const internal = await fetchInternalPlaylist(id, { limit: 100 });
+			items = pathfinderItems(internal);
+		} catch (err) {
+			console.error(`Playlist tracks fetch failed for ${id}:`, err);
 		}
 
 		// Check if user follows the playlist (optional - don't fail if this errors)
@@ -148,22 +147,9 @@ export default app
 			isFollowing = false;
 		}
 
-		// Spotify returns tracks.items[].track — map to items.items[].item for frontend
 		return c.json({
 			...playlist,
-			items: {
-				total,
-				items: rawTracks
-					// eslint-disable-next-line @typescript-eslint/no-explicit-any
-					.filter((i: any) => i.track != null)
-					// eslint-disable-next-line @typescript-eslint/no-explicit-any
-					.map((i: any) => ({
-						added_at: i.added_at,
-						added_by: i.added_by,
-						is_local: i.is_local,
-						item: i.track,
-					})),
-			},
+			items,
 			isFollowing,
 		});
 	})
