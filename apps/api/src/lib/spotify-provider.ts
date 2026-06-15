@@ -125,6 +125,23 @@ export class SpotifyProvider implements MusicProvider {
 
 	async getAlbum(id: string): Promise<MusicAlbum> {
 		const album = await this.client.albums.get(id);
+
+		// The album endpoint only returns the first page of tracks (max 50).
+		// Walk `tracks.next` to collect the rest so albums with >50 tracks load fully.
+		let nextUrl: string | null | undefined = album.tracks.next;
+		while (nextUrl) {
+			const res = await fetch(nextUrl, {
+				headers: { Authorization: `Bearer ${this.token}` },
+			});
+			if (!res.ok) break;
+			const page = (await res.json()) as {
+				items: TrackSimplified[];
+				next: string | null;
+			};
+			album.tracks.items.push(...page.items);
+			nextUrl = page.next;
+		}
+
 		return mapAlbum(album);
 	}
 
