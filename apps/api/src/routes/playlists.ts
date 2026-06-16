@@ -10,15 +10,28 @@ const app = new Hono();
 const SPOTIFY_API = "https://api.spotify.com/v1";
 
 // Map a pathfinder MusicPlaylist's tracks into the { item } shape the frontend
-// expects. Pathfinder tracks are already normalized and carry no added_at/by.
+// expects. The frontend's SpotifyTrack type uses Spotify's snake_case shape
+// (duration_ms), so convert from the pathfinder's camelCase MusicTrack here —
+// otherwise durations render as 0 and playback gets an undefined durationMs.
+// Pathfinder tracks carry no added_at/by.
 function pathfinderItems(internal: MusicPlaylist) {
 	return {
 		total: internal.tracks.total,
-		items: internal.tracks.items.map((i) => ({
+		items: internal.tracks.items.map(({ track }) => ({
 			added_at: null,
 			added_by: null,
 			is_local: false,
-			item: i.track,
+			item: {
+				id: track.id,
+				name: track.name,
+				duration_ms: track.durationMs,
+				artists: track.artists.map((a) => ({ id: a.id, name: a.name })),
+				album: {
+					id: track.album.id,
+					name: track.album.name,
+					images: track.album.images,
+				},
+			},
 		})),
 	};
 }
@@ -99,11 +112,17 @@ export default app
 		try {
 			playlist = await spotifyFetch(`/playlists/${id}`, token);
 		} catch (err) {
-			// Spotify-owned editorial/algorithmic playlists 404 on the official API
-			// for this app's access level. Fall back to the internal pathfinder API,
-			// which resolves every playlist type. Only catch 404s — other failures
-			// (auth, rate limit) should propagate.
-			if (!(err instanceof Error) || !err.message.includes("404")) throw err;
+			// At this app's access level the official API won't serve playlist
+			// detail: user playlists return 403 and Spotify-owned editorial ones
+			// 404. Fall back to the internal pathfinder API for both — it resolves
+			// every playlist type and embeds the tracks. Other failures (401 auth,
+			// 429 rate limit) should still propagate.
+			if (
+				!(err instanceof Error) ||
+				(!err.message.includes("403") && !err.message.includes("404"))
+			) {
+				throw err;
+			}
 
 			try {
 				// First 100 tracks only — covers the editorial/algorithmic target
