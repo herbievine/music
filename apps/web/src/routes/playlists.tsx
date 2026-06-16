@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ListMusic, Plus } from "lucide-react";
+import { ChevronLeft, ChevronRight, ListMusic, Plus } from "lucide-react";
 import { useUserPlaylists, useCreatePlaylist } from "@/api/user-playlists";
 import type { SpotifyPlaylist } from "@/api/user-playlists";
 import { Input } from "@/components/ui/input";
@@ -9,6 +9,8 @@ import { Button } from "@/components/ui/button";
 export const Route = createFileRoute("/playlists")({
 	component: RouteComponent,
 });
+
+const PAGE_SIZE = 15;
 
 function CreatePlaylistForm({ onSuccess, onCancel }: { onSuccess: () => void; onCancel: () => void }) {
 	const createPlaylist = useCreatePlaylist();
@@ -83,50 +85,93 @@ function CreatePlaylistButton() {
 	);
 }
 
-function PlaylistsSection({ playlists }: { playlists: SpotifyPlaylist[] }) {
+function PlaylistsGrid({ playlists }: { playlists: SpotifyPlaylist[] }) {
 	return (
-		<div className="flex flex-col gap-6">
-			{/* Playlists grid */}
-			{playlists.length === 0 ? (
-				<p className="text-sm text-muted-foreground/60 py-1">Create a playlist to organize your music.</p>
-			) : (
-				<div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-					{playlists.map((pl) => {
-						const imageUrl = pl.images?.[0]?.url;
-						return (
-							<Link
-								key={pl.id}
-								to="/playlist/$id"
-								params={{ id: pl.id }}
-								className="flex flex-col gap-2 group"
-							>
-								<div className="relative aspect-square overflow-hidden rounded-xl bg-card border border-white/5 flex items-center justify-center group-hover:border-white/10 transition-colors">
-									{imageUrl ? (
-										<img
-											src={imageUrl}
-											alt={pl.name}
-											className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-										/>
-									) : (
-										<ListMusic className="w-10 h-10 text-white/20 group-hover:text-white/30 transition-colors" strokeWidth={1} />
-									)}
-								</div>
-								<div>
-									<p className="text-sm font-medium truncate">{pl.name}</p>
-									<p className="text-xs text-muted-foreground">Playlist</p>
-								</div>
-							</Link>
-						);
-					})}
-				</div>
-			)}
+		<div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+			{playlists.map((pl) => {
+				const imageUrl = pl.images?.[0]?.url;
+				return (
+					<Link
+						key={pl.id}
+						to="/playlist/$id"
+						params={{ id: pl.id }}
+						className="flex flex-col gap-2 group"
+					>
+						<div className="relative aspect-square overflow-hidden rounded-xl bg-card border border-white/5 flex items-center justify-center group-hover:border-white/10 transition-colors">
+							{imageUrl ? (
+								<img
+									src={imageUrl}
+									alt={pl.name}
+									className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+								/>
+							) : (
+								<ListMusic className="w-10 h-10 text-white/20 group-hover:text-white/30 transition-colors" strokeWidth={1} />
+							)}
+						</div>
+						<div>
+							<p className="text-sm font-medium truncate">{pl.name}</p>
+							<p className="text-xs text-muted-foreground">Playlist</p>
+						</div>
+					</Link>
+				);
+			})}
+		</div>
+	);
+}
+
+function Pagination({
+	offset,
+	total,
+	pageSize,
+	hasPrev,
+	hasNext,
+	onPrev,
+	onNext,
+}: {
+	offset: number;
+	total: number;
+	pageSize: number;
+	hasPrev: boolean;
+	hasNext: boolean;
+	onPrev: () => void;
+	onNext: () => void;
+}) {
+	const from = offset + 1;
+	const to = Math.min(offset + pageSize, total);
+
+	return (
+		<div className="flex flex-col items-center gap-2 text-sm text-muted-foreground">
+			<div className="flex items-center gap-1">
+				<button
+					type="button"
+					onClick={onPrev}
+					disabled={!hasPrev}
+					className="p-1.5 rounded-md hover:bg-secondary disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+				>
+					<ChevronLeft className="w-4 h-4" />
+				</button>
+				<span className="px-2">{from}–{to} of {total}</span>
+				<button
+					type="button"
+					onClick={onNext}
+					disabled={!hasNext}
+					className="p-1.5 rounded-md hover:bg-secondary disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+				>
+					<ChevronRight className="w-4 h-4" />
+				</button>
+			</div>
 		</div>
 	);
 }
 
 function RouteComponent() {
-	const { data: myPlaylistsData, isLoading: myPlaylistsLoading } = useUserPlaylists();
-	const myPlaylists = myPlaylistsData?.playlists ?? [];
+	const [offset, setOffset] = useState(0);
+	const { data, isLoading } = useUserPlaylists(offset);
+
+	const playlists = data?.playlists ?? [];
+	const total = data?.total ?? 0;
+	const hasPrev = offset > 0;
+	const hasNext = offset + PAGE_SIZE < total;
 
 	return (
 		<div className="flex flex-col gap-8 px-4 sm:px-8 py-2 sm:py-6">
@@ -146,10 +191,25 @@ function RouteComponent() {
 				<CreatePlaylistButton />
 			</div>
 
-			{myPlaylistsLoading ? (
+			{isLoading ? (
 				<PlaylistsSkeleton />
+			) : playlists.length === 0 && offset === 0 ? (
+				<p className="text-sm text-muted-foreground/60 py-1">Create a playlist to organize your music.</p>
 			) : (
-				<PlaylistsSection playlists={myPlaylists} />
+				<>
+					<PlaylistsGrid playlists={playlists} />
+					{total > PAGE_SIZE && (
+						<Pagination
+							offset={offset}
+							total={total}
+							pageSize={PAGE_SIZE}
+							hasPrev={hasPrev}
+							hasNext={hasNext}
+							onPrev={() => setOffset((o) => Math.max(0, o - PAGE_SIZE))}
+							onNext={() => setOffset((o) => o + PAGE_SIZE)}
+						/>
+					)}
+				</>
 			)}
 		</div>
 	);
@@ -157,17 +217,14 @@ function RouteComponent() {
 
 function PlaylistsSkeleton() {
 	return (
-		<div className="flex flex-col gap-8">
-			<div className="h-5 w-32 bg-secondary rounded animate-pulse" />
-			<div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-				{Array.from({ length: 8 }).map((_, i) => (
-					<div key={i} className="flex flex-col gap-2">
-						<div className="aspect-square bg-secondary rounded-xl animate-pulse" />
-						<div className="h-3.5 w-3/4 bg-secondary/70 rounded animate-pulse" />
-						<div className="h-3 w-1/2 bg-secondary/50 rounded animate-pulse" />
-					</div>
-				))}
-			</div>
+		<div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+			{Array.from({ length: PAGE_SIZE }).map((_, i) => (
+				<div key={i} className="flex flex-col gap-2">
+					<div className="aspect-square bg-secondary rounded-xl animate-pulse" />
+					<div className="h-3.5 w-3/4 bg-secondary/70 rounded animate-pulse" />
+					<div className="h-3 w-1/2 bg-secondary/50 rounded animate-pulse" />
+				</div>
+			))}
 		</div>
 	);
 }

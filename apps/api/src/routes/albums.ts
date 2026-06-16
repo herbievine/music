@@ -39,11 +39,22 @@ async function spotifyFetch(endpoint: string, token: string, options?: RequestIn
 }
 
 export default app
-	.get("/saved", async (c) => {
-		const token = getOAuthToken(c);
-		const albums = await spotifyFetch("/me/albums?limit=50", token);
-		return c.json(albums);
-	})
+	.get(
+		"/saved",
+		zValidator(
+			"query",
+			z.object({
+				limit: z.coerce.number().int().min(1).max(50).default(15),
+				offset: z.coerce.number().int().min(0).default(0),
+			}),
+		),
+		async (c) => {
+			const token = getOAuthToken(c);
+			const { limit, offset } = c.req.valid("query");
+			const albums = await spotifyFetch(`/me/albums?limit=${limit}&offset=${offset}`, token);
+			return c.json(albums);
+		},
+	)
 	.get("/:id", async (c) => {
 		const provider = getMusicProvider(c);
 		const token = getOAuthToken(c);

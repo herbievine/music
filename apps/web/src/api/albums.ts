@@ -14,7 +14,7 @@ export type SavedAlbum = {
 
 export const albumKeys = {
 	all: ["albums"] as const,
-	saved: () => ["albums", "saved"] as const,
+	saved: (offset: number) => ["albums", "saved", offset] as const,
 	contains: (ids: string[]) => ["albums", "contains", ids] as const,
 };
 
@@ -70,13 +70,13 @@ export function useCheckSavedAlbums(albumIds: string[]) {
 	});
 }
 
-export function useSavedAlbums() {
+export function useSavedAlbums(offset = 0) {
 	const { session } = useClerk();
 	return useQuery({
-		queryKey: albumKeys.saved(),
+		queryKey: albumKeys.saved(offset),
 		queryFn: async () => {
 			const res = await client.albums.saved.$get(
-				{},
+				{ query: { limit: "15", offset: String(offset) } },
 				{ headers: { Authorization: `Bearer ${await session?.getToken()}` } },
 			);
 			if (!res.ok) throw new Error("Failed to fetch saved albums");

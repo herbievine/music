@@ -41,23 +41,23 @@ export type SpotifyPlaylist = {
 
 export const playlistKeys = {
 	all: ["playlists"] as const,
-	list: () => ["playlists", "list"] as const,
+	list: (offset: number) => ["playlists", "list", offset] as const,
 	detail: (id: string) => ["playlists", "detail", id] as const,
 };
 
 // ─── Hooks ────────────────────────────────────────────────────────────────────
 
-export function useUserPlaylists() {
+export function useUserPlaylists(offset = 0) {
 	const { session } = useClerk();
 	return useQuery({
-		queryKey: playlistKeys.list(),
+		queryKey: playlistKeys.list(offset),
 		queryFn: async () => {
 			const res = await client.playlists.$get(
-				{},
+				{ query: { limit: "15", offset: String(offset) } },
 				{ headers: { Authorization: `Bearer ${await session?.getToken()}` } },
 			);
 			if (!res.ok) throw new Error("Failed to fetch playlists");
-			return res.json() as Promise<{ playlists: SpotifyPlaylist[] }>;
+			return res.json() as Promise<{ playlists: SpotifyPlaylist[]; total: number; limit: number; offset: number }>;
 		},
 	});
 }
@@ -91,7 +91,7 @@ export function useCreatePlaylist() {
 			return res.json() as Promise<SpotifyPlaylist>;
 		},
 		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: playlistKeys.list() });
+			queryClient.invalidateQueries({ queryKey: playlistKeys.all });
 		},
 	});
 }
@@ -109,7 +109,7 @@ export function useRenamePlaylist() {
 			return res.json();
 		},
 		onSuccess: (_data, variables) => {
-			queryClient.invalidateQueries({ queryKey: playlistKeys.list() });
+			queryClient.invalidateQueries({ queryKey: playlistKeys.all });
 			queryClient.invalidateQueries({ queryKey: ["playlist", variables.id] });
 		},
 	});
@@ -128,7 +128,7 @@ export function useDeletePlaylist() {
 			return res.json();
 		},
 		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: playlistKeys.list() });
+			queryClient.invalidateQueries({ queryKey: playlistKeys.all });
 		},
 	});
 }
