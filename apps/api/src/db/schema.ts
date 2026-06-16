@@ -30,6 +30,30 @@ export const playHistory = pgTable("play_history", {
 	playedAt: timestamp("played_at").defaultNow().notNull(),
 });
 
+export const playClicks = pgTable("play_clicks", {
+	id: uuid("id").defaultRandom().primaryKey(),
+	userId: text("user_id").notNull(),
+	contextType: text("context_type").notNull(), // 'album' | 'playlist' | 'track'
+	contextId: text("context_id").notNull(),
+	metadata: jsonb("metadata")
+		.$type<{
+			name: string;
+			images: { url: string; width?: number; height?: number }[];
+			artists?: { id: string; name: string }[];
+			description?: string;
+			releaseDate?: string;
+			durationMs?: number;
+			album?: {
+				id: string;
+				name: string;
+				images: { url: string; width?: number; height?: number }[];
+				releaseDate: string;
+			};
+		}>()
+		.notNull(),
+	clickedAt: timestamp("clicked_at").defaultNow().notNull(),
+});
+
 export const likes = pgTable("likes", {
 	id: uuid("id").defaultRandom().primaryKey(),
 	userId: text("user_id").notNull(),

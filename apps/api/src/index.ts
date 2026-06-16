@@ -8,6 +8,7 @@ import { z } from "zod";
 import { getMusicProvider, getOAuthToken, getUserId, providerMiddleware } from "./lib/middleware.js";
 import albumRoutes from "./routes/albums.js";
 import artistRoutes from "./routes/artists.js";
+import clicksRoutes from "./routes/clicks.js";
 import { buildHome } from "./routes/home.js";
 import likesRoutes from "./routes/likes.js";
 import lyricsRoutes from "./routes/lyrics.js";
@@ -41,6 +42,7 @@ const routes = app
 	.route("/albums", albumRoutes)
 	.route("/artists", artistRoutes)
 	.route("/playlists", playlistRoutes)
+	.route("/clicks", clicksRoutes)
 	.route("/likes", likesRoutes)
 	.route("/lyrics", lyricsRoutes)
 	.get(

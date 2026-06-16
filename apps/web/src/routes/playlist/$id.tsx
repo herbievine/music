@@ -28,6 +28,7 @@ import {
 } from "../../components/ui/dropdown-menu";
 import { Input } from "../../components/ui/input";
 import { useIsLiked, useLikeMutation } from "../../hooks/use-likes";
+import { useRecordClick } from "@/api/clicks";
 import { shuffleTracks, useShufflePreference } from "../../hooks/use-shuffle-preference";
 import { formatTime } from "../../lib/format-time";
 import { client } from "../../lib/hono-rpc";
@@ -61,6 +62,7 @@ function RouteComponent() {
 		},
 	});
 	const { play, pause, add, songs, songIndex, isPlaying } = useQueueStore();
+	const recordClick = useRecordClick();
 	const { isLiked, likeEntry } = useIsLiked(id, "playlist");
 	const { like, unlike } = useLikeMutation();
 	const { shuffleOnPlay, toggle: toggleShuffleOnPlay } = useShufflePreference();
@@ -175,6 +177,15 @@ function RouteComponent() {
 							),
 						);
 						play(shuffleOnPlay ? shuffleTracks(tracks) : tracks, 0);
+					recordClick.mutate({
+						contextType: "playlist",
+						contextId: id,
+						metadata: {
+							name: data.name,
+							images: data.images,
+							description: data.description ?? undefined,
+						},
+					});
 					}}
 					className="w-12 h-12 sm:w-14 sm:h-14 bg-emerald-500 hover:bg-emerald-400 hover:scale-105 active:scale-100 rounded-full flex items-center justify-center shadow-lg transition-all flex-shrink-0"
 				>
@@ -281,7 +292,27 @@ function RouteComponent() {
 						data.items.items.map(({ item }, i) => {
 							const isCurrentTrack = item.id === currentSongId;
 							const playTrack = () => {
-								if (isCurrentTrack && isPlaying) { pause(); } else { play([toSimpleTrack({ ...item, durationMs: item.duration_ms } as any, item.album as any)]); }
+								if (isCurrentTrack && isPlaying) {
+									pause();
+								} else {
+									play([toSimpleTrack({ ...item, durationMs: item.duration_ms } as any, item.album as any)]);
+									recordClick.mutate({
+										contextType: "track",
+										contextId: item.id,
+										metadata: {
+											name: item.name,
+											images: item.album.images,
+											artists: item.artists,
+											durationMs: item.duration_ms,
+											album: {
+												id: item.album.id,
+												name: item.album.name,
+												images: item.album.images,
+												releaseDate: "",
+											},
+										},
+									});
+								}
 							};
 							return (
 								<div

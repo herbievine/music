@@ -25,6 +25,7 @@ import { useQueueStore } from "../../store/queue";
 import { toSimpleTrack } from "../../utils/to-simple-track";
 import { cn } from "@/lib/utils";
 import { useSaveAlbum, useRemoveAlbum } from "../../api/albums";
+import { useRecordClick } from "@/api/clicks";
 import { shuffleTracks, useShufflePreference } from "../../hooks/use-shuffle-preference";
 
 export const Route = createFileRoute("/album/$id")({
@@ -56,6 +57,7 @@ function RouteComponent() {
 		},
 	});
 	const { play, pause, add, songs, songIndex, isPlaying } = useQueueStore();
+	const recordClick = useRecordClick();
 	const saveAlbum = useSaveAlbum();
 	const removeAlbum = useRemoveAlbum();
 	const [isSaved, setIsSaved] = useState(false);
@@ -168,6 +170,16 @@ function RouteComponent() {
 						if (!data) return;
 						const tracks = data.tracks.items.map((t) => toSimpleTrack(t, data));
 						play(shuffleOnPlay ? shuffleTracks(tracks) : tracks, 0);
+						recordClick.mutate({
+							contextType: "album",
+							contextId: id,
+							metadata: {
+								name: data.name,
+								images: data.images,
+								artists: data.artists,
+								releaseDate: data.releaseDate,
+							},
+						});
 					}}
 					className="w-12 h-12 sm:w-14 sm:h-14 bg-emerald-500 hover:bg-emerald-400 hover:scale-105 active:scale-100 rounded-full flex items-center justify-center shadow-lg transition-all flex-shrink-0"
 				>
@@ -249,7 +261,29 @@ function RouteComponent() {
 					? data.tracks.total > 0 &&
 						data.tracks.items.map((track, i) => {
 							const isCurrentTrack = track.id === currentSongId;
-							const playTrack = () => { if (isCurrentTrack && isPlaying) pause(); else play([toSimpleTrack(track, data)]); };
+							const playTrack = () => {
+								if (isCurrentTrack && isPlaying) {
+									pause();
+								} else {
+									play([toSimpleTrack(track, data)]);
+									recordClick.mutate({
+										contextType: "track",
+										contextId: track.id,
+										metadata: {
+											name: track.name,
+											images: data.images,
+											artists: track.artists,
+											durationMs: track.durationMs,
+											album: {
+												id: data.id,
+												name: data.name,
+												images: data.images,
+												releaseDate: data.releaseDate,
+											},
+										},
+									});
+								}
+							};
 							return (
 								<div
 									key={track.id}

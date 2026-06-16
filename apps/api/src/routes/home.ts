@@ -5,6 +5,7 @@ import {
 	albumImages,
 	albums,
 	artists,
+	playClicks,
 	playHistory,
 } from "../db/schema.js";
 import type { MusicProvider } from "../lib/music-provider.js";
@@ -15,101 +16,15 @@ import type {
 	MusicArtist,
 	MusicImage,
 	MusicPlaylistSummary,
-	MusicTrack,
 } from "../types.js";
-
-async function getRecentTracks(
-	userId: string,
-	limit: number,
-): Promise<{ items: MusicTrack[]; total: number }> {
-	const rows = await db
-		.selectDistinctOn([playHistory.trackId], {
-			trackId: playHistory.trackId,
-			metadata: playHistory.metadata,
-			playedAt: playHistory.playedAt,
-		})
-		.from(playHistory)
-		.where(eq(playHistory.userId, userId))
-		.orderBy(playHistory.trackId, desc(playHistory.playedAt))
-		.limit(limit);
-
-	rows.sort((a, b) => b.playedAt.getTime() - a.playedAt.getTime());
-
-	const items: MusicTrack[] = rows.map((row) => ({
-		id: row.trackId,
-		name: row.metadata.name,
-		artists: row.metadata.artists,
-		durationMs: row.metadata.durationMs,
-		trackNumber: 0,
-		type: "track" as const,
-		album: row.metadata.album,
-	}));
-
-	return { items, total: items.length };
-}
 
 // ---------------------------------------------------------------------------
 // Home feed: server-driven sections. Each builder returns HomeItem[]; buildHome
 // assembles them in order and drops sections that don't clear their min count.
 // ---------------------------------------------------------------------------
 
-type PlayRow = {
-	track_id: string;
-	metadata: {
-		name: string;
-		artists: { id: string; name: string }[];
-		album: {
-			id: string;
-			name: string;
-			images: MusicImage[];
-			releaseDate: string;
-		};
-		durationMs: number;
-	};
-};
-
-function playRowToTrack(row: PlayRow): MusicTrack {
-	return {
-		id: row.track_id,
-		name: row.metadata.name,
-		artists: row.metadata.artists,
-		durationMs: row.metadata.durationMs,
-		trackNumber: 0,
-		type: "track" as const,
-		album: row.metadata.album,
-	};
-}
-
 function titleCase(value: string): string {
 	return value.replace(/\b\w/g, (c) => c.toUpperCase());
-}
-
-// Most-played tracks, optionally limited to the last `sinceDays`.
-async function mostPlayedTracks(
-	userId: string,
-	limit: number,
-	sinceDays?: number,
-): Promise<MusicTrack[]> {
-	const since = sinceDays
-		? sql`AND played_at > now() - make_interval(days => ${sinceDays})`
-		: sql``;
-	const result = await db.execute(sql`
-		WITH ranked AS (
-			SELECT
-				track_id,
-				metadata,
-				count(*) OVER (PARTITION BY track_id)::int AS play_count,
-				max(played_at) OVER (PARTITION BY track_id) AS last_played,
-				row_number() OVER (PARTITION BY track_id ORDER BY played_at DESC) AS rn
-			FROM play_history
-			WHERE user_id = ${userId} ${since}
-		)
-		SELECT track_id, metadata FROM ranked
-		WHERE rn = 1
-		ORDER BY play_count DESC, last_played DESC
-		LIMIT ${limit}
-	`);
-	return (result.rows as PlayRow[]).map(playRowToTrack);
 }
 
 // Fetch full artist objects (name, images, genres) from Spotify, preserving order.
@@ -192,11 +107,53 @@ async function albumSummariesFromIds(
 		}));
 }
 
-// Section 0 — Quick picks: most-played tracks in the last 7d, else recents.
-async function getQuickPicks(userId: string): Promise<MusicTrack[]> {
-	const recent = await mostPlayedTracks(userId, 8, 7);
-	if (recent.length > 0) return recent;
-	return (await getRecentTracks(userId, 8)).items;
+// Section 0 — Quick picks: most recently clicked contexts (album/playlist/track), limit 8.
+async function getQuickPicks(userId: string): Promise<HomeItem[]> {
+	const rows = await db
+		.selectDistinctOn([playClicks.contextType, playClicks.contextId], {
+			contextType: playClicks.contextType,
+			contextId: playClicks.contextId,
+			metadata: playClicks.metadata,
+			clickedAt: playClicks.clickedAt,
+		})
+		.from(playClicks)
+		.where(eq(playClicks.userId, userId))
+		.orderBy(playClicks.contextType, playClicks.contextId, desc(playClicks.clickedAt));
+
+	rows.sort((a, b) => b.clickedAt.getTime() - a.clickedAt.getTime());
+
+	return rows.slice(0, 8).map((row): HomeItem => {
+		const { contextType, contextId, metadata } = row;
+		if (contextType === "album") {
+			return {
+				id: contextId,
+				type: "album",
+				name: metadata.name,
+				artists: metadata.artists ?? [],
+				images: metadata.images,
+				releaseDate: metadata.releaseDate ?? "",
+			};
+		}
+		if (contextType === "playlist") {
+			return {
+				id: contextId,
+				type: "playlist",
+				name: metadata.name,
+				description: metadata.description ?? "",
+				images: metadata.images,
+			};
+		}
+		// track
+		return {
+			id: contextId,
+			type: "track",
+			name: metadata.name,
+			artists: metadata.artists ?? [],
+			durationMs: metadata.durationMs ?? 0,
+			trackNumber: 0,
+			album: metadata.album!,
+		};
+	});
 }
 
 // Section 1 — Jump back in: albums replayed 7–30d ago, mixed with playlists the
@@ -420,7 +377,7 @@ export async function buildHome(
 ): Promise<{ sections: HomeSection[] }> {
 	const [quickPicks, jumpBackIn, topArtists, genreRows, moreLike, library] =
 		await Promise.all([
-			getQuickPicks(userId).catch(() => [] as MusicTrack[]),
+			getQuickPicks(userId).catch(() => [] as HomeItem[]),
 			getJumpBackInItems(userId).catch(() => [] as HomeItem[]),
 			getTopArtists(userId, oauthToken).catch(() => [] as MusicArtist[]),
 			getGenreRows(userId, provider).catch(() => [] as HomeSection[]),
