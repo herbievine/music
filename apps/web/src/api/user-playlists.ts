@@ -96,6 +96,25 @@ export function useCreatePlaylist() {
 	});
 }
 
+export function useRenamePlaylist() {
+	const { session } = useClerk();
+	const queryClient = useQueryClient();
+	return useMutation({
+		mutationFn: async (payload: { id: string; name: string }) => {
+			const res = await client.playlists[":id"].$patch(
+				{ param: { id: payload.id }, json: { name: payload.name } },
+				{ headers: { Authorization: `Bearer ${await session?.getToken()}` } },
+			);
+			if (!res.ok) throw new Error("Failed to rename playlist");
+			return res.json();
+		},
+		onSuccess: (_data, variables) => {
+			queryClient.invalidateQueries({ queryKey: playlistKeys.list() });
+			queryClient.invalidateQueries({ queryKey: ["playlist", variables.id] });
+		},
+	});
+}
+
 export function useDeletePlaylist() {
 	const { session } = useClerk();
 	const queryClient = useQueryClient();

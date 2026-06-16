@@ -7,22 +7,33 @@ import {
 	useParams,
 	useRouter,
 } from "@tanstack/react-router";
-import { ChevronLeft, Heart, HeartOff, ListEnd, MoreHorizontal, Pause, Play, Shuffle } from "lucide-react";
+import { ChevronLeft, Heart, HeartOff, ListEnd, MoreHorizontal, Pause, Pencil, Play, Shuffle, Trash2 } from "lucide-react";
+import { useState } from "react";
 import toast from "react-hot-toast";
+import type { SpotifyPlaylist } from "../../api/user-playlists";
+import { useDeletePlaylist, useRenamePlaylist } from "../../api/user-playlists";
+import {
+	Dialog,
+	DialogContent,
+	DialogFooter,
+	DialogHeader,
+	DialogTitle,
+} from "../../components/ui/dialog";
 import {
 	DropdownMenu,
 	DropdownMenuContent,
 	DropdownMenuItem,
+	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from "../../components/ui/dropdown-menu";
+import { Input } from "../../components/ui/input";
 import { useIsLiked, useLikeMutation } from "../../hooks/use-likes";
+import { shuffleTracks, useShufflePreference } from "../../hooks/use-shuffle-preference";
 import { formatTime } from "../../lib/format-time";
 import { client } from "../../lib/hono-rpc";
+import { cn } from "@/lib/utils";
 import { useQueueStore } from "../../store/queue";
 import { toSimpleTrack } from "../../utils/to-simple-track";
-import { cn } from "@/lib/utils";
-import type { SpotifyPlaylist } from "../../api/user-playlists";
-import { shuffleTracks, useShufflePreference } from "../../hooks/use-shuffle-preference";
 
 export const Route = createFileRoute("/playlist/$id")({
 	component: RouteComponent,
@@ -53,6 +64,36 @@ function RouteComponent() {
 	const { isLiked, likeEntry } = useIsLiked(id, "playlist");
 	const { like, unlike } = useLikeMutation();
 	const { shuffleOnPlay, toggle: toggleShuffleOnPlay } = useShufflePreference();
+	const renamePlaylist = useRenamePlaylist();
+	const deletePlaylist = useDeletePlaylist();
+	const [renameOpen, setRenameOpen] = useState(false);
+	const [renameName, setRenameName] = useState("");
+	const [deleteOpen, setDeleteOpen] = useState(false);
+
+	function handleRename() {
+		if (!renameName.trim()) return;
+		renamePlaylist.mutate(
+			{ id, name: renameName.trim() },
+			{
+				onSuccess: () => {
+					setRenameOpen(false);
+					toast.success("Playlist renamed");
+				},
+				onError: () => toast.error("Failed to rename playlist"),
+			},
+		);
+	}
+
+	function handleDelete() {
+		deletePlaylist.mutate(id, {
+			onSuccess: () => {
+				setDeleteOpen(false);
+				toast.success("Playlist deleted");
+				if (canGoBack) { router.history.back(); } else { navigate({ to: "/playlists" }); }
+			},
+			onError: () => toast.error("Failed to delete playlist"),
+		});
+	}
 
 	const imageUrl = data?.images?.[0]?.url;
 	const totalMs =
@@ -205,6 +246,23 @@ function RouteComponent() {
 							<ListEnd className="w-4 h-4" />
 							Add to queue
 						</DropdownMenuItem>
+						<DropdownMenuSeparator />
+						<DropdownMenuItem
+							onSelect={() => {
+								setRenameName(data?.name ?? "");
+								setRenameOpen(true);
+							}}
+						>
+							<Pencil className="w-4 h-4" />
+							Rename
+						</DropdownMenuItem>
+						<DropdownMenuItem
+							onSelect={() => setDeleteOpen(true)}
+							className="text-destructive focus:text-destructive"
+						>
+							<Trash2 className="w-4 h-4" />
+							Delete playlist
+						</DropdownMenuItem>
 					</DropdownMenuContent>
 				</DropdownMenu>
 			</div>
@@ -292,6 +350,71 @@ function RouteComponent() {
 							</div>
 						))}
 			</div>
+
+			{/* Rename dialog */}
+			<Dialog open={renameOpen} onOpenChange={setRenameOpen}>
+				<DialogContent>
+					<DialogHeader>
+						<DialogTitle>Rename playlist</DialogTitle>
+					</DialogHeader>
+					<Input
+						autoFocus
+						value={renameName}
+						onChange={(e) => setRenameName(e.target.value)}
+						onKeyDown={(e) => {
+							if (e.key === "Enter") handleRename();
+							if (e.key === "Escape") setRenameOpen(false);
+						}}
+						maxLength={100}
+					/>
+					<DialogFooter>
+						<button
+							type="button"
+							onClick={() => setRenameOpen(false)}
+							className="px-4 py-2 text-sm rounded-md text-muted-foreground hover:text-foreground transition-colors"
+						>
+							Cancel
+						</button>
+						<button
+							type="button"
+							onClick={handleRename}
+							disabled={!renameName.trim() || renamePlaylist.isPending}
+							className="px-4 py-2 text-sm rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50"
+						>
+							{renamePlaylist.isPending ? "Saving…" : "Save"}
+						</button>
+					</DialogFooter>
+				</DialogContent>
+			</Dialog>
+
+			{/* Delete confirmation dialog */}
+			<Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+				<DialogContent>
+					<DialogHeader>
+						<DialogTitle>Delete playlist?</DialogTitle>
+					</DialogHeader>
+					<p className="text-sm text-muted-foreground">
+						This will unfollow <span className="text-foreground font-medium">{data?.name}</span>. This action cannot be undone.
+					</p>
+					<DialogFooter>
+						<button
+							type="button"
+							onClick={() => setDeleteOpen(false)}
+							className="px-4 py-2 text-sm rounded-md text-muted-foreground hover:text-foreground transition-colors"
+						>
+							Cancel
+						</button>
+						<button
+							type="button"
+							onClick={handleDelete}
+							disabled={deletePlaylist.isPending}
+							className="px-4 py-2 text-sm rounded-md bg-destructive text-destructive-foreground hover:bg-destructive/90 transition-colors disabled:opacity-50"
+						>
+							{deletePlaylist.isPending ? "Deleting…" : "Delete"}
+						</button>
+					</DialogFooter>
+				</DialogContent>
+			</Dialog>
 		</div>
 	);
 }
