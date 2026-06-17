@@ -282,7 +282,7 @@ function RouteComponent() {
 
 			{/* Track list */}
 			<div className="px-4 sm:px-8 pb-8">
-				<div className="grid grid-cols-[2rem_1fr_auto] sm:grid-cols-[2rem_1fr_auto_1.75rem] items-center border-b border-border/50 pb-2 mb-1 text-xs uppercase tracking-wider text-muted-foreground select-none">
+				<div className="grid grid-cols-[2rem_1fr_auto] sm:grid-cols-[2rem_1fr_auto_2.75rem] items-center border-b border-border/50 pb-2 mb-1 text-xs uppercase tracking-wider text-muted-foreground select-none">
 					<span className="text-center">#</span>
 					<span className="pl-3">Title</span>
 					<span>Duration</span>
@@ -324,7 +324,7 @@ function RouteComponent() {
 									onClick={playTrack}
 									onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); playTrack(); } }}
 									className={cn(
-										"grid grid-cols-[2rem_1fr_auto] sm:grid-cols-[2rem_1fr_auto_1.75rem] items-center py-2.5 rounded-md transition-colors group cursor-pointer select-none",
+										"grid grid-cols-[2rem_1fr_auto] sm:grid-cols-[2rem_1fr_auto_2.75rem] items-center py-2.5 rounded-md transition-colors group cursor-pointer select-none",
 										"hover:bg-white/5 focus-visible:bg-white/10 focus-visible:outline-none",
 									)}
 								>
@@ -355,7 +355,7 @@ function RouteComponent() {
 										</span>
 									</span>
 
-									<span className="text-xs text-muted-foreground tabular-nums sm:pr-3">
+									<span className="text-xs text-muted-foreground tabular-nums">
 										{formatTime(item.duration_ms)}
 									</span>
 
