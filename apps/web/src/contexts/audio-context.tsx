@@ -38,7 +38,11 @@ export function AudioProvider({ children }: { children: ReactNode }) {
 	const { songs, songIndex, isPlaying } = useQueueStore();
 
 	const { data } = useQuery({
-		queryKey: ["play", songs[songIndex]?.id, songs[songIndex + 1]?.id],
+		// Key only on the current song. The next song's id is passed to queryFn
+		// purely to warm a background prefetch — including it here would refetch
+		// (and return a fresh stream URL) whenever the queue is reordered, which
+		// reloads the audio element and restarts the current track from 0.
+		queryKey: ["play", songs[songIndex]?.id],
 		queryFn: async () => {
 			const res = await client.play[":spotifyId"].$get(
 				{
