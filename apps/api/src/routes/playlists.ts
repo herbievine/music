@@ -2,7 +2,7 @@ import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
 import { z } from "zod";
 import { getOAuthToken } from "../lib/middleware.js";
-import { fetchInternalPlaylist, PlaylistNotFoundError } from "../lib/spotify-internal.js";
+import { fetchInternalPlaylist, fetchRadioPlaylistId, PlaylistNotFoundError } from "../lib/spotify-internal.js";
 import type { MusicPlaylist } from "../types.js";
 
 const app = new Hono();
@@ -113,6 +113,13 @@ export default app
 			return c.json(playlist, 201);
 		},
 	)
+
+	// Resolve song radio (inspiredby-mix) — must be before /:id
+	.get("/radio/:trackId", async (c) => {
+		const trackId = c.req.param("trackId");
+		const playlistId = await fetchRadioPlaylistId(trackId);
+		return c.json({ playlistId });
+	})
 
 	// Get playlist details
 	.get("/:id", async (c) => {

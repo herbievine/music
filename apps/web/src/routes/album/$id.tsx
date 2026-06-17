@@ -8,7 +8,7 @@ import {
 	useParams,
 	useRouter,
 } from "@tanstack/react-router";
-import { ChevronLeft, Heart, ListEnd, ListPlus, MoreHorizontal, Pause, Play, Shuffle } from "lucide-react";
+import { ChevronLeft, Heart, ListEnd, ListPlus, MoreHorizontal, Pause, Play, Radio, Shuffle } from "lucide-react";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { AddToPlaylistDialog } from "../../components/add-to-playlist-dialog";
@@ -16,8 +16,10 @@ import {
 	DropdownMenu,
 	DropdownMenuContent,
 	DropdownMenuItem,
+	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from "../../components/ui/dropdown-menu";
+import { useGoToRadio } from "../../api/radio";
 import { z } from "zod";
 import { formatTime } from "../../lib/format-time";
 import { client } from "../../lib/hono-rpc";
@@ -60,6 +62,7 @@ function RouteComponent() {
 	const recordClick = useRecordClick();
 	const saveAlbum = useSaveAlbum();
 	const removeAlbum = useRemoveAlbum();
+	const goToRadio = useGoToRadio();
 	const [isSaved, setIsSaved] = useState(false);
 	const { shuffleOnPlay, toggle: toggleShuffleOnPlay } = useShufflePreference();
 
@@ -249,11 +252,10 @@ function RouteComponent() {
 			{/* Track list */}
 			<div className="px-4 sm:px-8 pb-8">
 				{/* Column headers */}
-				<div className="grid grid-cols-[2rem_1fr_auto] sm:grid-cols-[2rem_1fr_auto_1.75rem_1.75rem] items-center border-b border-border/50 pb-2 mb-1 text-xs uppercase tracking-wider text-muted-foreground select-none">
+				<div className="grid grid-cols-[2rem_1fr_auto] sm:grid-cols-[2rem_1fr_auto_1.75rem] items-center border-b border-border/50 pb-2 mb-1 text-xs uppercase tracking-wider text-muted-foreground select-none">
 					<span className="text-center">#</span>
 					<span className="pl-3">Title</span>
 					<span>Duration</span>
-					<span className="hidden sm:block" />
 					<span className="hidden sm:block" />
 				</div>
 
@@ -292,7 +294,7 @@ function RouteComponent() {
 									onClick={playTrack}
 									onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); playTrack(); } }}
 									className={cn(
-										"grid grid-cols-[2rem_1fr_auto] sm:grid-cols-[2rem_1fr_auto_1.75rem_1.75rem] items-center px-0 py-2.5 rounded-md transition-colors group cursor-pointer select-none",
+										"grid grid-cols-[2rem_1fr_auto] sm:grid-cols-[2rem_1fr_auto_1.75rem] items-center px-0 py-2.5 rounded-md transition-colors group cursor-pointer select-none",
 										"hover:bg-white/5 focus-visible:bg-white/10 focus-visible:outline-none",
 										isCurrentTrack && "text-primary",
 									)}
@@ -326,34 +328,44 @@ function RouteComponent() {
 										{formatTime(track.durationMs)}
 									</span>
 
-									{/* Add to playlist */}
-									<button
-										type="button"
-										onClick={(e) => {
-											e.stopPropagation();
-											setDialogTrack({
-												id: track.id,
-												name: track.name,
-												artists: track.artists.map((a) => a.name),
-												albumName: data.name,
-												albumImage: data.images[0]?.url ?? "",
-												durationMs: track.durationMs,
-											});
-										}}
-										className="hidden sm:flex items-center justify-center sm:opacity-0 sm:group-hover:opacity-100 transition-opacity text-muted-foreground/50 hover:text-foreground"
-									>
-										<ListPlus className="w-3.5 h-3.5" />
-									</button>
-
-									{/* Add to queue */}
-									<button
-										type="button"
-										title="Add to queue"
-										onClick={(e) => { e.stopPropagation(); add([toSimpleTrack(track, data)]); toast.success("Added to queue"); }}
-										className="hidden sm:flex items-center justify-center sm:opacity-0 sm:group-hover:opacity-100 transition-opacity text-muted-foreground/50 hover:text-foreground"
-									>
-										<ListEnd className="w-3.5 h-3.5" />
-									</button>
+									{/* Track options */}
+									<DropdownMenu>
+										<DropdownMenuTrigger
+											onClick={(e) => e.stopPropagation()}
+											className="hidden sm:flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground/50 hover:text-foreground focus:outline-none"
+										>
+											<MoreHorizontal className="w-3.5 h-3.5" />
+										</DropdownMenuTrigger>
+										<DropdownMenuContent align="end">
+											<DropdownMenuItem
+												onSelect={() => { add([toSimpleTrack(track, data)]); toast.success("Added to queue"); }}
+											>
+												<ListEnd className="w-4 h-4" />
+												Add to queue
+											</DropdownMenuItem>
+											<DropdownMenuItem
+												onSelect={() => setDialogTrack({
+													id: track.id,
+													name: track.name,
+													artists: track.artists.map((a) => a.name),
+													albumName: data.name,
+													albumImage: data.images[0]?.url ?? "",
+													durationMs: track.durationMs,
+												})}
+											>
+												<ListPlus className="w-4 h-4" />
+												Add to playlist
+											</DropdownMenuItem>
+											<DropdownMenuSeparator />
+											<DropdownMenuItem
+												onSelect={() => goToRadio.mutate(track.id)}
+												disabled={goToRadio.isPending}
+											>
+												<Radio className="w-4 h-4" />
+												Go to radio
+											</DropdownMenuItem>
+										</DropdownMenuContent>
+									</DropdownMenu>
 								</div>
 							);
 						})

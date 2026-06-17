@@ -210,6 +210,36 @@ function mapItem(item: any): MusicTrack | null {
 }
 
 /**
+ * Resolve the Spotify station ("song radio") for a track via the internal
+ * inspiredby-mix endpoint and return the generated playlist ID.
+ */
+export async function fetchRadioPlaylistId(trackId: string): Promise<string> {
+	const [accessToken, clientToken] = await Promise.all([
+		getAccessToken(),
+		getClientToken(),
+	]);
+	const res = await fetch(
+		`https://spclient.wg.spotify.com/inspiredby-mix/v2/seed_to_playlist/spotify:track:${trackId}?response-format=json`,
+		{
+			headers: {
+				authorization: `Bearer ${accessToken}`,
+				"client-token": clientToken,
+				"app-platform": "WebPlayer",
+				Accept: "application/json",
+				"User-Agent": UA,
+			},
+		},
+	);
+	if (!res.ok) {
+		throw new Error(`inspiredby-mix failed: ${res.status} ${await res.text()}`);
+	}
+	const data = (await res.json()) as { mediaItems?: { uri: string }[] };
+	const uri = data.mediaItems?.[0]?.uri;
+	if (!uri) throw new Error("No radio playlist returned for track");
+	return uri.split(":").pop()!;
+}
+
+/**
  * Fetch a playlist (any type — editorial, algorithmic, or user-created) via the
  * internal pathfinder API and map it to MusicPlaylist. Throws
  * PlaylistNotFoundError if the playlist doesn't resolve.

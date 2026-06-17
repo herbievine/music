@@ -7,7 +7,7 @@ import {
 	useParams,
 	useRouter,
 } from "@tanstack/react-router";
-import { ChevronLeft, Heart, HeartOff, ListEnd, MoreHorizontal, Pause, Pencil, Play, Shuffle, Trash2 } from "lucide-react";
+import { ChevronLeft, Heart, HeartOff, ListEnd, MoreHorizontal, Pause, Pencil, Play, Radio, Shuffle, Trash2 } from "lucide-react";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import type { SpotifyPlaylist } from "../../api/user-playlists";
@@ -26,6 +26,7 @@ import {
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from "../../components/ui/dropdown-menu";
+import { useGoToRadio } from "../../api/radio";
 import { Input } from "../../components/ui/input";
 import { useIsLiked, useLikeMutation } from "../../hooks/use-likes";
 import { useRecordClick } from "@/api/clicks";
@@ -66,6 +67,7 @@ function RouteComponent() {
 	const { isLiked, likeEntry } = useIsLiked(id, "playlist");
 	const { like, unlike } = useLikeMutation();
 	const { shuffleOnPlay, toggle: toggleShuffleOnPlay } = useShufflePreference();
+	const goToRadio = useGoToRadio();
 	const renamePlaylist = useRenamePlaylist();
 	const deletePlaylist = useDeletePlaylist();
 	const [renameOpen, setRenameOpen] = useState(false);
@@ -357,15 +359,31 @@ function RouteComponent() {
 										{formatTime(item.duration_ms)}
 									</span>
 
-									{/* Add to queue */}
-									<button
-										type="button"
-										title="Add to queue"
-										onClick={(e) => { e.stopPropagation(); add([toSimpleTrack({ ...item, durationMs: item.duration_ms } as any, item.album as any)]); toast.success("Added to queue"); }}
-										className="hidden sm:flex items-center justify-center sm:opacity-0 sm:group-hover:opacity-100 transition-opacity text-muted-foreground/50 hover:text-foreground"
-									>
-										<ListEnd className="w-3.5 h-3.5" />
-									</button>
+									{/* Track options */}
+									<DropdownMenu>
+										<DropdownMenuTrigger
+											onClick={(e) => e.stopPropagation()}
+											className="hidden sm:flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground/50 hover:text-foreground focus:outline-none"
+										>
+											<MoreHorizontal className="w-3.5 h-3.5" />
+										</DropdownMenuTrigger>
+										<DropdownMenuContent align="end">
+											<DropdownMenuItem
+												onSelect={() => { add([toSimpleTrack({ ...item, durationMs: item.duration_ms } as any, item.album as any)]); toast.success("Added to queue"); }}
+											>
+												<ListEnd className="w-4 h-4" />
+												Add to queue
+											</DropdownMenuItem>
+											<DropdownMenuSeparator />
+											<DropdownMenuItem
+												onSelect={() => goToRadio.mutate(item.id)}
+												disabled={goToRadio.isPending}
+											>
+												<Radio className="w-4 h-4" />
+												Go to radio
+											</DropdownMenuItem>
+										</DropdownMenuContent>
+									</DropdownMenu>
 								</div>
 							);
 						})
