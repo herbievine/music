@@ -7,7 +7,7 @@ import {
 	useParams,
 	useRouter,
 } from "@tanstack/react-router";
-import { ChevronLeft, Heart, HeartOff, ListEnd, MoreHorizontal, Pause, Pencil, Play, Radio, Shuffle, Trash2 } from "lucide-react";
+import { ChevronLeft, Heart, ListEnd, MoreHorizontal, Pause, Pencil, Play, Radio, Shuffle, Trash2 } from "lucide-react";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import type { SpotifyPlaylist } from "../../api/user-playlists";
@@ -218,7 +218,7 @@ function RouteComponent() {
 							: "text-muted-foreground hover:text-foreground",
 					)}
 				>
-					{isLiked ? <HeartOff className="w-5 h-5" /> : <Heart className="w-5 h-5" />}
+					<Heart className="w-5 h-5" fill={isLiked ? "currentColor" : "none"} />
 				</button>
 
 				<button
