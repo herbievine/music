@@ -324,7 +324,7 @@ function RouteComponent() {
 									</span>
 
 									{/* Duration */}
-									<span className="text-xs text-muted-foreground tabular-nums">
+									<span className="text-xs text-muted-foreground tabular-nums sm:pr-3">
 										{formatTime(track.durationMs)}
 									</span>
 
