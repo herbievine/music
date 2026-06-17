@@ -333,7 +333,7 @@ function RouteComponent() {
 										<DropdownMenuTrigger
 											title="More options"
 											onClick={(e) => e.stopPropagation()}
-											className="hidden sm:flex items-center justify-center w-7 h-7 rounded-full opacity-0 group-hover:opacity-100 data-[state=open]:opacity-100 transition-all text-muted-foreground hover:text-foreground hover:bg-white/10 data-[state=open]:bg-white/10 focus:outline-none"
+											className="hidden sm:flex justify-self-center items-center justify-center w-7 h-7 rounded-full opacity-0 group-hover:opacity-100 data-[state=open]:opacity-100 transition-all text-muted-foreground hover:text-foreground hover:bg-white/10 data-[state=open]:bg-white/10 focus:outline-none"
 										>
 											<MoreHorizontal className="w-4 h-4" />
 										</DropdownMenuTrigger>
