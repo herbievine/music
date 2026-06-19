@@ -37,44 +37,73 @@ export type SpotifyPlaylist = {
 	owner: { display_name: string };
 };
 
+// ─── Supabase user-playlist types ───────────────────────────────────────────
+
+export type UserPlaylistTrackMetadata = {
+	name: string;
+	artists: string[];
+	albumName: string;
+	albumImage: string;
+	durationMs: number;
+};
+
+export type UserPlaylistTrack = {
+	id: string;
+	playlistId: string;
+	trackId: string;
+	trackMetadata: UserPlaylistTrackMetadata;
+	position: number;
+	addedAt: string;
+};
+
+export type UserPlaylist = {
+	id: string;
+	userId: string;
+	name: string;
+	description: string | null;
+	isSystem: boolean;
+	createdAt: string;
+	updatedAt: string;
+};
+
 // ─── Query keys ───────────────────────────────────────────────────────────────
 
 export const playlistKeys = {
 	all: ["playlists"] as const,
-	list: (offset: number) => ["playlists", "list", offset] as const,
+	list: () => ["playlists", "list"] as const,
 	detail: (id: string) => ["playlists", "detail", id] as const,
 };
 
 // ─── Hooks ────────────────────────────────────────────────────────────────────
 
-export function useUserPlaylists(offset = 0) {
+export function useUserPlaylists() {
 	const { session } = useClerk();
 	return useQuery({
-		queryKey: playlistKeys.list(offset),
+		queryKey: playlistKeys.list(),
 		queryFn: async () => {
-			const res = await client.playlists.$get(
-				{ query: { limit: "15", offset: String(offset) } },
+			const res = await client["user-playlists"].$get(
+				{},
 				{ headers: { Authorization: `Bearer ${await session?.getToken()}` } },
 			);
 			if (!res.ok) throw new Error("Failed to fetch playlists");
-			return res.json() as Promise<{ playlists: SpotifyPlaylist[]; total: number; limit: number; offset: number }>;
+			return res.json() as Promise<{ playlists: UserPlaylist[] }>;
 		},
 	});
 }
 
-export function useUserPlaylist(id: string) {
+export function useUserPlaylist(id: string, enabled = true) {
 	const { session } = useClerk();
 	return useQuery({
 		queryKey: playlistKeys.detail(id),
 		queryFn: async () => {
-			const res = await client.playlists[":id"].$get(
+			const res = await client["user-playlists"][":id"].$get(
 				{ param: { id } },
 				{ headers: { Authorization: `Bearer ${await session?.getToken()}` } },
 			);
 			if (!res.ok) throw new Error("Failed to fetch playlist");
-			return res.json() as Promise<SpotifyPlaylist>;
+			return res.json() as Promise<UserPlaylist & { tracks: UserPlaylistTrack[] }>;
 		},
-		enabled: !!id,
+		enabled: !!id && enabled,
 	});
 }
 
@@ -82,13 +111,13 @@ export function useCreatePlaylist() {
 	const { session } = useClerk();
 	const queryClient = useQueryClient();
 	return useMutation({
-		mutationFn: async (payload: { name: string; description?: string; isPublic?: boolean }) => {
-			const res = await client.playlists.$post(
+		mutationFn: async (payload: { name: string; description?: string }) => {
+			const res = await client["user-playlists"].$post(
 				{ json: payload },
 				{ headers: { Authorization: `Bearer ${await session?.getToken()}` } },
 			);
 			if (!res.ok) throw new Error("Failed to create playlist");
-			return res.json() as Promise<SpotifyPlaylist>;
+			return res.json() as Promise<UserPlaylist>;
 		},
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: playlistKeys.all });
@@ -101,7 +130,7 @@ export function useRenamePlaylist() {
 	const queryClient = useQueryClient();
 	return useMutation({
 		mutationFn: async (payload: { id: string; name: string }) => {
-			const res = await client.playlists[":id"].$patch(
+			const res = await client["user-playlists"][":id"].$patch(
 				{ param: { id: payload.id }, json: { name: payload.name } },
 				{ headers: { Authorization: `Bearer ${await session?.getToken()}` } },
 			);
@@ -110,7 +139,7 @@ export function useRenamePlaylist() {
 		},
 		onSuccess: (_data, variables) => {
 			queryClient.invalidateQueries({ queryKey: playlistKeys.all });
-			queryClient.invalidateQueries({ queryKey: ["playlist", variables.id] });
+			queryClient.invalidateQueries({ queryKey: playlistKeys.detail(variables.id) });
 		},
 	});
 }
@@ -120,7 +149,7 @@ export function useDeletePlaylist() {
 	const queryClient = useQueryClient();
 	return useMutation({
 		mutationFn: async (id: string) => {
-			const res = await client.playlists[":id"].$delete(
+			const res = await client["user-playlists"][":id"].$delete(
 				{ param: { id } },
 				{ headers: { Authorization: `Bearer ${await session?.getToken()}` } },
 			);
@@ -137,11 +166,15 @@ export function useAddTrackToPlaylist() {
 	const { session } = useClerk();
 	const queryClient = useQueryClient();
 	return useMutation({
-		mutationFn: async (payload: { playlistId: string; trackId: string }) => {
-			const res = await client.playlists[":id"].tracks.$post(
+		mutationFn: async (payload: {
+			playlistId: string;
+			trackId: string;
+			trackMetadata: UserPlaylistTrackMetadata;
+		}) => {
+			const res = await client["user-playlists"][":id"].tracks.$post(
 				{
 					param: { id: payload.playlistId },
-					json: { trackId: payload.trackId },
+					json: { trackId: payload.trackId, trackMetadata: payload.trackMetadata },
 				},
 				{ headers: { Authorization: `Bearer ${await session?.getToken()}` } },
 			);
@@ -160,9 +193,9 @@ export function useRemoveTrackFromPlaylist() {
 	const { session } = useClerk();
 	const queryClient = useQueryClient();
 	return useMutation({
-		mutationFn: async (payload: { playlistId: string; trackId: string }) => {
-			const res = await client.playlists[":id"].tracks[":trackId"].$delete(
-				{ param: { id: payload.playlistId, trackId: payload.trackId } },
+		mutationFn: async (payload: { playlistId: string; entryId: string }) => {
+			const res = await client["user-playlists"][":id"].tracks[":entryId"].$delete(
+				{ param: { id: payload.playlistId, entryId: payload.entryId } },
 				{ headers: { Authorization: `Bearer ${await session?.getToken()}` } },
 			);
 			if (!res.ok) throw new Error("Failed to remove track");

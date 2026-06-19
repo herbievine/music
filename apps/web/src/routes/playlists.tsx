@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ChevronLeft, ChevronRight, ListMusic, Plus } from "lucide-react";
-import { useUserPlaylists, useCreatePlaylist } from "@/api/user-playlists";
-import type { SpotifyPlaylist } from "@/api/user-playlists";
+import { useCreatePlaylist, useUserPlaylists } from "@/api/user-playlists";
+import { useLikes } from "@/api/likes";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
@@ -85,11 +85,11 @@ function CreatePlaylistButton() {
 	);
 }
 
-function PlaylistsGrid({ playlists }: { playlists: SpotifyPlaylist[] }) {
+function PlaylistsGrid({ playlists }: { playlists: { id: string; name: string; image?: string }[] }) {
 	return (
 		<div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
 			{playlists.map((pl) => {
-				const imageUrl = pl.images?.[0]?.url;
+				const imageUrl = pl.image;
 				return (
 					<Link
 						key={pl.id}
@@ -166,10 +166,25 @@ function Pagination({
 
 function RouteComponent() {
 	const [offset, setOffset] = useState(0);
-	const { data, isLoading } = useUserPlaylists(offset);
+	const { data: created, isLoading: loadingCreated } = useUserPlaylists();
+	const { data: likedData, isLoading: loadingLiked } = useLikes("playlist");
 
-	const playlists = data?.playlists ?? [];
-	const total = data?.total ?? 0;
+	// Created (Supabase, editable) first, then liked external playlists (read-only).
+	const createdItems = (created?.playlists ?? []).map((p) => ({
+		id: p.id,
+		name: p.name,
+		image: undefined as string | undefined,
+	}));
+	const likedItems = (likedData?.items ?? []).map((l) => ({
+		id: l.itemId,
+		name: l.metadata.name,
+		image: l.metadata.image,
+	}));
+	const allPlaylists = [...createdItems, ...likedItems];
+
+	const isLoading = loadingCreated || loadingLiked;
+	const total = allPlaylists.length;
+	const playlists = allPlaylists.slice(offset, offset + PAGE_SIZE);
 	const hasPrev = offset > 0;
 	const hasNext = offset + PAGE_SIZE < total;
 
@@ -194,7 +209,7 @@ function RouteComponent() {
 			{isLoading ? (
 				<PlaylistsSkeleton />
 			) : playlists.length === 0 && offset === 0 ? (
-				<p className="text-sm text-muted-foreground/60 py-1">Create a playlist to organize your music.</p>
+				<p className="text-sm text-muted-foreground/60 py-1">Playlists you like will appear here.</p>
 			) : (
 				<>
 					<PlaylistsGrid playlists={playlists} />

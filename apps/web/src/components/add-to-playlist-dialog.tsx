@@ -45,6 +45,13 @@ export function AddToPlaylistDialog({ track, open, onOpenChange }: Props) {
 			{
 				playlistId,
 				trackId: track.id,
+				trackMetadata: {
+					name: track.name,
+					artists: track.artists,
+					albumName: track.albumName,
+					albumImage: track.albumImage,
+					durationMs: track.durationMs,
+				},
 			},
 			{
 				onSuccess: () => {

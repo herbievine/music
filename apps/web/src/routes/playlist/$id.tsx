@@ -7,11 +7,16 @@ import {
 	useParams,
 	useRouter,
 } from "@tanstack/react-router";
-import { ChevronLeft, Heart, ListEnd, MoreHorizontal, Pause, Pencil, Play, Radio, Shuffle, Trash2 } from "lucide-react";
-import { useState } from "react";
+import { ChevronLeft, Heart, ListEnd, ListMusic, MoreHorizontal, Pause, Pencil, Play, Radio, Shuffle, Trash2 } from "lucide-react";
+import { useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import type { SpotifyPlaylist } from "../../api/user-playlists";
-import { useDeletePlaylist, useRenamePlaylist } from "../../api/user-playlists";
+import {
+	useDeletePlaylist,
+	useRemoveTrackFromPlaylist,
+	useRenamePlaylist,
+	useUserPlaylist,
+} from "../../api/user-playlists";
 import {
 	Dialog,
 	DialogContent,
@@ -34,8 +39,14 @@ import { shuffleTracks, useShufflePreference } from "../../hooks/use-shuffle-pre
 import { formatTime } from "../../lib/format-time";
 import { client } from "../../lib/hono-rpc";
 import { cn } from "@/lib/utils";
+import type { SimpleTrack } from "../../store/queue";
 import { useQueueStore } from "../../store/queue";
 import { toSimpleTrack } from "../../utils/to-simple-track";
+
+// User playlists are Supabase rows keyed by UUID; external (liked) playlists use
+// Spotify's 22-char base62 ids. The id format tells the two apart with no extra
+// state threaded through deep links / search / home.
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export const Route = createFileRoute("/playlist/$id")({
 	component: RouteComponent,
@@ -47,7 +58,9 @@ function RouteComponent() {
 	const navigate = useNavigate();
 	const { session } = useClerk();
 	const { id } = useParams({ from: "/playlist/$id" });
-	const { data } = useQuery({
+	const isUserPlaylist = UUID_RE.test(id);
+
+	const spotifyQuery = useQuery({
 		queryKey: ["playlist", id],
 		queryFn: async (): Promise<SpotifyPlaylist> => {
 			const res = await client.playlists[":id"].$get(
@@ -61,7 +74,45 @@ function RouteComponent() {
 			if (!res.ok) throw new Error("Could not fetch playlist");
 			return (await res.json()) as SpotifyPlaylist;
 		},
+		enabled: !isUserPlaylist,
 	});
+	const userQuery = useUserPlaylist(id, isUserPlaylist);
+
+	// Normalize both playlist kinds into one view model. `entryId` is the
+	// user_playlist_tracks row id, present only for editable user playlists.
+	const view = useMemo(() => {
+		if (isUserPlaylist) {
+			const d = userQuery.data;
+			if (!d) return null;
+			return {
+				name: d.name,
+				image: d.tracks[0]?.trackMetadata.albumImage || undefined,
+				isSystem: d.isSystem,
+				tracks: d.tracks.map((t) => ({
+					entryId: t.id as string | undefined,
+					track: {
+						id: t.trackId,
+						name: t.trackMetadata.name,
+						durationMs: t.trackMetadata.durationMs,
+						artists: t.trackMetadata.artists.map((name) => ({ id: "", name })),
+						album: { id: "", name: t.trackMetadata.albumName, image: t.trackMetadata.albumImage },
+					} satisfies SimpleTrack,
+				})),
+			};
+		}
+		const d = spotifyQuery.data;
+		if (!d) return null;
+		return {
+			name: d.name,
+			image: d.images?.[0]?.url,
+			isSystem: false,
+			tracks: d.items.items.map(({ item }) => ({
+				entryId: undefined as string | undefined,
+				track: toSimpleTrack({ ...item, durationMs: item.duration_ms } as any, item.album as any),
+			})),
+		};
+	}, [isUserPlaylist, userQuery.data, spotifyQuery.data]);
+
 	const { play, pause, add, songs, songIndex, isPlaying } = useQueueStore();
 	const recordClick = useRecordClick();
 	const { isLiked, likeEntry } = useIsLiked(id, "playlist");
@@ -70,6 +121,7 @@ function RouteComponent() {
 	const goToRadio = useGoToRadio();
 	const renamePlaylist = useRenamePlaylist();
 	const deletePlaylist = useDeletePlaylist();
+	const removeTrack = useRemoveTrackFromPlaylist();
 	const [renameOpen, setRenameOpen] = useState(false);
 	const [renameName, setRenameName] = useState("");
 	const [deleteOpen, setDeleteOpen] = useState(false);
@@ -99,9 +151,8 @@ function RouteComponent() {
 		});
 	}
 
-	const imageUrl = data?.images?.[0]?.url;
-	const totalMs =
-		data?.items?.items?.reduce((acc: number, { item }) => acc + (item?.duration_ms || 0), 0) ?? 0;
+	const imageUrl = view?.image;
+	const totalMs = view?.tracks.reduce((acc, t) => acc + t.track.durationMs, 0) ?? 0;
 	const totalMin = Math.floor(totalMs / 60000);
 	const currentSongId = songs[songIndex]?.id;
 
@@ -131,10 +182,14 @@ function RouteComponent() {
 					{imageUrl ? (
 						<img
 							src={imageUrl}
-							alt={data?.name}
+							alt={view?.name}
 							className="w-40 h-40 sm:w-48 sm:h-48 rounded-xl shadow-2xl flex-shrink-0 object-cover mx-auto lg:mx-0"
 							style={{ viewTransitionName: `key-${id}` }}
 						/>
+					) : view ? (
+						<div className="w-40 h-40 sm:w-48 sm:h-48 rounded-xl bg-secondary flex-shrink-0 flex items-center justify-center mx-auto lg:mx-0">
+							<ListMusic className="w-12 h-12 text-white/20" strokeWidth={1} />
+						</div>
 					) : (
 						<div className="w-40 h-40 sm:w-48 sm:h-48 rounded-xl bg-secondary flex-shrink-0 animate-pulse mx-auto lg:mx-0" />
 					)}
@@ -143,17 +198,17 @@ function RouteComponent() {
 						<p className="text-xs font-bold uppercase tracking-widest text-white/70 mb-2">
 							Playlist
 						</p>
-						{data ? (
+						{view ? (
 							<h1 className="text-3xl sm:text-4xl lg:text-5xl font-black text-white leading-tight mb-4 line-clamp-2">
-								{data.name}
+								{view.name}
 							</h1>
 						) : (
 							<div className="h-12 w-64 bg-white/20 rounded-lg animate-pulse mb-4" />
 						)}
 						<div className="flex flex-wrap justify-center lg:justify-start items-center gap-x-1.5 gap-y-0.5 text-sm text-white/70">
-							{data ? (
+							{view ? (
 								<>
-									<span>{data.items.total} songs</span>
+									<span>{view.tracks.length} songs</span>
 									{totalMin > 0 && (
 										<><span>•</span><span>about {totalMin} min</span></>
 									)}
@@ -171,55 +226,51 @@ function RouteComponent() {
 				<button
 					type="button"
 					onClick={() => {
-						if (!data) return;
-						const tracks = data.items.items.map(({ item }) =>
-							toSimpleTrack(
-								{ ...item, durationMs: item.duration_ms } as any,
-								item.album as any,
-							),
-						);
+						if (!view) return;
+						const tracks = view.tracks.map((t) => t.track);
 						play(shuffleOnPlay ? shuffleTracks(tracks) : tracks, 0);
-					recordClick.mutate({
-						contextType: "playlist",
-						contextId: id,
-						metadata: {
-							name: data.name,
-							images: data.images,
-							description: data.description ?? undefined,
-						},
-					});
+						recordClick.mutate({
+							contextType: "playlist",
+							contextId: id,
+							metadata: {
+								name: view.name,
+								images: view.image ? [{ url: view.image }] : [],
+							},
+						});
 					}}
 					className="w-12 h-12 sm:w-14 sm:h-14 bg-emerald-500 hover:bg-emerald-400 hover:scale-105 active:scale-100 rounded-full flex items-center justify-center shadow-lg transition-all flex-shrink-0"
 				>
 					<Play className="w-6 h-6 text-black fill-black ml-0.5" />
 				</button>
 
-				<button
-					type="button"
-					onClick={() => {
-						if (isLiked && likeEntry) {
-							unlike.mutate(likeEntry.id);
-						} else if (data) {
-							like.mutate({
-								itemId: id,
-								itemType: "playlist",
-								metadata: {
-									name: data.name,
-									image: data.images[0]?.url ?? "",
-									artist: "",
-								},
-							});
-						}
-					}}
-					className={cn(
-						"w-10 h-10 sm:w-8 sm:h-8 flex items-center justify-center transition-colors",
-						isLiked
-							? "text-emerald-400 hover:text-emerald-300"
-							: "text-muted-foreground hover:text-foreground",
-					)}
-				>
-					<Heart className="w-5 h-5" fill={isLiked ? "currentColor" : "none"} />
-				</button>
+				{!isUserPlaylist && (
+					<button
+						type="button"
+						onClick={() => {
+							if (isLiked && likeEntry) {
+								unlike.mutate(likeEntry.id);
+							} else if (view) {
+								like.mutate({
+									itemId: id,
+									itemType: "playlist",
+									metadata: {
+										name: view.name,
+										image: view.image ?? "",
+										artist: "",
+									},
+								});
+							}
+						}}
+						className={cn(
+							"w-10 h-10 sm:w-8 sm:h-8 flex items-center justify-center transition-colors",
+							isLiked
+								? "text-emerald-400 hover:text-emerald-300"
+								: "text-muted-foreground hover:text-foreground",
+						)}
+					>
+						<Heart className="w-5 h-5" fill={isLiked ? "currentColor" : "none"} />
+					</button>
+				)}
 
 				<button
 					type="button"
@@ -245,37 +296,36 @@ function RouteComponent() {
 					<DropdownMenuContent align="start">
 						<DropdownMenuItem
 							onSelect={() => {
-								if (!data) return;
-								const tracks = data.items.items.map(({ item }) =>
-									toSimpleTrack(
-										{ ...item, durationMs: item.duration_ms } as any,
-										item.album as any,
-									),
-								);
+								if (!view) return;
+								const tracks = view.tracks.map((t) => t.track);
 								add(shuffleOnPlay ? shuffleTracks(tracks) : tracks);
-								toast.success(`Added ${data.items.total} tracks to queue`);
+								toast.success(`Added ${tracks.length} tracks to queue`);
 							}}
 						>
 							<ListEnd className="w-4 h-4" />
 							Add to queue
 						</DropdownMenuItem>
-						<DropdownMenuSeparator />
-						<DropdownMenuItem
-							onSelect={() => {
-								setRenameName(data?.name ?? "");
-								setRenameOpen(true);
-							}}
-						>
-							<Pencil className="w-4 h-4" />
-							Rename
-						</DropdownMenuItem>
-						<DropdownMenuItem
-							onSelect={() => setDeleteOpen(true)}
-							className="text-destructive focus:text-destructive"
-						>
-							<Trash2 className="w-4 h-4" />
-							Delete playlist
-						</DropdownMenuItem>
+						{isUserPlaylist && !view?.isSystem && (
+							<>
+								<DropdownMenuSeparator />
+								<DropdownMenuItem
+									onSelect={() => {
+										setRenameName(view?.name ?? "");
+										setRenameOpen(true);
+									}}
+								>
+									<Pencil className="w-4 h-4" />
+									Rename
+								</DropdownMenuItem>
+								<DropdownMenuItem
+									onSelect={() => setDeleteOpen(true)}
+									className="text-destructive focus:text-destructive"
+								>
+									<Trash2 className="w-4 h-4" />
+									Delete playlist
+								</DropdownMenuItem>
+							</>
+						)}
 					</DropdownMenuContent>
 				</DropdownMenu>
 			</div>
@@ -289,27 +339,28 @@ function RouteComponent() {
 					<span className="hidden sm:block" />
 				</div>
 
-				{data
-					? data.items.total > 0 &&
-						data.items.items.map(({ item }, i) => {
+				{view
+					? view.tracks.length > 0 &&
+						view.tracks.map(({ entryId, track: item }, i) => {
 							const isCurrentTrack = item.id === currentSongId;
+							const albumImages = item.album.image ? [{ url: item.album.image }] : [];
 							const playTrack = () => {
 								if (isCurrentTrack && isPlaying) {
 									pause();
 								} else {
-									play([toSimpleTrack({ ...item, durationMs: item.duration_ms } as any, item.album as any)]);
+									play([item]);
 									recordClick.mutate({
 										contextType: "track",
 										contextId: item.id,
 										metadata: {
 											name: item.name,
-											images: item.album.images,
+											images: albumImages,
 											artists: item.artists,
-											durationMs: item.duration_ms,
+											durationMs: item.durationMs,
 											album: {
 												id: item.album.id,
 												name: item.album.name,
-												images: item.album.images,
+												images: albumImages,
 												releaseDate: "",
 											},
 										},
@@ -356,7 +407,7 @@ function RouteComponent() {
 									</span>
 
 									<span className="text-xs text-muted-foreground tabular-nums">
-										{formatTime(item.duration_ms)}
+										{formatTime(item.durationMs)}
 									</span>
 
 									{/* Track options */}
@@ -370,7 +421,7 @@ function RouteComponent() {
 										</DropdownMenuTrigger>
 										<DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
 											<DropdownMenuItem
-												onSelect={() => { add([toSimpleTrack({ ...item, durationMs: item.duration_ms } as any, item.album as any)]); toast.success("Added to queue"); }}
+												onSelect={() => { add([item]); toast.success("Added to queue"); }}
 											>
 												<ListEnd className="w-4 h-4" />
 												Add to queue
@@ -383,6 +434,26 @@ function RouteComponent() {
 												<Radio className="w-4 h-4" />
 												Go to radio
 											</DropdownMenuItem>
+											{isUserPlaylist && entryId && (
+												<>
+													<DropdownMenuSeparator />
+													<DropdownMenuItem
+														onSelect={() =>
+															removeTrack.mutate(
+																{ playlistId: id, entryId },
+																{
+																	onSuccess: () => toast.success("Removed from playlist"),
+																	onError: () => toast.error("Failed to remove track"),
+																},
+															)
+														}
+														className="text-destructive focus:text-destructive"
+													>
+														<Trash2 className="w-4 h-4" />
+														Remove from playlist
+													</DropdownMenuItem>
+												</>
+											)}
 										</DropdownMenuContent>
 									</DropdownMenu>
 								</div>
@@ -444,7 +515,7 @@ function RouteComponent() {
 						<DialogTitle>Delete playlist?</DialogTitle>
 					</DialogHeader>
 					<p className="text-sm text-muted-foreground">
-						This will unfollow <span className="text-foreground font-medium">{data?.name}</span>. This action cannot be undone.
+						This will permanently delete <span className="text-foreground font-medium">{view?.name}</span>. This action cannot be undone.
 					</p>
 					<DialogFooter>
 						<button
