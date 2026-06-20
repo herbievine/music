@@ -50,6 +50,13 @@
       "when": 1780820160445,
       "tag": "0006_add_artist_genres",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1781938676374,
+      "tag": "0007_tiresome_pyro",
+      "breakpoints": true
     }
   ]
 }

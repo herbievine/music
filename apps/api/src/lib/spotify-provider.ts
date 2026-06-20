@@ -236,6 +236,38 @@ export class SpotifyProvider implements MusicProvider {
 		};
 	}
 
+	async getUserSavedTracks(options?: {
+		limit?: number;
+		offset?: number;
+	}): Promise<{ items: { addedAt: string; track: MusicTrack }[]; total: number }> {
+		const url = new URL("/v1/me/tracks", "https://api.spotify.com");
+		url.searchParams.append("limit", String(options?.limit ?? 50));
+		url.searchParams.append("offset", String(options?.offset ?? 0));
+
+		const res = await fetch(url, {
+			headers: { Authorization: `Bearer ${this.token}` },
+		});
+
+		if (!res.ok) {
+			throw new Error("Could not retrieve user saved tracks");
+		}
+
+		const data = (await res.json()) as {
+			items: { added_at: string; track: Track }[];
+			total: number;
+		};
+
+		return {
+			items: data.items
+				.filter((item) => item.track != null)
+				.map((item) => ({
+					addedAt: item.added_at,
+					track: mapTrack(item.track),
+				})),
+			total: data.total,
+		};
+	}
+
 	async getUserPlaylists(): Promise<{
 		items: MusicPlaylistSummary[];
 		total: number;

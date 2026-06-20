@@ -18,6 +18,11 @@ export interface MusicProvider {
 		items: { addedAt: string; album: MusicAlbumSummary }[];
 	}>;
 
+	getUserSavedTracks(options?: { limit?: number; offset?: number }): Promise<{
+		items: { addedAt: string; track: MusicTrack }[];
+		total: number;
+	}>;
+
 	getUserPlaylists(): Promise<{
 		items: MusicPlaylistSummary[];
 		total: number;

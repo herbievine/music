@@ -74,6 +74,9 @@ export const userPlaylists = pgTable("user_playlists", {
 	userId: text("user_id").notNull(),
 	name: text("name").notNull(),
 	description: text("description"),
+	// Set when the playlist was imported from Spotify; null for app-created playlists.
+	// Used to dedupe imports so an already-imported playlist isn't re-synced.
+	spotifyId: text("spotify_id"),
 	isSystem: boolean("is_system").notNull().default(false),
 	createdAt: timestamp("created_at").defaultNow().notNull(),
 	updatedAt: timestamp("updated_at").defaultNow().notNull(),

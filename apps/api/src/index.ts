@@ -14,6 +14,7 @@ import likesRoutes from "./routes/likes.js";
 import lyricsRoutes from "./routes/lyrics.js";
 import playerRoutes from "./routes/player.js";
 import playlistRoutes from "./routes/playlists.js";
+import syncRoutes from "./routes/sync.js";
 import userPlaylistRoutes from "./routes/user-playlists.js";
 
 config();
@@ -46,6 +47,7 @@ const routes = app
 	.route("/user-playlists", userPlaylistRoutes)
 	.route("/clicks", clicksRoutes)
 	.route("/likes", likesRoutes)
+	.route("/sync", syncRoutes)
 	.route("/lyrics", lyricsRoutes)
 	.get(
 		"/search",
