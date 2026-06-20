@@ -24,6 +24,9 @@ type AudioContextValue = {
 
 const AudioContext = createContext<AudioContextValue | null>(null);
 
+const defaultTitle =
+	typeof document !== "undefined" ? document.title : "Music";
+
 export function useAudioContext() {
 	const ctx = useContext(AudioContext);
 	if (!ctx) throw new Error("useAudioContext must be used within AudioProvider");
@@ -71,6 +74,23 @@ export function AudioProvider({ children }: { children: ReactNode }) {
 
 	useMediaSession({ audioRef });
 	useKeyboardShortcuts({ audioRef });
+
+	// Reflect the current track in the page title while playing
+	useEffect(() => {
+		const currentSong = songs[songIndex];
+
+		if (isPlaying && currentSong) {
+			document.title = `${currentSong.name} - ${currentSong.artists
+				.map((artist) => artist.name)
+				.join(", ")}`;
+		} else {
+			document.title = defaultTitle;
+		}
+
+		return () => {
+			document.title = defaultTitle;
+		};
+	}, [isPlaying, songs, songIndex]);
 
 	// Keep screen on while playing
 	useEffect(() => {
