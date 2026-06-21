@@ -48,6 +48,7 @@ export type ImportResult = {
 	tracksImported: number;
 	albumsImported: number;
 	playlistsImported: number;
+	errors: string[];
 };
 
 // ─── Query keys ───────────────────────────────────────────────────────────────
@@ -71,6 +72,10 @@ export function useSyncStatus() {
 			if (!res.ok) throw new Error("Failed to load sync status");
 			return res.json() as Promise<SyncStatus>;
 		},
+		// Walking the whole Spotify library is expensive; don't refetch on every
+		// window focus / remount. The user can refresh explicitly.
+		staleTime: 5 * 60 * 1000,
+		refetchOnWindowFocus: false,
 	});
 }
 
@@ -86,8 +91,27 @@ export function useImportLibrary() {
 			if (!res.ok) throw new Error("Import failed");
 			return res.json() as Promise<ImportResult>;
 		},
-		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: syncKeys.all });
+		onSuccess: (_result, selection) => {
+			// Flip the imported badges in-cache rather than refetching the whole
+			// library (which would re-walk every page of liked songs + albums).
+			const importedTracks = new Set(selection.tracks.map((t) => t.id));
+			const importedAlbums = new Set(selection.albums.map((a) => a.id));
+			const importedPlaylists = new Set(selection.playlistIds);
+			queryClient.setQueryData<SyncStatus>(syncKeys.status(), (prev) =>
+				prev
+					? {
+							tracks: prev.tracks.map((t) =>
+								importedTracks.has(t.id) ? { ...t, imported: true } : t,
+							),
+							albums: prev.albums.map((a) =>
+								importedAlbums.has(a.id) ? { ...a, imported: true } : a,
+							),
+							playlists: prev.playlists.map((p) =>
+								importedPlaylists.has(p.id) ? { ...p, imported: true } : p,
+							),
+						}
+					: prev,
+			);
 			queryClient.invalidateQueries({ queryKey: likesKeys.all });
 			queryClient.invalidateQueries({ queryKey: playlistKeys.all });
 		},

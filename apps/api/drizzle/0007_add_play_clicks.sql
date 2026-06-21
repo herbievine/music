@@ -6,5 +6,3 @@ CREATE TABLE IF NOT EXISTS "play_clicks" (
 	"metadata" jsonb NOT NULL,
 	"clicked_at" timestamp DEFAULT now() NOT NULL
 );
---> statement-breakpoint
-ALTER TABLE "user_playlists" ADD COLUMN "spotify_id" text;

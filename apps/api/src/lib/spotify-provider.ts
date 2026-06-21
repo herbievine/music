@@ -108,6 +108,24 @@ function mapArtist(artist: Artist): MusicArtist {
 	};
 }
 
+// Fetch a Spotify URL, honoring 429 rate limits by waiting out `Retry-After`
+// (seconds) and retrying. Used by every paginated walk so large libraries don't
+// blow up mid-pagination.
+async function spotifyFetch(
+	url: string | URL,
+	token: string,
+	retries = 5,
+): Promise<Response> {
+	for (let attempt = 0; ; attempt++) {
+		const res = await fetch(url, {
+			headers: { Authorization: `Bearer ${token}` },
+		});
+		if (res.status !== 429 || attempt >= retries) return res;
+		const retryAfter = Number(res.headers.get("Retry-After")) || 1;
+		await new Promise((r) => setTimeout(r, retryAfter * 1000));
+	}
+}
+
 export class SpotifyProvider implements MusicProvider {
 	private client: SpotifyAPI;
 	private token: string;
@@ -205,6 +223,21 @@ export class SpotifyProvider implements MusicProvider {
 
 	async getPlaylist(id: string): Promise<MusicPlaylist> {
 		const playlist = await this.client.playlist.get(id);
+
+		// The playlist endpoint only returns the first page of tracks (max 100).
+		// Walk `tracks.next` to collect the rest so large playlists import fully.
+		let nextUrl: string | null | undefined = playlist.tracks.next;
+		while (nextUrl) {
+			const res = await spotifyFetch(nextUrl, this.token);
+			if (!res.ok) break;
+			const page = (await res.json()) as {
+				items: Playlist["tracks"]["items"];
+				next: string | null;
+			};
+			playlist.tracks.items.push(...page.items);
+			nextUrl = page.next;
+		}
+
 		return mapPlaylist(playlist);
 	}
 
@@ -216,9 +249,7 @@ export class SpotifyProvider implements MusicProvider {
 		url.searchParams.append("limit", String(options?.limit ?? 10));
 		url.searchParams.append("offset", String(options?.offset ?? 0));
 
-		const res = await fetch(url, {
-			headers: { Authorization: `Bearer ${this.token}` },
-		});
+		const res = await spotifyFetch(url, this.token);
 
 		if (!res.ok) {
 			throw new Error("Could not retrieve user albums");
@@ -244,9 +275,7 @@ export class SpotifyProvider implements MusicProvider {
 		url.searchParams.append("limit", String(options?.limit ?? 50));
 		url.searchParams.append("offset", String(options?.offset ?? 0));
 
-		const res = await fetch(url, {
-			headers: { Authorization: `Bearer ${this.token}` },
-		});
+		const res = await spotifyFetch(url, this.token);
 
 		if (!res.ok) {
 			throw new Error("Could not retrieve user saved tracks");
@@ -272,11 +301,33 @@ export class SpotifyProvider implements MusicProvider {
 		items: MusicPlaylistSummary[];
 		total: number;
 	}> {
-		const result = await this.client.me.playlists();
-		return {
-			items: result.items.map(mapPlaylistSummary),
-			total: result.total,
-		};
+		// `/me/playlists` returns max 50 per page; walk every page so users with
+		// many playlists see (and can import) all of them, not just the first page.
+		const items: MusicPlaylistSummary[] = [];
+		const limit = 50;
+		let offset = 0;
+		let total = 0;
+		for (;;) {
+			const url = new URL("/v1/me/playlists", "https://api.spotify.com");
+			url.searchParams.append("limit", String(limit));
+			url.searchParams.append("offset", String(offset));
+
+			const res = await spotifyFetch(url, this.token);
+			if (!res.ok) {
+				throw new Error("Could not retrieve user playlists");
+			}
+
+			const page = (await res.json()) as {
+				items: SimplifiedPlaylist[];
+				total: number;
+			};
+			total = page.total;
+			items.push(...page.items.filter(Boolean).map(mapPlaylistSummary));
+			offset += limit;
+			if (items.length >= total || page.items.length < limit) break;
+		}
+
+		return { items, total };
 	}
 
 	async getTopTracks(options?: {

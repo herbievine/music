@@ -7,6 +7,7 @@ import {
 	primaryKey,
 	text,
 	timestamp,
+	uniqueIndex,
 	uuid,
 } from "drizzle-orm/pg-core";
 
@@ -54,33 +55,54 @@ export const playClicks = pgTable("play_clicks", {
 	clickedAt: timestamp("clicked_at").defaultNow().notNull(),
 });
 
-export const likes = pgTable("likes", {
-	id: uuid("id").defaultRandom().primaryKey(),
-	userId: text("user_id").notNull(),
-	itemId: text("item_id").notNull(),
-	itemType: text("item_type").notNull(),
-	metadata: jsonb("metadata")
-		.$type<{
-			name: string;
-			image: string;
-			artist: string;
-		}>()
-		.notNull(),
-	createdAt: timestamp("created_at").defaultNow().notNull(),
-});
+export const likes = pgTable(
+	"likes",
+	{
+		id: uuid("id").defaultRandom().primaryKey(),
+		userId: text("user_id").notNull(),
+		itemId: text("item_id").notNull(),
+		itemType: text("item_type").notNull(),
+		metadata: jsonb("metadata")
+			.$type<{
+				name: string;
+				image: string;
+				artist: string;
+			}>()
+			.notNull(),
+		createdAt: timestamp("created_at").defaultNow().notNull(),
+	},
+	(table) => ({
+		// One like per (user, item); makes imports idempotent under concurrent writes.
+		userItemUnique: uniqueIndex("likes_user_item_type_uq").on(
+			table.userId,
+			table.itemId,
+			table.itemType,
+		),
+	}),
+);
 
-export const userPlaylists = pgTable("user_playlists", {
-	id: uuid("id").defaultRandom().primaryKey(),
-	userId: text("user_id").notNull(),
-	name: text("name").notNull(),
-	description: text("description"),
-	// Set when the playlist was imported from Spotify; null for app-created playlists.
-	// Used to dedupe imports so an already-imported playlist isn't re-synced.
-	spotifyId: text("spotify_id"),
-	isSystem: boolean("is_system").notNull().default(false),
-	createdAt: timestamp("created_at").defaultNow().notNull(),
-	updatedAt: timestamp("updated_at").defaultNow().notNull(),
-});
+export const userPlaylists = pgTable(
+	"user_playlists",
+	{
+		id: uuid("id").defaultRandom().primaryKey(),
+		userId: text("user_id").notNull(),
+		name: text("name").notNull(),
+		description: text("description"),
+		// Set when the playlist was imported from Spotify; null for app-created playlists.
+		// Used to dedupe imports so an already-imported playlist isn't re-synced.
+		spotifyId: text("spotify_id"),
+		isSystem: boolean("is_system").notNull().default(false),
+		createdAt: timestamp("created_at").defaultNow().notNull(),
+		updatedAt: timestamp("updated_at").defaultNow().notNull(),
+	},
+	(table) => ({
+		// At most one imported playlist per (user, Spotify playlist). Partial so
+		// app-created playlists (null spotify_id) are unconstrained.
+		spotifyUnique: uniqueIndex("user_playlists_user_spotify_uq")
+			.on(table.userId, table.spotifyId)
+			.where(sql`${table.spotifyId} is not null`),
+	}),
+);
 
 export const userPlaylistTracks = pgTable("user_playlist_tracks", {
 	id: uuid("id").defaultRandom().primaryKey(),

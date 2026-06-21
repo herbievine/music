@@ -121,7 +121,7 @@ function Section<T extends { id: string; imported: boolean }>({
 }
 
 function RouteComponent() {
-	const { data, isLoading } = useSyncStatus();
+	const { data, isLoading, isError, refetch } = useSyncStatus();
 	const importLibrary = useImportLibrary();
 	const [selection, setSelection] = useState<Selection>(emptySelection);
 
@@ -164,9 +164,12 @@ function RouteComponent() {
 			},
 			{
 				onSuccess: (r) => {
-					toast.success(
-						`Imported ${r.tracksImported} songs, ${r.albumsImported} albums, ${r.playlistsImported} playlists`,
-					);
+					const summary = `Imported ${r.tracksImported} songs, ${r.albumsImported} albums, ${r.playlistsImported} playlists`;
+					if (r.errors.length > 0) {
+						toast.error(`${summary}. ${r.errors.length} item(s) failed.`);
+					} else {
+						toast.success(summary);
+					}
 					setSelection(emptySelection());
 				},
 				onError: () => toast.error("Import failed"),
@@ -180,12 +183,21 @@ function RouteComponent() {
 				<div>
 					<h1 className="text-2xl font-bold">Sync</h1>
 					<p className="text-sm text-muted-foreground">
-						Import your Spotify library into your library.
+						Import your saved Spotify library into your account.
 					</p>
 				</div>
 			</div>
 
-			{isLoading || !data ? (
+			{isError ? (
+				<div className="flex flex-col items-center gap-3 py-16 text-center">
+					<p className="text-sm text-muted-foreground">
+						Couldn't load your Spotify library.
+					</p>
+					<Button variant="secondary" onClick={() => refetch()}>
+						Try again
+					</Button>
+				</div>
+			) : isLoading || !data ? (
 				<SyncSkeleton />
 			) : (
 				<div className="flex flex-col gap-8">
@@ -248,7 +260,7 @@ function RouteComponent() {
 				</div>
 			)}
 
-			<div className="fixed bottom-0 left-0 right-0 z-10 border-t border-white/5 bg-background/80 backdrop-blur-md px-4 sm:px-8 py-3">
+			<div className="sticky bottom-0 z-10 -mx-4 sm:-mx-8 border-t border-white/5 bg-card/90 backdrop-blur-md px-4 sm:px-8 py-3">
 				<div className="flex items-center justify-between gap-4">
 					<span className="text-sm text-muted-foreground">
 						{totalSelected} selected
