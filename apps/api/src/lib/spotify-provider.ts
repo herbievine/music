@@ -1,403 +1,443 @@
 import type {
-	Album,
-	Artist,
-	Playlist,
-	SimplifiedPlaylist,
-	Track,
-	TrackSimplified,
+  Album,
+  Artist,
+  Playlist,
+  SimplifiedPlaylist,
+  Track,
+  TrackSimplified,
 } from "@statsfm/spotify.js";
 import { SpotifyAPI } from "@statsfm/spotify.js";
 import type {
-	MusicAlbum,
-	MusicAlbumSummary,
-	MusicArtist,
-	MusicArtistDetail,
-	MusicImage,
-	MusicPlaylist,
-	MusicPlaylistSummary,
-	MusicSearchResult,
-	MusicTrack,
-	MusicTrackSimplified,
+  MusicAlbum,
+  MusicAlbumSummary,
+  MusicArtist,
+  MusicArtistDetail,
+  MusicImage,
+  MusicPlaylist,
+  MusicPlaylistSummary,
+  MusicSearchResult,
+  MusicTrack,
+  MusicTrackSimplified,
 } from "../types.js";
 import type { MusicProvider } from "./music-provider.js";
 
 function mapImage(image: {
-	url: string;
-	width?: number;
-	height?: number;
+  url: string;
+  width?: number;
+  height?: number;
 }): MusicImage {
-	return { url: image.url, width: image.width, height: image.height };
+  return { url: image.url, width: image.width, height: image.height };
 }
 
 function mapTrackSimplified(track: TrackSimplified): MusicTrackSimplified {
-	return {
-		id: track.id,
-		name: track.name,
-		durationMs: track.duration_ms,
-		trackNumber: track.track_number,
-		artists: track.artists.map((a) => ({ id: a.id, name: a.name })),
-		type: "track" as const,
-	};
+  return {
+    id: track.id,
+    name: track.name,
+    durationMs: track.duration_ms,
+    trackNumber: track.track_number,
+    artists: track.artists.map((a) => ({ id: a.id, name: a.name })),
+    type: "track" as const,
+  };
 }
 
 function mapTrack(track: Track): MusicTrack {
-	return {
-		...mapTrackSimplified(track),
-		album: {
-			id: track.album.id,
-			name: track.album.name ?? "",
-			images: track.album.images.map(mapImage),
-			releaseDate: track.album.release_date ?? "",
-		},
-	};
+  return {
+    ...mapTrackSimplified(track),
+    album: {
+      id: track.album.id,
+      name: track.album.name ?? "",
+      images: track.album.images.map(mapImage),
+      releaseDate: track.album.release_date ?? "",
+    },
+  };
 }
 
 function mapAlbumSummary(album: Album): MusicAlbumSummary {
-	return {
-		id: album.id,
-		name: album.name ?? "",
-		artists: (album.artists ?? []).map((a) => ({ id: a.id, name: a.name })),
-		images: (album.images ?? []).map(mapImage),
-		releaseDate: album.release_date ?? "",
-		type: "album" as const,
-	};
+  return {
+    id: album.id,
+    name: album.name ?? "",
+    artists: (album.artists ?? []).map((a) => ({ id: a.id, name: a.name })),
+    images: (album.images ?? []).map(mapImage),
+    releaseDate: album.release_date ?? "",
+    type: "album" as const,
+  };
 }
 
 function mapAlbum(album: Album): MusicAlbum {
-	return {
-		...mapAlbumSummary(album),
-		totalTracks: album.total_tracks,
-		tracks: {
-			total: album.tracks.total,
-			items: album.tracks.items.map(mapTrackSimplified),
-		},
-	};
+  return {
+    ...mapAlbumSummary(album),
+    totalTracks: album.total_tracks,
+    tracks: {
+      total: album.tracks.total,
+      items: album.tracks.items.map(mapTrackSimplified),
+    },
+  };
 }
 
 function mapPlaylistSummary(
-	playlist: Playlist | SimplifiedPlaylist,
+  playlist: Playlist | SimplifiedPlaylist,
 ): MusicPlaylistSummary {
-	return {
-		id: playlist.id,
-		name: playlist.name,
-		description: playlist.description ?? "",
-		images: (playlist.images ?? []).map(mapImage),
-		type: "playlist" as const,
-	};
+  return {
+    id: playlist.id,
+    name: playlist.name,
+    description: playlist.description ?? "",
+    images: (playlist.images ?? []).map(mapImage),
+    type: "playlist" as const,
+  };
 }
 
-function mapPlaylist(playlist: Playlist): MusicPlaylist {
-	return {
-		...mapPlaylistSummary(playlist),
-		tracks: {
-			total: playlist.tracks.total,
-			items: playlist.tracks.items
-				.filter((item) => item.track != null)
-				.map((item) => ({ track: mapTrack(item.track) })),
-		},
-	};
+function mapPlaylist(
+  playlist: Playlist,
+  items?: Playlist["tracks"]["items"],
+): MusicPlaylist {
+  // `playlist.tracks` is absent for some playlists (see getPlaylist), so fall
+  // back to the explicitly-collected items and never assume the page exists.
+  const trackItems = items ?? playlist.tracks?.items ?? [];
+  return {
+    ...mapPlaylistSummary(playlist),
+    tracks: {
+      total: trackItems.length,
+      items: trackItems
+        .filter((item) => item.track != null)
+        .map((item) => ({ track: mapTrack(item.track) })),
+    },
+  };
 }
 
 function mapArtist(artist: Artist): MusicArtist {
-	return {
-		id: artist.id,
-		name: artist.name,
-		images: (artist.images ?? []).map(mapImage),
-		genres: artist.genres ?? [],
-		type: "artist" as const,
-	};
+  return {
+    id: artist.id,
+    name: artist.name,
+    images: (artist.images ?? []).map(mapImage),
+    genres: artist.genres ?? [],
+    type: "artist" as const,
+  };
 }
 
 // Fetch a Spotify URL, honoring 429 rate limits by waiting out `Retry-After`
 // (seconds) and retrying. Used by every paginated walk so large libraries don't
 // blow up mid-pagination.
 async function spotifyFetch(
-	url: string | URL,
-	token: string,
-	retries = 5,
+  url: string | URL,
+  token: string,
+  retries = 5,
 ): Promise<Response> {
-	for (let attempt = 0; ; attempt++) {
-		const res = await fetch(url, {
-			headers: { Authorization: `Bearer ${token}` },
-		});
-		if (res.status !== 429 || attempt >= retries) return res;
-		const retryAfter = Number(res.headers.get("Retry-After")) || 1;
-		await new Promise((r) => setTimeout(r, retryAfter * 1000));
-	}
+  for (let attempt = 0; ; attempt++) {
+    const res = await fetch(url, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (res.status !== 429 || attempt >= retries) return res;
+    const retryAfter = Number(res.headers.get("Retry-After")) || 1;
+    await new Promise((r) => setTimeout(r, retryAfter * 1000));
+  }
 }
 
 export class SpotifyProvider implements MusicProvider {
-	private client: SpotifyAPI;
-	private token: string;
+  private client: SpotifyAPI;
+  private token: string;
 
-	constructor(token: string) {
-		this.token = token;
-		this.client = new SpotifyAPI({
-			clientCredentials: {
-				clientId: process.env.SPOTIFY_CLIENT_ID,
-				clientSecret: process.env.SPOTIFY_CLIENT_SECRET,
-			},
-			accessToken: token,
-		});
-	}
+  constructor(token: string) {
+    this.token = token;
+    this.client = new SpotifyAPI({
+      clientCredentials: {
+        clientId: process.env.SPOTIFY_CLIENT_ID,
+        clientSecret: process.env.SPOTIFY_CLIENT_SECRET,
+      },
+      accessToken: token,
+    });
+  }
 
-	async getAlbum(id: string): Promise<MusicAlbum> {
-		const album = await this.client.albums.get(id);
+  async getAlbum(id: string): Promise<MusicAlbum> {
+    const album = await this.client.albums.get(id);
 
-		// The album endpoint only returns the first page of tracks (max 50).
-		// Walk `tracks.next` to collect the rest so albums with >50 tracks load fully.
-		let nextUrl: string | null | undefined = album.tracks.next;
-		while (nextUrl) {
-			const res = await fetch(nextUrl, {
-				headers: { Authorization: `Bearer ${this.token}` },
-			});
-			if (!res.ok) break;
-			const page = (await res.json()) as {
-				items: TrackSimplified[];
-				next: string | null;
-			};
-			album.tracks.items.push(...page.items);
-			nextUrl = page.next;
-		}
+    // The album endpoint only returns the first page of tracks (max 50).
+    // Walk `tracks.next` to collect the rest so albums with >50 tracks load fully.
+    let nextUrl: string | null | undefined = album.tracks.next;
+    while (nextUrl) {
+      const res = await fetch(nextUrl, {
+        headers: { Authorization: `Bearer ${this.token}` },
+      });
+      if (!res.ok) break;
+      const page = (await res.json()) as {
+        items: TrackSimplified[];
+        next: string | null;
+      };
+      album.tracks.items.push(...page.items);
+      nextUrl = page.next;
+    }
 
-		return mapAlbum(album);
-	}
+    return mapAlbum(album);
+  }
 
-	async getTrack(id: string): Promise<MusicTrack> {
-		const track = await this.client.tracks.get(id);
-		return mapTrack(track);
-	}
+  async getTrack(id: string): Promise<MusicTrack> {
+    const track = await this.client.tracks.get(id);
+    return mapTrack(track);
+  }
 
-	async getArtist(id: string): Promise<MusicArtistDetail> {
-		const [artistRes, firstAlbumsRes] = await Promise.all([
-			fetch(`https://api.spotify.com/v1/artists/${encodeURIComponent(id)}`, {
-				headers: { Authorization: `Bearer ${this.token}` },
-			}),
-			// limit=10 is the effective max for this app's API access level
-			fetch(
-				`https://api.spotify.com/v1/artists/${encodeURIComponent(id)}/albums?limit=10&include_groups=album,single,compilation`,
-				{ headers: { Authorization: `Bearer ${this.token}` } },
-			),
-		]);
+  async getArtist(id: string): Promise<MusicArtistDetail> {
+    const [artistRes, firstAlbumsRes] = await Promise.all([
+      fetch(`https://api.spotify.com/v1/artists/${encodeURIComponent(id)}`, {
+        headers: { Authorization: `Bearer ${this.token}` },
+      }),
+      // limit=10 is the effective max for this app's API access level
+      fetch(
+        `https://api.spotify.com/v1/artists/${encodeURIComponent(id)}/albums?limit=10&include_groups=album,single,compilation`,
+        { headers: { Authorization: `Bearer ${this.token}` } },
+      ),
+    ]);
 
-		if (!artistRes.ok) {
-			const body = await artistRes.json().catch(() => null);
-			console.error("Spotify artist error", artistRes.status, JSON.stringify(body));
-			throw new Error(`Could not fetch artist: ${artistRes.status} ${JSON.stringify(body)}`);
-		}
-		if (!firstAlbumsRes.ok) {
-			const body = await firstAlbumsRes.json().catch(() => null);
-			console.error("Spotify artist albums error", firstAlbumsRes.status, JSON.stringify(body));
-			throw new Error(`Could not fetch artist albums: ${firstAlbumsRes.status} ${JSON.stringify(body)}`);
-		}
+    if (!artistRes.ok) {
+      const body = await artistRes.json().catch(() => null);
+      console.error(
+        "Spotify artist error",
+        artistRes.status,
+        JSON.stringify(body),
+      );
+      throw new Error(
+        `Could not fetch artist: ${artistRes.status} ${JSON.stringify(body)}`,
+      );
+    }
+    if (!firstAlbumsRes.ok) {
+      const body = await firstAlbumsRes.json().catch(() => null);
+      console.error(
+        "Spotify artist albums error",
+        firstAlbumsRes.status,
+        JSON.stringify(body),
+      );
+      throw new Error(
+        `Could not fetch artist albums: ${firstAlbumsRes.status} ${JSON.stringify(body)}`,
+      );
+    }
 
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		const artist = (await artistRes.json()) as any;
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		const firstPage = (await firstAlbumsRes.json()) as { items: any[]; next: string | null };
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const artist = (await artistRes.json()) as any;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const firstPage = (await firstAlbumsRes.json()) as {
+      items: any[];
+      next: string | null;
+    };
 
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		const allAlbums: any[] = [...firstPage.items];
-		let nextUrl = firstPage.next;
-		let pages = 1;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const allAlbums: any[] = [...firstPage.items];
+    let nextUrl = firstPage.next;
+    let pages = 1;
 
-		while (nextUrl && pages < 5) {
-			const res = await fetch(nextUrl, { headers: { Authorization: `Bearer ${this.token}` } });
-			if (!res.ok) break;
-			// eslint-disable-next-line @typescript-eslint/no-explicit-any
-			const data = (await res.json()) as { items: any[]; next: string | null };
-			allAlbums.push(...data.items);
-			nextUrl = data.next;
-			pages++;
-		}
+    while (nextUrl && pages < 5) {
+      const res = await fetch(nextUrl, {
+        headers: { Authorization: `Bearer ${this.token}` },
+      });
+      if (!res.ok) break;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const data = (await res.json()) as { items: any[]; next: string | null };
+      allAlbums.push(...data.items);
+      nextUrl = data.next;
+      pages++;
+    }
 
-		return {
-			id: artist.id,
-			name: artist.name,
-			images: (artist.images ?? []).map(mapImage),
-			genres: artist.genres ?? [],
-			type: "artist" as const,
-			albums: allAlbums.filter(Boolean).map(mapAlbumSummary),
-		};
-	}
+    return {
+      id: artist.id,
+      name: artist.name,
+      images: (artist.images ?? []).map(mapImage),
+      genres: artist.genres ?? [],
+      type: "artist" as const,
+      albums: allAlbums.filter(Boolean).map(mapAlbumSummary),
+    };
+  }
 
-	async getPlaylist(id: string): Promise<MusicPlaylist> {
-		const playlist = await this.client.playlist.get(id);
+  async getPlaylist(id: string): Promise<MusicPlaylist> {
+    const playlist = await this.client.playlist.get(id);
 
-		// The playlist endpoint only returns the first page of tracks (max 100).
-		// Walk `tracks.next` to collect the rest so large playlists import fully.
-		let nextUrl: string | null | undefined = playlist.tracks.next;
-		while (nextUrl) {
-			const res = await spotifyFetch(nextUrl, this.token);
-			if (!res.ok) break;
-			const page = (await res.json()) as {
-				items: Playlist["tracks"]["items"];
-				next: string | null;
-			};
-			playlist.tracks.items.push(...page.items);
-			nextUrl = page.next;
-		}
+    // `playlist.get` usually embeds the first page of tracks, but some
+    // playlists (notably Spotify-owned/algorithmic ones like Discover Weekly)
+    // come back as a 200 with no `tracks` object at all. Reading
+    // `playlist.tracks.next` on those throws "Cannot read properties of
+    // undefined (reading 'next')" — the sync-import failure. So collect tracks
+    // into a local array, starting either from the embedded page or, when it's
+    // missing, from the dedicated tracks endpoint.
+    const items: Playlist["tracks"]["items"] = [
+      ...(playlist.tracks?.items ?? []),
+    ];
+    let nextUrl: string | null | undefined =
+      playlist.tracks?.next ??
+      (playlist.tracks
+        ? null
+        : `https://api.spotify.com/v1/playlists/${encodeURIComponent(id)}/tracks?limit=100`);
 
-		return mapPlaylist(playlist);
-	}
+    // Walk `next` to collect every remaining page so large playlists import fully.
+    while (nextUrl) {
+      const res = await spotifyFetch(nextUrl, this.token);
+      if (!res.ok) break;
+      const page = (await res.json()) as {
+        items: Playlist["tracks"]["items"];
+        next: string | null;
+      };
+      items.push(...page.items);
+      nextUrl = page.next;
+    }
 
-	async getUserAlbums(options?: {
-		limit?: number;
-		offset?: number;
-	}): Promise<{ items: { addedAt: string; album: MusicAlbumSummary }[] }> {
-		const url = new URL("/v1/me/albums", "https://api.spotify.com");
-		url.searchParams.append("limit", String(options?.limit ?? 10));
-		url.searchParams.append("offset", String(options?.offset ?? 0));
+    return mapPlaylist(playlist, items);
+  }
 
-		const res = await spotifyFetch(url, this.token);
+  async getUserAlbums(options?: {
+    limit?: number;
+    offset?: number;
+  }): Promise<{ items: { addedAt: string; album: MusicAlbumSummary }[] }> {
+    const url = new URL("/v1/me/albums", "https://api.spotify.com");
+    url.searchParams.append("limit", String(options?.limit ?? 10));
+    url.searchParams.append("offset", String(options?.offset ?? 0));
 
-		if (!res.ok) {
-			throw new Error("Could not retrieve user albums");
-		}
+    const res = await spotifyFetch(url, this.token);
 
-		const data = (await res.json()) as {
-			items: { added_at: string; album: Album }[];
-		};
+    if (!res.ok) {
+      throw new Error("Could not retrieve user albums");
+    }
 
-		return {
-			items: data.items.map((item) => ({
-				addedAt: item.added_at,
-				album: mapAlbumSummary(item.album),
-			})),
-		};
-	}
+    const data = (await res.json()) as {
+      items: { added_at: string; album: Album }[];
+    };
 
-	async getUserSavedTracks(options?: {
-		limit?: number;
-		offset?: number;
-	}): Promise<{ items: { addedAt: string; track: MusicTrack }[]; total: number }> {
-		const url = new URL("/v1/me/tracks", "https://api.spotify.com");
-		url.searchParams.append("limit", String(options?.limit ?? 50));
-		url.searchParams.append("offset", String(options?.offset ?? 0));
+    return {
+      items: data.items.map((item) => ({
+        addedAt: item.added_at,
+        album: mapAlbumSummary(item.album),
+      })),
+    };
+  }
 
-		const res = await spotifyFetch(url, this.token);
+  async getUserSavedTracks(options?: {
+    limit?: number;
+    offset?: number;
+  }): Promise<{
+    items: { addedAt: string; track: MusicTrack }[];
+    total: number;
+  }> {
+    const url = new URL("/v1/me/tracks", "https://api.spotify.com");
+    url.searchParams.append("limit", String(options?.limit ?? 50));
+    url.searchParams.append("offset", String(options?.offset ?? 0));
 
-		if (!res.ok) {
-			throw new Error("Could not retrieve user saved tracks");
-		}
+    const res = await spotifyFetch(url, this.token);
 
-		const data = (await res.json()) as {
-			items: { added_at: string; track: Track }[];
-			total: number;
-		};
+    if (!res.ok) {
+      throw new Error("Could not retrieve user saved tracks");
+    }
 
-		return {
-			items: data.items
-				.filter((item) => item.track != null)
-				.map((item) => ({
-					addedAt: item.added_at,
-					track: mapTrack(item.track),
-				})),
-			total: data.total,
-		};
-	}
+    const data = (await res.json()) as {
+      items: { added_at: string; track: Track }[];
+      total: number;
+    };
 
-	async getUserPlaylists(): Promise<{
-		items: MusicPlaylistSummary[];
-		total: number;
-	}> {
-		// `/me/playlists` returns max 50 per page; walk every page so users with
-		// many playlists see (and can import) all of them, not just the first page.
-		const items: MusicPlaylistSummary[] = [];
-		const limit = 50;
-		let offset = 0;
-		let total = 0;
-		for (;;) {
-			const url = new URL("/v1/me/playlists", "https://api.spotify.com");
-			url.searchParams.append("limit", String(limit));
-			url.searchParams.append("offset", String(offset));
+    return {
+      items: data.items
+        .filter((item) => item.track != null)
+        .map((item) => ({
+          addedAt: item.added_at,
+          track: mapTrack(item.track),
+        })),
+      total: data.total,
+    };
+  }
 
-			const res = await spotifyFetch(url, this.token);
-			if (!res.ok) {
-				throw new Error("Could not retrieve user playlists");
-			}
+  async getUserPlaylists(): Promise<{
+    items: MusicPlaylistSummary[];
+    total: number;
+  }> {
+    // `/me/playlists` returns max 50 per page; walk every page so users with
+    // many playlists see (and can import) all of them, not just the first page.
+    const items: MusicPlaylistSummary[] = [];
+    const limit = 50;
+    let offset = 0;
+    let total = 0;
+    for (;;) {
+      const url = new URL("/v1/me/playlists", "https://api.spotify.com");
+      url.searchParams.append("limit", String(limit));
+      url.searchParams.append("offset", String(offset));
 
-			const page = (await res.json()) as {
-				items: SimplifiedPlaylist[];
-				total: number;
-			};
-			total = page.total;
-			items.push(...page.items.filter(Boolean).map(mapPlaylistSummary));
-			offset += limit;
-			if (items.length >= total || page.items.length < limit) break;
-		}
+      const res = await spotifyFetch(url, this.token);
+      if (!res.ok) {
+        throw new Error("Could not retrieve user playlists");
+      }
 
-		return { items, total };
-	}
+      const page = (await res.json()) as {
+        items: SimplifiedPlaylist[];
+        total: number;
+      };
+      total = page.total;
+      items.push(...page.items.filter(Boolean).map(mapPlaylistSummary));
+      offset += limit;
+      if (items.length >= total || page.items.length < limit) break;
+    }
 
-	async getTopTracks(options?: {
-		timeRange?: "short_term" | "medium_term" | "long_term";
-		limit?: number;
-		offset?: number;
-	}): Promise<{ items: MusicTrack[]; total: number }> {
-		const result = await this.client.me.top("tracks", {
-			timeRange: options?.timeRange ?? "medium_term",
-			limit: options?.limit ?? 20,
-			offset: options?.offset ?? 0,
-		});
-		return {
-			items: result.items.map(mapTrack),
-			total: result.total,
-		};
-	}
+    return { items, total };
+  }
 
-	async getNewReleases(options?: {
-		limit?: number;
-	}): Promise<{ items: MusicAlbumSummary[]; total: number }> {
-		const result = await this.client.albums.newReleases({
-			limit: options?.limit ?? 10,
-		});
-		return {
-			items: result.albums.items.map(mapAlbumSummary),
-			total: result.albums.total,
-		};
-	}
+  async getTopTracks(options?: {
+    timeRange?: "short_term" | "medium_term" | "long_term";
+    limit?: number;
+    offset?: number;
+  }): Promise<{ items: MusicTrack[]; total: number }> {
+    const result = await this.client.me.top("tracks", {
+      timeRange: options?.timeRange ?? "medium_term",
+      limit: options?.limit ?? 20,
+      offset: options?.offset ?? 0,
+    });
+    return {
+      items: result.items.map(mapTrack),
+      total: result.total,
+    };
+  }
 
-	async search(
-		query: string,
-		type: "track" | "album" | "artist" | "playlist",
-	): Promise<{ results: MusicSearchResult[]; total: number }> {
-		const url = new URL("/v1/search", "https://api.spotify.com");
-		url.searchParams.append("q", query);
-		url.searchParams.append("type", type);
-		// limit=10 is the effective max for this app's API access level (>10 → 400 Invalid limit).
-		url.searchParams.append("limit", "10");
+  async getNewReleases(options?: {
+    limit?: number;
+  }): Promise<{ items: MusicAlbumSummary[]; total: number }> {
+    const result = await this.client.albums.newReleases({
+      limit: options?.limit ?? 10,
+    });
+    return {
+      items: result.albums.items.map(mapAlbumSummary),
+      total: result.albums.total,
+    };
+  }
 
-		const res = await fetch(url, {
-			headers: { Authorization: `Bearer ${this.token}` },
-		});
+  async search(
+    query: string,
+    type: "track" | "album" | "artist" | "playlist",
+  ): Promise<{ results: MusicSearchResult[]; total: number }> {
+    const url = new URL("/v1/search", "https://api.spotify.com");
+    url.searchParams.append("q", query);
+    url.searchParams.append("type", type);
+    // limit=10 is the effective max for this app's API access level (>10 → 400 Invalid limit).
+    url.searchParams.append("limit", "10");
 
-		if (!res.ok) {
-			const body = await res.json().catch(() => null);
-			console.error("Spotify search error", res.status, JSON.stringify(body));
-			throw new Error(`Search failed: ${res.status} ${JSON.stringify(body)}`);
-		}
+    const res = await fetch(url, {
+      headers: { Authorization: `Bearer ${this.token}` },
+    });
 
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		const data = (await res.json()) as any;
+    if (!res.ok) {
+      const body = await res.json().catch(() => null);
+      console.error("Spotify search error", res.status, JSON.stringify(body));
+      throw new Error(`Search failed: ${res.status} ${JSON.stringify(body)}`);
+    }
 
-		let items: MusicSearchResult[] = [];
-		let total = 0;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const data = (await res.json()) as any;
 
-		if (type === "track" && data.tracks) {
-			items = data.tracks.items.filter(Boolean).map(mapTrack);
-			total = data.tracks.total;
-		} else if (type === "album" && data.albums) {
-			items = data.albums.items.filter(Boolean).map(mapAlbumSummary);
-			total = data.albums.total;
-		} else if (type === "artist" && data.artists) {
-			items = data.artists.items.filter(Boolean).map(mapArtist);
-			total = data.artists.total;
-		} else if (type === "playlist" && data.playlists) {
-			items = data.playlists.items.filter(Boolean).map(mapPlaylistSummary);
-			total = data.playlists.total;
-		}
+    let items: MusicSearchResult[] = [];
+    let total = 0;
 
-		return { results: items, total };
-	}
+    if (type === "track" && data.tracks) {
+      items = data.tracks.items.filter(Boolean).map(mapTrack);
+      total = data.tracks.total;
+    } else if (type === "album" && data.albums) {
+      items = data.albums.items.filter(Boolean).map(mapAlbumSummary);
+      total = data.albums.total;
+    } else if (type === "artist" && data.artists) {
+      items = data.artists.items.filter(Boolean).map(mapArtist);
+      total = data.artists.total;
+    } else if (type === "playlist" && data.playlists) {
+      items = data.playlists.items.filter(Boolean).map(mapPlaylistSummary);
+      total = data.playlists.total;
+    }
+
+    return { results: items, total };
+  }
 }
