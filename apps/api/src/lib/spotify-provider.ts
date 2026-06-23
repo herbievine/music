@@ -247,26 +247,22 @@ export class SpotifyProvider implements MusicProvider {
   async getPlaylist(id: string): Promise<MusicPlaylist> {
     const playlist = await this.client.playlist.get(id);
 
-    // `playlist.get` usually embeds the first page of tracks, but some
-    // playlists (notably Spotify-owned/algorithmic ones like Discover Weekly)
-    // come back as a 200 with no `tracks` object at all. Reading
-    // `playlist.tracks.next` on those throws "Cannot read properties of
-    // undefined (reading 'next')" — the sync-import failure. So collect tracks
-    // into a local array, starting either from the embedded page or, when it's
-    // missing, from the dedicated tracks endpoint.
-    const items: Playlist["tracks"]["items"] = [
-      ...(playlist.tracks?.items ?? []),
-    ];
-    let nextUrl: string | null | undefined =
-      playlist.tracks?.next ??
-      (playlist.tracks
-        ? null
-        : `https://api.spotify.com/v1/playlists/${encodeURIComponent(id)}/tracks?limit=100`);
+    // Don't trust the SDK's embedded `tracks` page: under the user-OAuth flow it
+    // comes back empty for many playlists, which silently imported playlists with
+    // zero tracks. Always page the dedicated /tracks endpoint with the user token
+    // — the same path getUserSavedTracks uses, which reliably returns items.
+    const items: Playlist["tracks"]["items"] = [];
+    let nextUrl: string | null = `https://api.spotify.com/v1/playlists/${encodeURIComponent(
+      id,
+    )}/tracks?limit=100`;
 
-    // Walk `next` to collect every remaining page so large playlists import fully.
+    // Walk `next` to collect every page so large playlists import fully. Fail loud
+    // on a fetch error so the import records it instead of creating an empty playlist.
     while (nextUrl) {
       const res = await spotifyFetch(nextUrl, this.token);
-      if (!res.ok) break;
+      if (!res.ok) {
+        throw new Error(`Could not retrieve playlist tracks (${res.status})`);
+      }
       const page = (await res.json()) as {
         items: Playlist["tracks"]["items"];
         next: string | null;
