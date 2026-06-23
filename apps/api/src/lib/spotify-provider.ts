@@ -20,6 +20,7 @@ import type {
   MusicTrackSimplified,
 } from "../types.js";
 import type { MusicProvider } from "./music-provider.js";
+import { fetchInternalPlaylist } from "./spotify-internal.js";
 
 function mapImage(image: {
   url: string;
@@ -83,24 +84,6 @@ function mapPlaylistSummary(
     description: playlist.description ?? "",
     images: (playlist.images ?? []).map(mapImage),
     type: "playlist" as const,
-  };
-}
-
-function mapPlaylist(
-  playlist: Playlist,
-  items?: Playlist["tracks"]["items"],
-): MusicPlaylist {
-  // `playlist.tracks` is absent for some playlists (see getPlaylist), so fall
-  // back to the explicitly-collected items and never assume the page exists.
-  const trackItems = items ?? playlist.tracks?.items ?? [];
-  return {
-    ...mapPlaylistSummary(playlist),
-    tracks: {
-      total: trackItems.length,
-      items: trackItems
-        .filter((item) => item.track != null)
-        .map((item) => ({ track: mapTrack(item.track) })),
-    },
   };
 }
 
@@ -245,33 +228,22 @@ export class SpotifyProvider implements MusicProvider {
   }
 
   async getPlaylist(id: string): Promise<MusicPlaylist> {
-    const playlist = await this.client.playlist.get(id);
-
-    // Don't trust the SDK's embedded `tracks` page: under the user-OAuth flow it
-    // comes back empty for many playlists, which silently imported playlists with
-    // zero tracks. Always page the dedicated /tracks endpoint with the user token
-    // — the same path getUserSavedTracks uses, which reliably returns items.
-    const items: Playlist["tracks"]["items"] = [];
-    let nextUrl: string | null = `https://api.spotify.com/v1/playlists/${encodeURIComponent(
-      id,
-    )}/tracks?limit=100`;
-
-    // Walk `next` to collect every page so large playlists import fully. Fail loud
-    // on a fetch error so the import records it instead of creating an empty playlist.
-    while (nextUrl) {
-      const res = await spotifyFetch(nextUrl, this.token);
-      if (!res.ok) {
-        throw new Error(`Could not retrieve playlist tracks (${res.status})`);
-      }
-      const page = (await res.json()) as {
-        items: Playlist["tracks"]["items"];
-        next: string | null;
-      };
-      items.push(...page.items);
-      nextUrl = page.next;
+    // The official playlist API returns no usable tracks at this app's access
+    // level — `/playlists/{id}` omits the tracks payload and `/playlists/{id}/tracks`
+    // 403s — so use Spotify's internal pathfinder API, the same source the
+    // `/playlists/:id` route uses. Page by offset to capture the full track list.
+    const limit = 100;
+    const first = await fetchInternalPlaylist(id, { limit, offset: 0 });
+    const items = [...first.tracks.items];
+    let offset = limit;
+    while (items.length < first.tracks.total) {
+      const page = await fetchInternalPlaylist(id, { limit, offset });
+      if (page.tracks.items.length === 0) break;
+      items.push(...page.tracks.items);
+      offset += limit;
     }
 
-    return mapPlaylist(playlist, items);
+    return { ...first, tracks: { total: first.tracks.total, items } };
   }
 
   async getUserAlbums(options?: {
