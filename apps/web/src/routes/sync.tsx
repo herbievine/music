@@ -57,8 +57,22 @@ function SyncRow({
 	onToggle: () => void;
 }) {
 	return (
-		<label
-			className={`group flex items-center gap-3 px-3 py-2.5 rounded-xl border transition-colors ${
+		<div
+			role="checkbox"
+			aria-checked={imported || checked}
+			aria-disabled={imported}
+			tabIndex={imported ? -1 : 0}
+			onClick={() => {
+				if (!imported) onToggle();
+			}}
+			onKeyDown={(e) => {
+				if (imported) return;
+				if (e.key === " " || e.key === "Enter") {
+					e.preventDefault();
+					onToggle();
+				}
+			}}
+			className={`group flex items-center gap-3 px-3 py-2.5 rounded-xl border outline-none transition-colors focus-visible:ring-2 focus-visible:ring-primary/50 ${
 				imported
 					? "cursor-default border-transparent opacity-40"
 					: checked
@@ -66,13 +80,6 @@ function SyncRow({
 						: "cursor-pointer border-transparent hover:bg-secondary"
 			}`}
 		>
-			<input
-				type="checkbox"
-				className="sr-only"
-				disabled={imported}
-				checked={imported || checked}
-				onChange={onToggle}
-			/>
 			<span
 				className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-md border transition-colors ${
 					imported || checked
@@ -98,7 +105,7 @@ function SyncRow({
 					Imported
 				</span>
 			)}
-		</label>
+		</div>
 	);
 }
 
