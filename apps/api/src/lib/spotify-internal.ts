@@ -135,14 +135,17 @@ async function getAccessToken(): Promise<string> {
 	if (accessCache && accessCache.expiresAt > Date.now()) {
 		return accessCache.token;
 	}
-	const secret = process.env.SPOTIFY_TOTP_SECRET ?? DEFAULT_TOTP_SECRET;
+	// Use `||` not `??`: deploys (e.g. docker compose `KEY: ${VAR}`) inject these
+	// as empty strings when unset, and an empty secret/ver mints a bad TOTP that
+	// the token endpoint rejects with a 400. Treat empty as unset.
+	const secret = process.env.SPOTIFY_TOTP_SECRET || DEFAULT_TOTP_SECRET;
 	const code = totp(secret, Math.floor(Date.now() / 1000));
 	const url = new URL("https://open.spotify.com/api/token");
 	url.searchParams.set("reason", "init");
 	url.searchParams.set("productType", "web-player");
 	url.searchParams.set("totp", code);
 	url.searchParams.set("totpServer", code);
-	url.searchParams.set("totpVer", process.env.SPOTIFY_TOTP_VER ?? DEFAULT_TOTP_VER);
+	url.searchParams.set("totpVer", process.env.SPOTIFY_TOTP_VER || DEFAULT_TOTP_VER);
 
 	// sp_dc is optional: without it the token is anonymous (enough for editorial
 	// and other public playlists); with the service account's cookie the token is
