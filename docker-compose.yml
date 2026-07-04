@@ -1,0 +1,47 @@
+# music on marvin — raw Docker behind Caddy (no host ports).
+#
+# Deploy: copy to the repo root on marvin as docker-compose.pi.yml, put .env next
+# to it, then from /opt/apps/music:
+#   docker compose -f docker-compose.pi.yml up -d --build
+#
+# No local data: music uses an EXTERNAL Postgres via DATABASE_URL (unchanged).
+# apps/haxel (Cloudflare Worker) stays on Cloudflare and is not built here.
+name: music
+
+services:
+  music-api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: ${DATABASE_URL}
+      CORS_ORIGIN: ${CORS_ORIGIN:-https://music.herbievine.com}
+      CLERK_SECRET_KEY: ${CLERK_SECRET_KEY}
+      CLERK_PUBLISHABLE_KEY: ${CLERK_PUBLISHABLE_KEY}
+      HAXEL_API_URL: ${HAXEL_API_URL}
+      GENIUS_ACCESS_TOKEN: ${GENIUS_ACCESS_TOKEN}
+      SPOTIFY_CLIENT_ID: ${SPOTIFY_CLIENT_ID}
+      SPOTIFY_CLIENT_SECRET: ${SPOTIFY_CLIENT_SECRET}
+      SPOTIFY_SP_DC: ${SPOTIFY_SP_DC}
+      SPOTIFY_TOTP_SECRET: ${SPOTIFY_TOTP_SECRET}
+      SPOTIFY_TOTP_VER: ${SPOTIFY_TOTP_VER}
+      YOUTUBE_API_KEY: ${YOUTUBE_API_KEY}
+      YOUTUBE_API_KEYS: ${YOUTUBE_API_KEYS}
+    networks: [edge]
+    restart: unless-stopped
+
+  music-web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+      args:
+        VITE_API_URL: ${VITE_API_URL:-https://api.music.herbievine.com}
+        VITE_CLERK_PUBLISHABLE_KEY: ${VITE_CLERK_PUBLISHABLE_KEY}
+    networks: [edge]
+    depends_on: [music-api]
+    restart: unless-stopped
+
+networks:
+  edge:
+    external: true
