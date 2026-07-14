@@ -1,7 +1,8 @@
+import "dotenv/config";
+
 import { clerkMiddleware } from "@hono/clerk-auth";
 import { serve } from "@hono/node-server";
 import { zValidator } from "@hono/zod-validator";
-import { config } from "dotenv";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { z } from "zod";
@@ -16,8 +17,6 @@ import playerRoutes from "./routes/player.js";
 import playlistRoutes from "./routes/playlists.js";
 import syncRoutes from "./routes/sync.js";
 import userPlaylistRoutes from "./routes/user-playlists.js";
-
-config();
 
 if (!process.env.CORS_ORIGIN) {
 	throw new Error("CORS_ORIGIN not set");

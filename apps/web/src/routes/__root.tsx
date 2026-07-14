@@ -83,7 +83,7 @@ function RootComponent() {
 									<AppSidebar />
 
 									{/* Main + queue area */}
-									<div className="flex flex-1 overflow-hidden gap-2 p-2 pb-0">
+									<div className="flex flex-1 overflow-hidden gap-2 p-2">
 										<main className="flex-1 overflow-y-auto overflow-x-hidden rounded-xl bg-card pb-6 min-w-0">
 											<Outlet />
 										</main>
