@@ -138,6 +138,16 @@ export const artists = pgTable("artists", {
 	// true once written from a full artist-detail fetch, false for side-effect stubs.
 	complete: boolean("complete").notNull().default(false),
 	updatedAt: timestamp("updated_at").defaultNow().notNull(),
+	// Cached "This Is <Artist>" playlist lookup (resolved via undocumented pathfinder
+	// API). Null value + non-null checkedAt means "checked, artist has none" — distinct
+	// from "never checked" (checkedAt null), so we don't keep re-querying forever.
+	thisIsPlaylist: jsonb("this_is_playlist").$type<{
+		id: string;
+		name: string;
+		description: string;
+		images: { url: string; width?: number; height?: number }[];
+	} | null>(),
+	thisIsPlaylistCheckedAt: timestamp("this_is_playlist_checked_at"),
 });
 
 export const artistImages = pgTable("artist_images", {

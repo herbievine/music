@@ -64,6 +64,13 @@
       "when": 1782034593226,
       "tag": "0008_add_sync_dedup",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1784466422281,
+      "tag": "0009_add_this_is_playlist",
+      "breakpoints": true
     }
   ]
 }
