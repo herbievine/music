@@ -1,5 +1,5 @@
 import crypto from "node:crypto";
-import type { MusicImage, MusicPlaylist, MusicTrack } from "../types.js";
+import type { MusicImage, MusicPlaylist, MusicPlaylistSummary, MusicTrack } from "../types.js";
 
 /**
  * Reverse-engineered client for Spotify's internal "pathfinder" GraphQL gateway
@@ -23,6 +23,11 @@ import type { MusicImage, MusicPlaylist, MusicTrack } from "../types.js";
 // web player (build 1.2.93). Refresh by sniffing a playlist load if it 400s.
 const FETCH_PLAYLIST_HASH =
 	"a65e12194ed5fc443a1cdebed5fabe33ca5b07b987185d63c72483867ad13cb4";
+
+// Persisted-query hash for the `queryArtistOverview` operation. Captured from the
+// live web player. Refresh by sniffing an artist page load if it 400s.
+const ARTIST_OVERVIEW_HASH =
+	"ae0e2958a4ab645b35ca19ac04d0495ae12d9c5d7b7286217674801a9aab281a";
 
 // TOTP secret for the web-player token mint, version 61 — derived from the
 // public web-player bundle (build 1.2.93) and stored as base32 of the key bytes.
@@ -310,4 +315,69 @@ export async function fetchInternalPlaylist(
 			items: items.map((track: MusicTrack) => ({ track })),
 		},
 	};
+}
+
+/**
+ * Find an artist's official "This Is <Artist>" playlist via the internal
+ * pathfinder API's artist-overview query. Returns null (never throws) if the
+ * artist has no such playlist, or if the lookup fails — this is a nice-to-have
+ * enhancement, not core artist data, so callers should degrade gracefully.
+ */
+export async function fetchArtistThisIsPlaylist(
+	artistId: string,
+): Promise<MusicPlaylistSummary | null> {
+	try {
+		const [accessToken, clientToken] = await Promise.all([
+			getAccessToken(),
+			getClientToken(),
+		]);
+
+		const body = {
+			operationName: "queryArtistOverview",
+			variables: { uri: `spotify:artist:${artistId}`, locale: "", preReleaseV2: true },
+			extensions: {
+				persistedQuery: { version: 1, sha256Hash: ARTIST_OVERVIEW_HASH },
+			},
+		};
+
+		const res = await fetch("https://api-partner.spotify.com/pathfinder/v2/query", {
+			method: "POST",
+			headers: {
+				authorization: `Bearer ${accessToken}`,
+				"client-token": clientToken,
+				"Content-Type": "application/json;charset=UTF-8",
+				Accept: "application/json",
+				"app-platform": "WebPlayer",
+			},
+			body: JSON.stringify(body),
+		});
+		if (!res.ok) return null;
+
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		const json = (await res.json()) as any;
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		const items = json?.data?.artistUnion?.relatedContent?.featuringV2?.items ?? [];
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		const match = items.find((item: any) => {
+			const d = item?.data;
+			return (
+				d?.__typename === "Playlist" &&
+				d?.ownerV2?.data?.name === "Spotify" &&
+				typeof d?.name === "string" &&
+				d.name.toLowerCase().startsWith("this is ")
+			);
+		})?.data;
+
+		if (!match) return null;
+
+		return {
+			id: match.id,
+			type: "playlist" as const,
+			name: match.name ?? "",
+			description: match.description ?? "",
+			images: mapImages(match.images?.items?.[0]?.sources),
+		};
+	} catch {
+		return null;
+	}
 }

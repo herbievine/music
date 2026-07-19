@@ -34,6 +34,18 @@ function RouteComponent() {
 		},
 	});
 
+	const { data: thisIsPlaylist } = useQuery({
+		queryKey: ["artist-this-is", id],
+		queryFn: async () => {
+			const res = await client.artists[":id"]["this-is-playlist"].$get(
+				{ param: { id } },
+				{ headers: { Authorization: `Bearer ${await session?.getToken()}` } },
+			);
+			if (!res.ok) throw new Error("Could not fetch This Is playlist");
+			return res.json();
+		},
+	});
+
 	const imageUrl = data?.images?.[0]?.url;
 
 	return (
@@ -94,6 +106,33 @@ function RouteComponent() {
 					</div>
 				</div>
 			</div>
+
+			{/* This Is playlist */}
+			{thisIsPlaylist && (
+				<div className="px-4 sm:px-8 pt-2 pb-6">
+					<Link
+						to="/playlist/$id"
+						params={{ id: thisIsPlaylist.id }}
+						className="flex items-center gap-5 p-5 rounded-2xl bg-secondary/40 hover:bg-secondary/60 transition-colors w-full"
+					>
+						{thisIsPlaylist.images?.[0] && (
+							<img
+								src={thisIsPlaylist.images[0].url}
+								alt={thisIsPlaylist.name}
+								className="w-20 h-20 flex-shrink-0 object-cover rounded-xl shadow-lg"
+							/>
+						)}
+						<div className="flex flex-col min-w-0">
+							<span className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">
+								Playlist
+							</span>
+							<span className="text-xl font-bold line-clamp-1">
+								{thisIsPlaylist.name}
+							</span>
+						</div>
+					</Link>
+				</div>
+			)}
 
 			{/* Albums grid */}
 			<div className="px-4 sm:px-8 pb-8">

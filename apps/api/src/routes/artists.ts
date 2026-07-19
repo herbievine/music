@@ -1,8 +1,14 @@
 import { Hono } from "hono";
 import { getArtistFromDb, upsertArtist } from "../lib/ingest.js";
 import { getMusicProvider } from "../lib/middleware.js";
+import { fetchArtistThisIsPlaylist } from "../lib/spotify-internal.js";
 
 const app = new Hono();
+
+app.get("/:id/this-is-playlist", async (c) => {
+	const { id } = c.req.param();
+	return c.json(await fetchArtistThisIsPlaylist(id));
+});
 
 app.get("/:id", async (c) => {
 	const provider = getMusicProvider(c);
